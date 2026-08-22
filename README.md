@@ -24,7 +24,7 @@ HTML + CSS + JS → fetch /api/** → @RestController → Service → Repository
 | Security | `SecurityConfig`, `JwtCookieFilter` | Autenticação por JWT em cookie e proteção de rotas |
 | Migrations | Flyway | Dono do schema e dos dados iniciais |
 
-**Stack:** Spring Boot 4.x · Java 21 · PostgreSQL · JPA · Flyway · Spring Security + JWT · springdoc/Swagger · HTML/CSS/JS · Maven
+**Stack:** Spring Boot 4.x · Java 21 · PostgreSQL · JPA · Flyway · Spring Security + JWT · springdoc/Swagger · HTML/CSS/JS · Maven · Docker
 
 ---
 
@@ -216,21 +216,50 @@ src/main/resources/db/migration/
 
 ---
 
+## Deploy
+
+`docker compose up -d --build` sobe o sistema completo em dois containers:
+
+| Serviço | Imagem | Papel |
+|---|---|---|
+| `db` | `postgres:15` | Banco, com healthcheck — a aplicação só sobe depois que ele aceita conexão |
+| `app` | build local | JAR executável com Tomcat embarcado |
+
+O `Dockerfile` é multi-stage: o Maven compila num estágio e a imagem final leva
+só o JRE e o JAR — sem Maven, sem código-fonte. O container roda como usuário
+sem privilégio (`sisbolsa`), não como root.
+
+Configuração por variável de ambiente, com default para desenvolvimento local:
+
+| Variável | Default | Uso |
+|---|---|---|
+| `DB_HOST` | `localhost` | No compose vale `db` |
+| `DB_PORT` | `5436` | Porta interna no compose é `5432` |
+| `DB_NAME` / `DB_USER` / `DB_PASSWORD` | `cadastroBolsista` / `postgres` / `1234` | Credenciais |
+| `JWT_SECRET` | valor de desenvolvimento | **Trocar em produção** |
+| `JWT_EXPIRACAO_MINUTOS` | `120` | Validade do token |
+
+---
+
 ## Instalação e Execução
 
 As instruções completas estão em [instalacao.md](instalacao.md).
 
-### Resumo rápido
+### Tudo em Docker (recomendado)
 
 ```bash
-# 1. Subir o banco
-docker compose up -d
-
-# 2. Rodar a aplicação
-mvn spring-boot:run
+docker compose up -d --build
 ```
 
-Acesse: `http://localhost:8080`
+Sobe banco e aplicação. O Flyway cria o schema e insere os dados iniciais no
+primeiro start. Acesse `http://localhost:8080`.
+
+### Desenvolvimento (banco em Docker, app local)
+
+```bash
+docker compose up -d db
+mvn spring-boot:run
+```
 
 ### Acesso inicial
 

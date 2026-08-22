@@ -4,9 +4,9 @@
 
 | Ferramenta | Versão mínima | Observação |
 |---|---|---|
-| Java JDK | 21 | Necessário para compilar e rodar |
-| Maven | 3.9+ | Gerenciamento de dependências e build |
-| Docker + Docker Compose | Qualquer atual | Recomendado para o banco de dados |
+| Docker + Docker Compose | Qualquer atual | Suficiente sozinho — o build roda dentro da imagem |
+| Java JDK | 21 | Só para rodar a aplicação fora do container |
+| Maven | 3.9+ | Só para rodar a aplicação fora do container |
 | IntelliJ IDEA | Qualquer | Opcional — o projeto roda via Maven também |
 
 > **PostgreSQL local** é uma alternativa ao Docker. Veja a Opção B abaixo.
@@ -24,16 +24,28 @@ cd CadastroBolsistas
 
 ## 2. Configurar o banco de dados
 
-### Opção A — Docker Compose (recomendado)
+### Opção A — Tudo em Docker (recomendado)
 
 Na raiz do projeto, execute:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-O Docker sobe o PostgreSQL vazio na porta `5436`. As tabelas e os dados iniciais
-são criados pelas migrations do Flyway quando a aplicação sobe.
+Sobe dois containers: o PostgreSQL e a aplicação. O banco tem healthcheck, então
+a aplicação só inicia depois que ele aceita conexão — sem isso o Flyway falharia
+na corrida. As tabelas e os dados iniciais são criados pelas migrations no
+primeiro start.
+
+Acesse `http://localhost:8080`. Não precisa de Java nem Maven instalados: o
+build acontece dentro da imagem.
+
+Para subir só o banco e rodar a aplicação localmente:
+
+```bash
+docker compose up -d db
+mvn spring-boot:run
+```
 
 Comandos úteis:
 
