@@ -52,6 +52,13 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
+		<!-- swagger / openapi. a linha 3.x e a que suporta boot 4 -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+
 		<!-- jwt: api publica em compile, impl e jackson so em runtime -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

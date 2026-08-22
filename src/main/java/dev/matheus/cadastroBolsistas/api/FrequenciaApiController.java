@@ -12,11 +12,14 @@ import dev.matheus.cadastroBolsistas.util.StringUtil;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+@Tag(name = "Frequencias", description = "Registro de horas trabalhadas pelos bolsistas.")
 @RestController
 @RequestMapping("/api/frequencias")
 public class FrequenciaApiController {
@@ -34,6 +37,7 @@ public class FrequenciaApiController {
         this.usuarioLogado = usuarioLogado;
     }
 
+    @Operation(summary = "Lista frequencias paginadas. Bolsista comum ve apenas as proprias, e o filtro bolsistaId e ignorado para ele.")
     @GetMapping
     public PaginaResponse<FrequenciaResponse> listar(@RequestParam(defaultValue = "1") int pagina,
                                                      @RequestParam(required = false) Integer bolsistaId,
@@ -66,6 +70,7 @@ public class FrequenciaApiController {
         return FrequenciaResponse.de(f);
     }
 
+    @Operation(summary = "Registra frequencia. Bolsista comum sempre registra para si mesmo, independente do bolsistaId enviado.")
     @PostMapping
     public ResponseEntity<FrequenciaResponse> registrar(@RequestBody FrequenciaRequest body, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);

@@ -24,7 +24,7 @@ JSP → Controller → Service → DAO → PostgreSQL
 | Security | `SecurityConfig`, `JwtCookieFilter` | Autenticação por JWT e proteção de rotas |
 | Config | `WebConfig` | Recursos estáticos |
 
-**Stack:** Spring Boot 4.x · Java 21 · PostgreSQL · Maven · WAR · Jakarta EE
+**Stack:** Spring Boot 4.x · Java 21 · PostgreSQL · JPA · Flyway · Spring Security + JWT · springdoc/Swagger · Maven · Jakarta EE
 
 ---
 
@@ -161,6 +161,14 @@ A suíte cobre 78 casos de teste sem dependência de banco de dados:
 ---
 
 ## API REST
+
+Documentação interativa em **`http://localhost:8080/swagger-ui.html`** (aberta, sem
+login — o que ela mostra é o formato dos endpoints, que continuam exigindo token).
+O contrato OpenAPI cru fica em `/v3/api-docs`.
+
+Para testar pela própria interface: chame `POST /api/auth/login` com e-mail e senha.
+O cookie `httpOnly` é gravado no navegador e as chamadas seguintes já vão autenticadas
+— não precisa colar token em lugar nenhum.
 
 Todos os endpoints ficam sob `/api/**`, autenticados pelo mesmo cookie JWT das
 telas. Erros saem sempre como `{"mensagem": "..."}`.

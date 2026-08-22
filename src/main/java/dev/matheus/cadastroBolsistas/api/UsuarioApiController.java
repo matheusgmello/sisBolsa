@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,6 +24,7 @@ import java.util.List;
  * bolsistas, admins e professores saem pela mesma rota porque para quem consome
  * sao todos usuario - o que muda e o tipoUsuario.
  */
+@Tag(name = "Usuarios", description = "Bolsistas, administradores e professores. O que muda entre eles e o campo tipoUsuario.")
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioApiController {
@@ -44,6 +47,7 @@ public class UsuarioApiController {
         this.usuarioLogado = usuarioLogado;
     }
 
+    @Operation(summary = "Lista usuarios ja recortados pelo escopo de quem chama: admin ve todos, professor ve os bolsistas dos labs que coordena, bolsista ve os colegas do proprio lab.")
     @GetMapping
     public PaginaResponse<UsuarioResponse> listar(@RequestParam(defaultValue = "1") int pagina,
                                                   @RequestParam(required = false) String tipo,
@@ -134,6 +138,7 @@ public class UsuarioApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.de(b));
     }
 
+    @Operation(summary = "Atualiza um usuario. Senha em branco mantem a que ja esta gravada.")
     @PutMapping("/{id}")
     public UsuarioResponse atualizar(@PathVariable int id,
                                      @RequestBody BolsistaRequest body,
@@ -171,6 +176,7 @@ public class UsuarioApiController {
         return UsuarioResponse.de(b);
     }
 
+    @Operation(summary = "Desativa o usuario (soft delete). A linha e o historico de frequencia permanecem no banco.")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable int id,
                                         @RequestParam(defaultValue = "BOLSISTA") String tipo,

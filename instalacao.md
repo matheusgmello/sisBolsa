@@ -121,6 +121,12 @@ Nenhum teste requer banco de dados ativo — todos os DAOs são mockados.
 http://localhost:8080
 ```
 
+Documentação da API (Swagger):
+
+```
+http://localhost:8080/swagger-ui.html
+```
+
 ---
 
 ## 6. Credenciais iniciais

@@ -10,9 +10,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+@Tag(name = "Autenticacao", description = "Login, logout e dados do usuario da sessao atual.")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthApiController {
@@ -27,6 +30,7 @@ public class AuthApiController {
         this.usuarioLogado = usuarioLogado;
     }
 
+    @Operation(summary = "Autentica e grava o token jwt num cookie httpOnly. As chamadas seguintes nao precisam mandar nada a mais.")
     @PostMapping("/login")
     public UsuarioResponse login(@RequestBody LoginRequest body,
                                  HttpSession session,

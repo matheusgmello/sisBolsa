@@ -7,6 +7,7 @@ import dev.matheus.cadastroBolsistas.service.LaboratorioService;
 import dev.matheus.cadastroBolsistas.service.ProjetoService;
 import dev.matheus.cadastroBolsistas.service.RelatorioService;
 import jakarta.servlet.http.HttpSession;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ import java.util.Map;
  * relatorios sao so para admin. o SecurityConfig ja barra a rota por role,
  * a checagem aqui e o cinto alem do suspensorio.
  */
+@Tag(name = "Relatorios", description = "Dados agregados do sistema. Exclusivo do perfil ADMIN.")
 @RestController
 @RequestMapping("/api/relatorios")
 public class RelatorioApiController {

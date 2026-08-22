@@ -67,6 +67,12 @@ public class SecurityConfig {
                  * para ela mesma e o browser entra em loop.
                  */
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                /*
+                 * swagger aberto: e a documentacao do trabalho e precisa abrir
+                 * sem login. nao expoe dado nenhum, so a forma dos endpoints -
+                 * que continuam exigindo token.
+                 */
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/login", "/cadastro-admin/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .anyRequest().authenticated())
             .formLogin(form -> form.disable())

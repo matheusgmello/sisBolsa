@@ -12,11 +12,13 @@ import dev.matheus.cadastroBolsistas.util.StringUtil;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+@Tag(name = "Projetos", description = "Projetos de cada laboratorio e o vinculo com bolsistas.")
 @RestController
 @RequestMapping("/api/projetos")
 public class ProjetoApiController {
