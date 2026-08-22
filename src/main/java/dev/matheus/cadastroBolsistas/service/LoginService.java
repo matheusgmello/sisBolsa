@@ -1,8 +1,8 @@
 package dev.matheus.cadastroBolsistas.service;
 
-import dev.matheus.cadastroBolsistas.dao.BolsistaDAO;
-import dev.matheus.cadastroBolsistas.dao.ProfessorDAO;
 import dev.matheus.cadastroBolsistas.model.Usuario;
+import dev.matheus.cadastroBolsistas.repository.BolsistaRepository;
+import dev.matheus.cadastroBolsistas.repository.ProfessorRepository;
 import dev.matheus.cadastroBolsistas.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,25 +11,23 @@ import org.springframework.stereotype.Service;
 public class LoginService {
 
     @Autowired
-    private BolsistaDAO bolsistaDao;
+    private BolsistaRepository bolsistaRepository;
 
     @Autowired
-    private ProfessorDAO professorDao;
+    private ProfessorRepository professorRepository;
 
     public Usuario autenticar(String email, String senha) {
         try {
             String senhaHash = SecurityUtil.hashSenha(senha);
             /*
-             * primeiro tenta autenticar o usuario como bolsista ou administrador
+             * tenta primeiro como bolsista ou admin, que moram na mesma tabela.
+             * so cai para professor se nao achar nada.
              */
-            Usuario u = bolsistaDao.autenticar(email, senhaHash);
+            Usuario u = bolsistaRepository.findByEmailAndSenhaAndAtivoTrue(email, senhaHash).orElse(null);
             if (u != null) {
                 return u;
             }
-            /*
-             * se nao encontrar nenhum bolsista ou administrador tenta como professor
-             */
-            return professorDao.autenticar(email, senhaHash);
+            return professorRepository.findByEmailAndSenhaAndAtivoTrue(email, senhaHash).orElse(null);
         } catch (Exception e) {
             e.printStackTrace();
             return null;

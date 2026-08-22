@@ -65,7 +65,6 @@ public class ProjetoController {
             for (Projeto p : lista) {
                 Laboratorio lab = laboratorioService.buscarPorId(p.getLaboratorioId());
                 if (lab != null) {
-                    p.setNomeLaboratorio(lab.getNome());
                     model.addAttribute("coordenador_" + p.getId(), lab.getCoordenador());
                 }
                 ArrayList<Bolsista> membros = bolsistaService.buscarPorProjeto(p.getId());
@@ -101,7 +100,6 @@ public class ProjetoController {
 
             Laboratorio lab = laboratorioService.buscarPorId(proj.getLaboratorioId());
             if (lab != null) {
-                proj.setNomeLaboratorio(lab.getNome());
                 model.addAttribute("coordenador", lab.getCoordenador());
                 model.addAttribute("coordenadorId", lab.getCoordenadorId());
             }

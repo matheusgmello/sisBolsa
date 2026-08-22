@@ -1,18 +1,44 @@
 package dev.matheus.cadastroBolsistas.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Transient;
+
 /*
- * representa um usuario generico no sistema (pode ser ADMIN, BOLSISTA ou PROFESSOR).
- * contem os campos de autenticacao e informacoes basicas.
+ * campos comuns de qualquer usuario do sistema (ADMIN, BOLSISTA ou PROFESSOR).
+ *
+ * nao e entidade: bolsista e professor moram em tabelas separadas e com sequences
+ * independentes, entao id 1 existe nas duas. nenhuma estrategia de heranca do jpa
+ * da conta disso, por isso MappedSuperclass e duas entidades sem hierarquia.
  */
+@MappedSuperclass
 public abstract class Usuario {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
     private String nome;
     private String email;
     private String senha;
     private boolean ativo;
+
+    @Column(name = "tipo_usuario")
     private String tipoUsuario; // 'ADMIN', 'BOLSISTA', 'PROFESSOR'
+
+    @Column(name = "foto_url")
     private String fotoUrl;
-    private String nomeLaboratorio; // nome do lab (para bolsistas) ou labs coordenados (para professores)
+
+    /*
+     * nao existe como coluna. para bolsista vem da relacao com laboratorio,
+     * para professor o controller preenche com a lista de labs que ele coordena.
+     */
+    @Transient
+    private String nomeLaboratorio;
+
     private String bio;
 
     public Usuario() {}

@@ -1,17 +1,40 @@
 package dev.matheus.cadastroBolsistas.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
 import java.time.LocalDate;
 
 /*
- * model que representa um registro de frequencia de um bolsista.
- * o campo nomeBolsista e preenchido via join no dao e nao existe na tabela.
+ * registro de horas trabalhadas por um bolsista.
  */
+@Entity
+@Table(name = "frequencia")
 public class Frequencia {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private int bolsistaId;
-    private String nomeBolsista;
+
+    @Column(name = "bolsista_id")
+    private Integer bolsistaId;
+
+    /* so leitura, serve para o getNomeBolsista() das telas de frequencia */
+    @ManyToOne
+    @JoinColumn(name = "bolsista_id", insertable = false, updatable = false)
+    private Bolsista bolsista;
+
     private LocalDate data;
+
+    @Column(name = "horas_trabalhadas")
     private double horasTrabalhadas;
+
     private String descricao;
     private boolean ativo;
 
@@ -19,7 +42,7 @@ public class Frequencia {
 
     public Frequencia(int id, int bolsistaId, LocalDate data, double horasTrabalhadas, String descricao, boolean ativo) {
         this.id = id;
-        this.bolsistaId = bolsistaId;
+        setBolsistaId(bolsistaId);
         this.data = data;
         this.horasTrabalhadas = horasTrabalhadas;
         this.descricao = descricao;
@@ -29,11 +52,12 @@ public class Frequencia {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
-    public int getBolsistaId() { return bolsistaId; }
-    public void setBolsistaId(int bolsistaId) { this.bolsistaId = bolsistaId; }
+    public int getBolsistaId() { return bolsistaId != null ? bolsistaId : 0; }
+    public void setBolsistaId(int bolsistaId) { this.bolsistaId = bolsistaId > 0 ? bolsistaId : null; }
 
-    public String getNomeBolsista() { return nomeBolsista; }
-    public void setNomeBolsista(String nomeBolsista) { this.nomeBolsista = nomeBolsista; }
+    public String getNomeBolsista() {
+        return bolsista != null ? bolsista.getNome() : null;
+    }
 
     public LocalDate getData() { return data; }
     public void setData(LocalDate data) { this.data = data; }

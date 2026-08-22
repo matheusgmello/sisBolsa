@@ -1,19 +1,48 @@
 package dev.matheus.cadastroBolsistas.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
 import java.time.LocalDate;
 
 /*
- * representa um bolsista do sistema.
- * herda de Usuario para autenticacao e perfil basico.
+ * bolsista do sistema. a tabela tambem guarda os ADMIN, diferenciados por tipo_usuario.
  */
+@Entity
+@Table(name = "bolsista")
 public class Bolsista extends Usuario {
+
+    @Column(name = "data_nascimento")
     private LocalDate dataNascimento;
+
     private String curso;
     private String matricula;
     private String cpf;
     private String telefone;
-    private int laboratorioId;
-    private Cargo cargo; // papel/cargo do bolsista no laboratorio
+
+    /*
+     * a coluna e nullable (admin nao tem lab), por isso Integer.
+     * o get/set publico continua em int para nao mexer em controller nem jsp:
+     * 0 para fora vira null no banco, igual ao que o dao antigo fazia.
+     */
+    @Column(name = "laboratorio_id")
+    private Integer laboratorioId;
+
+    /*
+     * so leitura, serve para resolver o nome do lab sem query extra.
+     * quem grava a coluna e o campo laboratorioId acima.
+     */
+    @ManyToOne
+    @JoinColumn(name = "laboratorio_id", insertable = false, updatable = false)
+    private Laboratorio laboratorio;
+
+    @Enumerated(EnumType.STRING)
+    private Cargo cargo;
 
     public Bolsista() {
         super();
@@ -29,7 +58,7 @@ public class Bolsista extends Usuario {
         this.matricula = matricula;
         this.cpf = cpf;
         this.telefone = telefone;
-        this.laboratorioId = laboratorioId;
+        setLaboratorioId(laboratorioId);
         this.cargo = cargo;
     }
 
@@ -48,8 +77,15 @@ public class Bolsista extends Usuario {
     public String getTelefone() { return telefone; }
     public void setTelefone(String telefone) { this.telefone = telefone; }
 
-    public int getLaboratorioId() { return laboratorioId; }
-    public void setLaboratorioId(int laboratorioId) { this.laboratorioId = laboratorioId; }
+    public int getLaboratorioId() { return laboratorioId != null ? laboratorioId : 0; }
+    public void setLaboratorioId(int laboratorioId) { this.laboratorioId = laboratorioId > 0 ? laboratorioId : null; }
+
+    public Laboratorio getLaboratorio() { return laboratorio; }
+
+    @Override
+    public String getNomeLaboratorio() {
+        return laboratorio != null ? laboratorio.getNome() : super.getNomeLaboratorio();
+    }
 
     public Cargo getCargo() { return cargo; }
     public void setCargo(Cargo cargo) { this.cargo = cargo; }

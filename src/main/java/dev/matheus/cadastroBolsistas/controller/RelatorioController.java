@@ -72,9 +72,8 @@ public class RelatorioController {
             model.addAttribute("bolsistasPorCargo", relatorioService.getBolsistasPorCargo());
             
             // Laboratórios próximos do limite (> 85%)
-            List<Map<String, Object>> todosLabsOcupacao = relatorioService.getLaboratoriosOcupacao();
-            List<Map<String, Object>> labsLimite = todosLabsOcupacao.stream()
-                    .filter(m -> ((Double) m.get("percentualOcupacao")) >= 85.0)
+            var labsLimite = relatorioService.getLaboratoriosOcupacao().stream()
+                    .filter(lab -> lab.getPercentualOcupacao() >= 85.0)
                     .collect(Collectors.toList());
             model.addAttribute("labsLimite", labsLimite);
 

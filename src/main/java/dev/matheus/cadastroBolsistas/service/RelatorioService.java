@@ -1,37 +1,34 @@
 package dev.matheus.cadastroBolsistas.service;
 
-import dev.matheus.cadastroBolsistas.dao.RelatorioDAO;
+import dev.matheus.cadastroBolsistas.repository.RelatorioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 
 /*
- * service responsavel por agregar os dados analiticos exibidos na tela de relatorios.
- * todas as queries sao executadas diretamente no banco via relatorioDAO com group by e sum.
- * acessivel apenas para o perfil admin.
+ * dados agregados da tela de relatorios. so admin chega aqui.
  */
 @Service
 public class RelatorioService {
 
     @Autowired
-    private RelatorioDAO dao;
+    private RelatorioRepository repository;
 
-    public List<Map<String, Object>> getHorasBolsistasMesCorrente() throws SQLException {
-        return dao.getHorasBolsistasMesCorrente();
+    public List<RelatorioRepository.HorasBolsista> getHorasBolsistasMesCorrente() throws SQLException {
+        return repository.horasBolsistasMesCorrente();
     }
 
-    public List<Map<String, Object>> getProjetosAtivosPorLaboratorio() throws SQLException {
-        return dao.getProjetosAtivosPorLaboratorio();
+    public List<RelatorioRepository.ProjetosPorLaboratorio> getProjetosAtivosPorLaboratorio() throws SQLException {
+        return repository.projetosAtivosPorLaboratorio();
     }
 
-    public List<Map<String, Object>> getBolsistasPorCargo() throws SQLException {
-        return dao.getBolsistasPorCargo();
+    public List<RelatorioRepository.BolsistasPorCargo> getBolsistasPorCargo() throws SQLException {
+        return repository.bolsistasPorCargo();
     }
 
-    public List<Map<String, Object>> getLaboratoriosOcupacao() throws SQLException {
-        return dao.getLaboratoriosOcupacao();
+    public List<RelatorioRepository.OcupacaoLaboratorio> getLaboratoriosOcupacao() throws SQLException {
+        return repository.laboratoriosOcupacao();
     }
 }

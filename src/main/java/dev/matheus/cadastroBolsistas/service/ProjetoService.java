@@ -1,72 +1,113 @@
 package dev.matheus.cadastroBolsistas.service;
 
-import dev.matheus.cadastroBolsistas.dao.ProjetoDAO;
 import dev.matheus.cadastroBolsistas.model.Projeto;
+import dev.matheus.cadastroBolsistas.repository.ProjetoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /*
- * service responsavel pelas regras de negocio de projetos.
- * gerencia o vinculo many-to-many entre bolsistas e projetos via tabela bolsista_projeto.
- * o metodo listarPorBolsistaEmLote resolve associacoes em batch para evitar n+1 queries.
+ * regras de negocio de projetos, incluindo o vinculo n:n com bolsistas
+ * (tabela bolsista_projeto).
  */
 @Service
 public class ProjetoService {
 
     @Autowired
-    private ProjetoDAO dao;
+    private ProjetoRepository repository;
 
     public boolean cadastrar(Projeto p) throws SQLException {
         p.setAtivo(true);
-        return dao.inserir(p);
+        repository.save(p);
+        return true;
     }
 
     public ArrayList<Projeto> listarTodos() throws SQLException {
-        return dao.getProjetos();
+        return buscarProjetos(null, null);
     }
 
     public ArrayList<Projeto> buscarProjetos(String buscaNome, Integer labId) throws SQLException {
-        return dao.buscarProjetos(buscaNome, labId);
+        String nome = buscaNome != null ? buscaNome.trim() : "";
+        Integer lab = (labId != null && labId > 0) ? labId : null;
+        return new ArrayList<>(repository.buscarProjetos(nome, lab));
     }
 
     public ArrayList<Projeto> listarPorLaboratorio(int labId) throws SQLException {
-        return dao.getProjetosPorLaboratorio(labId);
+        return new ArrayList<>(repository.buscarPorLaboratorio(labId));
     }
 
     public Projeto buscarPorId(int id) throws SQLException {
-        return dao.getProjetoPorId(id);
+        return repository.findById(id).orElse(null);
     }
 
     public boolean atualizar(Projeto p) throws SQLException {
-        return dao.atualizar(p);
+        repository.save(p);
+        return true;
     }
 
+    /* soft delete */
+    @Transactional
     public boolean excluir(int id) throws SQLException {
-        return dao.excluir(id);
+        return repository.desativar(id) > 0;
     }
 
+    @Transactional
     public boolean vincularBolsista(int bolsistaId, int projetoId) throws SQLException {
-        return dao.vincularBolsista(bolsistaId, projetoId);
+        repository.vincularBolsista(bolsistaId, projetoId);
+        return true;
     }
 
+    @Transactional
     public boolean desvincularBolsista(int bolsistaId, int projetoId) throws SQLException {
-        return dao.desvincularBolsista(bolsistaId, projetoId);
+        repository.desvincularBolsista(bolsistaId, projetoId);
+        return true;
     }
 
+    @Transactional
     public boolean desvincularBolsistaDeTodosProjetos(int bolsistaId) throws SQLException {
-        return dao.desvincularBolsistaDeTodosProjetos(bolsistaId);
+        repository.desvincularBolsistaDeTodosProjetos(bolsistaId);
+        return true;
     }
 
     public ArrayList<Projeto> listarPorBolsista(int bolsistaId) throws SQLException {
-        return dao.getProjetosPorBolsista(bolsistaId);
+        return new ArrayList<>(repository.buscarPorBolsista(bolsistaId));
     }
 
+    /*
+     * monta o mapa bolsista -> projetos do laboratorio inteiro em duas queries:
+     * uma para os vinculos e outra para carregar os projetos de uma vez.
+     * o dao antigo resolvia isso com um join manual so para fugir do n+1.
+     */
     public Map<Integer, ArrayList<Projeto>> getProjetosDosBolsistasDoLaboratorio(int labId) throws SQLException {
-        return dao.getProjetosDosBolsistasDoLaboratorio(labId);
+        List<Object[]> vinculos = repository.buscarVinculosDoLaboratorio(labId);
+        if (vinculos.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        List<Integer> projetoIds = vinculos.stream()
+                .map(v -> ((Number) v[1]).intValue())
+                .distinct()
+                .toList();
+
+        Map<Integer, Projeto> porId = new HashMap<>();
+        for (Projeto p : repository.findAllById(projetoIds)) {
+            porId.put(p.getId(), p);
+        }
+
+        Map<Integer, ArrayList<Projeto>> mapa = new HashMap<>();
+        for (Object[] vinculo : vinculos) {
+            int bolsistaId = ((Number) vinculo[0]).intValue();
+            Projeto projeto = porId.get(((Number) vinculo[1]).intValue());
+            if (projeto != null) {
+                mapa.computeIfAbsent(bolsistaId, k -> new ArrayList<>()).add(projeto);
+            }
+        }
+        return mapa;
     }
 }

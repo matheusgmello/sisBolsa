@@ -1,7 +1,5 @@
 package dev.matheus.cadastroBolsistas.service;
 
-import dev.matheus.cadastroBolsistas.dao.BolsistaDAO;
-import dev.matheus.cadastroBolsistas.dao.LaboratorioDAO;
 import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.model.Laboratorio;
 import dev.matheus.cadastroBolsistas.model.Professor;
@@ -13,7 +11,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import dev.matheus.cadastroBolsistas.repository.BolsistaRepository;
+import dev.matheus.cadastroBolsistas.repository.LaboratorioRepository;
+
 import java.sql.SQLException;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -22,10 +24,10 @@ import static org.mockito.Mockito.*;
 class BolsistaServiceTest {
 
     @Mock
-    private BolsistaDAO dao;
+    private BolsistaRepository repository;
 
     @Mock
-    private LaboratorioDAO laboratorioDao;
+    private LaboratorioRepository laboratorioRepository;
 
     @InjectMocks
     private BolsistaService bolsistaService;
@@ -39,7 +41,7 @@ class BolsistaServiceTest {
         bolsista.setId(5);
 
         assertTrue(bolsistaService.podeGerenciar(admin, bolsista));
-        verifyNoInteractions(laboratorioDao);
+        verifyNoInteractions(laboratorioRepository);
     }
 
     @Test
@@ -56,10 +58,10 @@ class BolsistaServiceTest {
         lab.setId(3);
         lab.setCoordenadorId(10);
 
-        when(laboratorioDao.getLaboratorioPorId(3)).thenReturn(lab);
+        when(laboratorioRepository.findById(3)).thenReturn(Optional.of(lab));
 
         assertTrue(bolsistaService.podeGerenciar(professor, bolsista));
-        verify(laboratorioDao).getLaboratorioPorId(3);
+        verify(laboratorioRepository).findById(3);
     }
 
     @Test
@@ -76,10 +78,10 @@ class BolsistaServiceTest {
         lab.setId(3);
         lab.setCoordenadorId(99);
 
-        when(laboratorioDao.getLaboratorioPorId(3)).thenReturn(lab);
+        when(laboratorioRepository.findById(3)).thenReturn(Optional.of(lab));
 
         assertFalse(bolsistaService.podeGerenciar(professor, bolsista));
-        verify(laboratorioDao).getLaboratorioPorId(3);
+        verify(laboratorioRepository).findById(3);
     }
 
     @Test
@@ -93,7 +95,7 @@ class BolsistaServiceTest {
         bolsista.setLaboratorioId(0);
 
         assertFalse(bolsistaService.podeGerenciar(professor, bolsista));
-        verifyNoInteractions(laboratorioDao);
+        verifyNoInteractions(laboratorioRepository);
     }
 
     @Test
@@ -105,7 +107,7 @@ class BolsistaServiceTest {
         bolsistaAlvo.setId(5);
 
         assertFalse(bolsistaService.podeGerenciar(bolsistaLogado, bolsistaAlvo));
-        verifyNoInteractions(laboratorioDao);
+        verifyNoInteractions(laboratorioRepository);
     }
 
     @Test
@@ -114,7 +116,7 @@ class BolsistaServiceTest {
         bolsista.setId(5);
 
         assertFalse(bolsistaService.podeGerenciar(null, bolsista));
-        verifyNoInteractions(laboratorioDao);
+        verifyNoInteractions(laboratorioRepository);
     }
 
     @Test
@@ -123,21 +125,19 @@ class BolsistaServiceTest {
         professor.setTipoUsuario("PROFESSOR");
 
         assertFalse(bolsistaService.podeGerenciar(professor, null));
-        verifyNoInteractions(laboratorioDao);
+        verifyNoInteractions(laboratorioRepository);
     }
 
     @Test
-    void inserir_setaAtivoTrueAntesDeDelegar() throws SQLException {
+    void inserir_setaAtivoTrueAntesDeSalvar() throws SQLException {
         Bolsista bolsista = new Bolsista();
         bolsista.setAtivo(false);
-
-        when(dao.inserir(any(Bolsista.class))).thenReturn(true);
 
         boolean result = bolsistaService.inserir(bolsista);
 
         assertTrue(result);
         ArgumentCaptor<Bolsista> captor = ArgumentCaptor.forClass(Bolsista.class);
-        verify(dao).inserir(captor.capture());
+        verify(repository).save(captor.capture());
         
         Bolsista capturado = captor.getValue();
         assertTrue(capturado.isAtivo());

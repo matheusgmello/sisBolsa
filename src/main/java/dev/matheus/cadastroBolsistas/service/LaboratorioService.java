@@ -1,34 +1,34 @@
 package dev.matheus.cadastroBolsistas.service;
 
-import dev.matheus.cadastroBolsistas.dao.LaboratorioDAO;
-import dev.matheus.cadastroBolsistas.dao.ProjetoDAO;
 import dev.matheus.cadastroBolsistas.model.Laboratorio;
 import dev.matheus.cadastroBolsistas.model.Usuario;
+import dev.matheus.cadastroBolsistas.repository.LaboratorioRepository;
+import dev.matheus.cadastroBolsistas.repository.ProjetoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 
 /*
- * service responsavel pelas regras de negocio de laboratorios.
- * centraliza a verificacao de permissao podeGerenciar para admin e professor coordenador.
- * o metodo temVaga consulta capacidade e ocupacao atual antes de permitir novo vinculo.
+ * regras de negocio de laboratorios. podeGerenciar libera admin e o professor
+ * que coordena o lab; temVaga compara ocupacao atual com a capacidade.
  */
 @Service
 public class LaboratorioService {
 
     @Autowired
-    private LaboratorioDAO dao;
+    private LaboratorioRepository repository;
 
     @Autowired
-    private ProjetoDAO projetoDao;
+    private ProjetoRepository projetoRepository;
 
     public boolean podeGerenciar(Usuario usuarioLogado, int labId) throws SQLException {
         if (usuarioLogado == null) return false;
         if (usuarioLogado.isAdmin()) return true;
         if (usuarioLogado.isProfessor()) {
-            Laboratorio lab = dao.getLaboratorioPorId(labId);
+            Laboratorio lab = repository.findById(labId).orElse(null);
             return lab != null && lab.getCoordenadorId() == usuarioLogado.getId();
         }
         return false;
@@ -36,41 +36,44 @@ public class LaboratorioService {
 
     public boolean cadastrar(Laboratorio lab) throws SQLException {
         lab.setAtivo(true);
-        return dao.inserir(lab);
+        repository.save(lab);
+        return true;
     }
 
     public ArrayList<Laboratorio> listarTodos() throws SQLException {
-        return dao.getLaboratorios();
+        return new ArrayList<>(repository.findByAtivoTrueOrderByNome());
     }
 
     public ArrayList<Laboratorio> listarPorCoordenador(int professorId) throws SQLException {
-        return dao.getLaboratoriosPorCoordenador(professorId);
+        return new ArrayList<>(repository.buscarPorCoordenador(professorId));
     }
 
     public Laboratorio buscarPorId(int id) throws SQLException {
-        Laboratorio lab = dao.getLaboratorioPorId(id);
+        Laboratorio lab = repository.findById(id).orElse(null);
         if (lab != null) {
-            lab.setProjetos(projetoDao.getProjetosPorLaboratorio(id));
+            lab.setProjetos(new ArrayList<>(projetoRepository.buscarPorLaboratorio(id)));
         }
         return lab;
     }
 
     public boolean atualizar(Laboratorio lab) throws SQLException {
-        return dao.atualizar(lab);
+        repository.save(lab);
+        return true;
     }
 
+    /* soft delete */
+    @Transactional
     public boolean excluir(int id) throws SQLException {
-        return dao.excluir(id);
+        return repository.desativar(id) > 0;
     }
 
     public boolean temVaga(int labId) throws SQLException {
-        Laboratorio lab = dao.getLaboratorioPorId(labId);
+        Laboratorio lab = repository.findById(labId).orElse(null);
         if (lab == null) return false;
-        int ocupados = dao.contarBolsistasNoLaboratorio(labId);
-        return ocupados < lab.getCapacidade();
+        return repository.contarBolsistasAtivos(labId) < lab.getCapacidade();
     }
 
     public int contarBolsistasNoLaboratorio(int labId) throws SQLException {
-        return dao.contarBolsistasNoLaboratorio(labId);
+        return repository.contarBolsistasAtivos(labId);
     }
 }

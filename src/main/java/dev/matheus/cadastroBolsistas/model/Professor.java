@@ -1,9 +1,14 @@
 package dev.matheus.cadastroBolsistas.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+
 /*
- * representa um professor/coordenador no sistema.
- * herda atributos basicos de Usuario.
+ * professor/coordenador. tabela propria, sem relacao mapeada com laboratorio -
+ * quem aponta e o laboratorio, via coordenador_id.
  */
+@Entity
+@Table(name = "professor")
 public class Professor extends Usuario {
 
     public Professor() {

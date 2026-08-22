@@ -1,36 +1,40 @@
 package dev.matheus.cadastroBolsistas.service;
 
-import dev.matheus.cadastroBolsistas.dao.BolsistaDAO;
-import dev.matheus.cadastroBolsistas.dao.LaboratorioDAO;
 import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.model.Laboratorio;
 import dev.matheus.cadastroBolsistas.model.Usuario;
+import dev.matheus.cadastroBolsistas.repository.BolsistaRepository;
+import dev.matheus.cadastroBolsistas.repository.LaboratorioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 
 /*
- * service responsavel pelas regras de negocio relacionadas a bolsistas.
- * centraliza a logica de permissao podeGerenciar para evitar duplicacao nos controllers.
- * delega o acesso ao banco para bolsistaDAO e laboratorioDAO.
+ * regras de negocio de bolsistas. concentra o podeGerenciar para os controllers
+ * nao repetirem a checagem de permissao.
+ *
+ * ponytail: o "throws SQLException" das assinaturas nao serve mais para nada -
+ * jpa lanca unchecked. fica so ate a etapa 4, quando os controllers viram REST
+ * e o catch (SQLException) deles some junto.
  */
 @Service
 public class BolsistaService {
 
     @Autowired
-    private BolsistaDAO dao;
+    private BolsistaRepository repository;
 
     @Autowired
-    private LaboratorioDAO laboratorioDao;
+    private LaboratorioRepository laboratorioRepository;
 
     public boolean podeGerenciar(Usuario usuarioLogado, Bolsista b) throws SQLException {
         if (usuarioLogado == null || b == null) return false;
         if (usuarioLogado.isAdmin()) return true;
         if (usuarioLogado.isProfessor()) {
             if (b.getLaboratorioId() > 0) {
-                Laboratorio lab = laboratorioDao.getLaboratorioPorId(b.getLaboratorioId());
+                Laboratorio lab = laboratorioRepository.findById(b.getLaboratorioId()).orElse(null);
                 return lab != null && lab.getCoordenadorId() == usuarioLogado.getId();
             }
         }
@@ -39,42 +43,46 @@ public class BolsistaService {
 
     public boolean inserir(Bolsista b) throws SQLException {
         b.setAtivo(true);
-        return dao.inserir(b);
+        repository.save(b);
+        return true;
     }
 
     public ArrayList<Bolsista> listarTodos() throws SQLException {
-        return dao.getBolsistas();
+        return new ArrayList<>(repository.findByAtivoTrueOrderByNome());
     }
 
     public Bolsista buscarPorId(int id) throws SQLException {
-        return dao.getBolsistaPorId(id);
+        return repository.findById(id).orElse(null);
     }
 
     public ArrayList<Bolsista> buscarPorNome(String nome) throws SQLException {
-        return dao.getBolsistasPorNome(nome);
+        return new ArrayList<>(repository.findByNomeContainingIgnoreCaseAndAtivoTrueOrderByNome(nome));
     }
 
     public ArrayList<Bolsista> buscarPorCurso(String curso) throws SQLException {
-        return dao.getBolsistasPorCurso(curso);
+        return new ArrayList<>(repository.findByCursoContainingIgnoreCaseAndAtivoTrueOrderByNome(curso));
     }
 
     public ArrayList<Bolsista> buscarPorLaboratorio(int laboratorioId) throws SQLException {
-        return dao.getBolsistasPorLaboratorio(laboratorioId);
+        return new ArrayList<>(repository.buscarPorLaboratorio(laboratorioId));
     }
 
     public ArrayList<Bolsista> buscarPorProjeto(int projetoId) throws SQLException {
-        return dao.getBolsistasPorProjeto(projetoId);
+        return new ArrayList<>(repository.buscarPorProjeto(projetoId));
     }
 
     public boolean atualizar(Bolsista b) throws SQLException {
-        return dao.atualizar(b);
+        repository.save(b);
+        return true;
     }
 
+    /* soft delete: marca ativo = false, nunca apaga a linha */
+    @Transactional
     public boolean excluir(int id) throws SQLException {
-        return dao.excluir(id);
+        return repository.desativar(id) > 0;
     }
 
     public int contarAdmins() throws SQLException {
-        return dao.contarAdmins();
+        return repository.countByTipoUsuarioAndAtivoTrue("ADMIN");
     }
 }

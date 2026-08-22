@@ -1,7 +1,5 @@
 package dev.matheus.cadastroBolsistas.service;
 
-import dev.matheus.cadastroBolsistas.dao.LaboratorioDAO;
-import dev.matheus.cadastroBolsistas.dao.ProjetoDAO;
 import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.model.Laboratorio;
 import dev.matheus.cadastroBolsistas.model.Professor;
@@ -12,7 +10,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import dev.matheus.cadastroBolsistas.repository.LaboratorioRepository;
+import dev.matheus.cadastroBolsistas.repository.ProjetoRepository;
+
 import java.sql.SQLException;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -21,10 +23,10 @@ import static org.mockito.Mockito.*;
 class LaboratorioServiceTest {
 
     @Mock
-    private LaboratorioDAO dao;
+    private LaboratorioRepository repository;
 
     @Mock
-    private ProjetoDAO projetoDao;
+    private ProjetoRepository projetoRepository;
 
     @InjectMocks
     private LaboratorioService laboratorioService;
@@ -36,8 +38,8 @@ class LaboratorioServiceTest {
         admin.setTipoUsuario("ADMIN");
 
         assertTrue(laboratorioService.podeGerenciar(admin, 999));
-        // dao.getLaboratorioPorId NUNCA deve ser chamado
-        verifyNoInteractions(dao);
+        // o repositorio NUNCA deve ser consultado para admin
+        verifyNoInteractions(repository);
     }
 
     @Test
@@ -51,10 +53,10 @@ class LaboratorioServiceTest {
         lab.setId(5);
         lab.setCoordenadorId(10);
 
-        when(dao.getLaboratorioPorId(5)).thenReturn(lab);
+        when(repository.findById(5)).thenReturn(Optional.of(lab));
 
         assertTrue(laboratorioService.podeGerenciar(professor, 5));
-        verify(dao).getLaboratorioPorId(5);
+        verify(repository).findById(5);
     }
 
     @Test
@@ -68,10 +70,10 @@ class LaboratorioServiceTest {
         lab.setId(5);
         lab.setCoordenadorId(99);
 
-        when(dao.getLaboratorioPorId(5)).thenReturn(lab);
+        when(repository.findById(5)).thenReturn(Optional.of(lab));
 
         assertFalse(laboratorioService.podeGerenciar(professor, 5));
-        verify(dao).getLaboratorioPorId(5);
+        verify(repository).findById(5);
     }
 
     @Test
@@ -80,10 +82,10 @@ class LaboratorioServiceTest {
         professor.setId(10);
         professor.setTipoUsuario("PROFESSOR");
 
-        when(dao.getLaboratorioPorId(5)).thenReturn(null);
+        when(repository.findById(5)).thenReturn(Optional.empty());
 
         assertFalse(laboratorioService.podeGerenciar(professor, 5));
-        verify(dao).getLaboratorioPorId(5);
+        verify(repository).findById(5);
     }
 
     @Test
@@ -92,13 +94,13 @@ class LaboratorioServiceTest {
         bolsista.setTipoUsuario("BOLSISTA");
 
         assertFalse(laboratorioService.podeGerenciar(bolsista, 5));
-        verifyNoInteractions(dao);
+        verifyNoInteractions(repository);
     }
 
     @Test
     void podeGerenciar_usuarioNullRetornaFalse() throws SQLException {
         assertFalse(laboratorioService.podeGerenciar(null, 5));
-        verifyNoInteractions(dao);
+        verifyNoInteractions(repository);
     }
 
     @Test
@@ -107,12 +109,12 @@ class LaboratorioServiceTest {
         lab.setId(1);
         lab.setCapacidade(10);
 
-        when(dao.getLaboratorioPorId(1)).thenReturn(lab);
-        when(dao.contarBolsistasNoLaboratorio(1)).thenReturn(5);
+        when(repository.findById(1)).thenReturn(Optional.of(lab));
+        when(repository.contarBolsistasAtivos(1)).thenReturn(5);
 
         assertTrue(laboratorioService.temVaga(1));
-        verify(dao).getLaboratorioPorId(1);
-        verify(dao).contarBolsistasNoLaboratorio(1);
+        verify(repository).findById(1);
+        verify(repository).contarBolsistasAtivos(1);
     }
 
     @Test
@@ -121,20 +123,20 @@ class LaboratorioServiceTest {
         lab.setId(1);
         lab.setCapacidade(10);
 
-        when(dao.getLaboratorioPorId(1)).thenReturn(lab);
-        when(dao.contarBolsistasNoLaboratorio(1)).thenReturn(10);
+        when(repository.findById(1)).thenReturn(Optional.of(lab));
+        when(repository.contarBolsistasAtivos(1)).thenReturn(10);
 
         assertFalse(laboratorioService.temVaga(1));
-        verify(dao).getLaboratorioPorId(1);
-        verify(dao).contarBolsistasNoLaboratorio(1);
+        verify(repository).findById(1);
+        verify(repository).contarBolsistasAtivos(1);
     }
 
     @Test
     void temVaga_retornaFalseQuandoLabNaoExiste() throws SQLException {
-        when(dao.getLaboratorioPorId(1)).thenReturn(null);
+        when(repository.findById(1)).thenReturn(Optional.empty());
 
         assertFalse(laboratorioService.temVaga(1));
-        verify(dao).getLaboratorioPorId(1);
-        verify(dao, never()).contarBolsistasNoLaboratorio(anyInt());
+        verify(repository).findById(1);
+        verify(repository, never()).contarBolsistasAtivos(anyInt());
     }
 }
