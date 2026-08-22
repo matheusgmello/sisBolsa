@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Usuários - SisBolsa</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/bolsistas.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="main-content">
+        <div class="header-actions">
+            <h1 id="titulo">Gerenciar Usuários</h1>
+            <div class="header-buttons">
+                <a href="/api/usuarios/exportar" class="btn-new btn-export">
+                    <i class="fas fa-file-csv"></i> Exportar CSV
+                </a>
+                <a href="/usuario-form.html" class="btn-new btn-create" id="btn-novo">
+                    <i class="fas fa-plus"></i> <span id="rotulo-novo">Novo Usuário</span>
+                </a>
+            </div>
+        </div>
+
+        <div id="avisos"></div>
+
+        <div class="container">
+            <div class="search-section">
+                <form class="search-form" id="form-nome">
+                    <input type="text" id="busca-nome" placeholder="Pesquisar por nome..." class="search-input">
+                    <button type="submit" class="search-button"><i class="fas fa-search"></i></button>
+                </form>
+                <form class="search-form" id="form-curso">
+                    <input type="text" id="busca-curso" placeholder="Pesquisar por curso..." class="search-input">
+                    <button type="submit" class="search-button"><i class="fas fa-filter"></i></button>
+                </form>
+                <a href="/usuarios.html" class="reset-button"><i class="fas fa-sync"></i></a>
+            </div>
+
+            <div class="filter-pills" id="filtros" hidden>
+                <span style="font-weight:600;font-size:0.85rem;color:var(--text-muted);margin-right:8px;">Filtrar por tipo:</span>
+                <a href="/usuarios.html" class="pill-btn" data-tipo="">Todos</a>
+                <a href="/usuarios.html?tipo=BOLSISTA" class="pill-btn" data-tipo="BOLSISTA">Bolsistas</a>
+                <a href="/usuarios.html?tipo=PROFESSOR" class="pill-btn" data-tipo="PROFESSOR">Professores</a>
+                <a href="/usuarios.html?tipo=ADMIN" class="pill-btn" data-tipo="ADMIN">Administradores</a>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th><th>Curso</th><th>Cargo</th>
+                            <th>Laboratório</th><th>Tipo</th><th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo"></tbody>
+                </table>
+            </div>
+
+            <div class="pagination" id="paginacao"
+                 style="display:flex;justify-content:center;gap:15px;margin-top:20px;align-items:center;"></div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/util.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/sessao.js"></script>
+    <script src="/js/usuarios.js"></script>
+</body>
+</html>

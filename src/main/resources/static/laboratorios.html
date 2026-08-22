@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratórios - SisBolsa</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/laboratorios.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="main-content">
+        <div class="header-actions">
+            <h1>Gerenciar Laboratórios</h1>
+            <a href="/laboratorio-form.html" class="btn-new" id="btn-novo" hidden>
+                <i class="fas fa-plus"></i> Cadastrar Novo Laboratório
+            </a>
+        </div>
+
+        <div id="avisos"></div>
+
+        <div class="container">
+            <h2><i class="fas fa-list"></i> Listagem de Laboratórios</h2>
+            <div class="table-container">
+                <table>
+                    <thead><tr id="cabecalho"></tr></thead>
+                    <tbody id="corpo"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/util.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/sessao.js"></script>
+    <script src="/js/laboratorios.js"></script>
+</body>
+</html>

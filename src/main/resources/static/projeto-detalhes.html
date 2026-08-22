@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Projeto - SisBolsa</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/detalhes-laboratorio.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .project-details-grid { display:grid; grid-template-columns:2fr 1fr; gap:30px; margin-top:30px; }
+        @media (max-width:900px) { .project-details-grid { grid-template-columns:1fr; } }
+        .desc-box {
+            background-color:var(--surface-color); border:1px solid var(--border-grid);
+            border-radius:var(--radius-md); padding:24px; box-shadow:var(--shadow-sm); margin-bottom:30px;
+        }
+        .desc-box p { margin-top:10px; color:var(--text-main); line-height:1.6; font-size:0.95rem; }
+        .card-management {
+            background-color:var(--surface-color); border:1px solid var(--border-grid);
+            border-radius:var(--radius-md); padding:20px; box-shadow:var(--shadow-sm); height:fit-content;
+        }
+        .badge-unlink {
+            color:var(--danger-color); background-color:var(--danger-bg); border:1px solid #fecaca;
+            border-radius:var(--radius-sm); padding:4px 8px; text-decoration:none; font-size:0.75rem;
+            display:inline-flex; align-items:center; gap:4px; transition:var(--transition-smooth);
+        }
+        .badge-unlink:hover { background-color:#fecaca; }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="container">
+            <div class="lab-header">
+                <h1><i class="fas fa-project-diagram"></i> Projeto: <span id="nome-projeto"></span></h1>
+                <a href="/projetos.html" class="btn-back"><i class="fas fa-arrow-left"></i> Voltar</a>
+            </div>
+
+            <div id="avisos"></div>
+            <div class="lab-info-grid" id="info"></div>
+            <div class="project-details-grid" id="detalhes"></div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/util.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/sessao.js"></script>
+    <script src="/js/projeto-detalhes.js"></script>
+</body>
+</html>

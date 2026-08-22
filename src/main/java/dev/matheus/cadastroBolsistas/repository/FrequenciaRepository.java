@@ -39,6 +39,16 @@ public interface FrequenciaRepository extends JpaRepository<Frequencia, Integer>
             + "AND (:bolsistaId IS NULL OR f.bolsistaId = :bolsistaId)")
     int contarFrequencias(@Param("bolsistaId") Integer bolsistaId);
 
+    /*
+     * usado pelo professor sem filtro: ele so pode ver as frequencias dos
+     * bolsistas dos laboratorios que coordena, e nao a folha do sistema inteiro.
+     */
+    @Query("SELECT f FROM Frequencia f WHERE f.ativo = true AND f.bolsistaId IN :ids ORDER BY f.data DESC")
+    List<Frequencia> buscarPorBolsistas(@Param("ids") List<Integer> ids, Pageable pageable);
+
+    @Query("SELECT COUNT(f) FROM Frequencia f WHERE f.ativo = true AND f.bolsistaId IN :ids")
+    int contarPorBolsistas(@Param("ids") List<Integer> ids);
+
     /* soft delete, mesmo motivo do BolsistaRepository */
     @Modifying
     @Query("UPDATE Frequencia f SET f.ativo = false WHERE f.id = :id")

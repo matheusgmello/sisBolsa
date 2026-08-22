@@ -89,18 +89,11 @@ mvn spring-boot:run
 
 O Tomcat embarcado sobe na porta `8080`. Não é necessário instalar WildFly ou outro servidor.
 
-### Via build WAR + WildFly (opcional, para deploy)
+### Via build
 
 ```bash
-# Gera o WAR em target/cadastroBolsistas.war
 mvn clean package
 ```
-
-No IntelliJ IDEA:
-1. Vá em `Run > Edit Configurations`.
-2. Adicione uma configuração de servidor WildFly.
-3. Selecione o artefato `cadastroBolsistas:war exploded`.
-4. Inicie o servidor.
 
 ---
 
@@ -110,8 +103,8 @@ No IntelliJ IDEA:
 mvn test
 ```
 
-A suíte possui 78 testes unitários e de controller (JUnit 5 + Mockito + MockMvc).
-Nenhum teste requer banco de dados ativo — todos os DAOs são mockados.
+A suíte possui 74 testes unitários e de API (JUnit 5 + Mockito + MockMvc).
+Nenhum teste requer banco de dados ativo — os repositórios são mockados.
 
 ---
 

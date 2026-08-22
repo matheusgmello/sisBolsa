@@ -1,13 +1,16 @@
 package dev.matheus.cadastroBolsistas.api;
 
 import dev.matheus.cadastroBolsistas.dto.BolsistaRequest;
+import dev.matheus.cadastroBolsistas.dto.ProjetoResponse;
 import dev.matheus.cadastroBolsistas.dto.PaginaResponse;
 import dev.matheus.cadastroBolsistas.dto.UsuarioResponse;
 import dev.matheus.cadastroBolsistas.model.*;
 import dev.matheus.cadastroBolsistas.service.BolsistaService;
 import dev.matheus.cadastroBolsistas.service.LaboratorioService;
 import dev.matheus.cadastroBolsistas.service.ProfessorService;
+import dev.matheus.cadastroBolsistas.service.ProjetoService;
 import dev.matheus.cadastroBolsistas.util.StringUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /*
  * bolsistas, admins e professores saem pela mesma rota porque para quem consome
@@ -29,20 +33,23 @@ import java.util.List;
 @RequestMapping("/api/usuarios")
 public class UsuarioApiController {
 
-    private static final int TAMANHO_PAGINA = 10;
+    private static final int TAMANHO_PADRAO = 10;
+    private static final int TAMANHO_MAXIMO = 200;
 
     private final BolsistaService bolsistaService;
     private final ProfessorService professorService;
     private final LaboratorioService laboratorioService;
+    private final ProjetoService projetoService;
     private final PasswordEncoder passwordEncoder;
     private final UsuarioLogado usuarioLogado;
 
     public UsuarioApiController(BolsistaService bolsistaService, ProfessorService professorService,
-                                LaboratorioService laboratorioService, PasswordEncoder passwordEncoder,
-                                UsuarioLogado usuarioLogado) {
+                                LaboratorioService laboratorioService, ProjetoService projetoService,
+                                PasswordEncoder passwordEncoder, UsuarioLogado usuarioLogado) {
         this.bolsistaService = bolsistaService;
         this.professorService = professorService;
         this.laboratorioService = laboratorioService;
+        this.projetoService = projetoService;
         this.passwordEncoder = passwordEncoder;
         this.usuarioLogado = usuarioLogado;
     }
@@ -50,6 +57,7 @@ public class UsuarioApiController {
     @Operation(summary = "Lista usuarios ja recortados pelo escopo de quem chama: admin ve todos, professor ve os bolsistas dos labs que coordena, bolsista ve os colegas do proprio lab.")
     @GetMapping
     public PaginaResponse<UsuarioResponse> listar(@RequestParam(defaultValue = "1") int pagina,
+                                                  @RequestParam(required = false) Integer tamanho,
                                                   @RequestParam(required = false) String tipo,
                                                   @RequestParam(required = false) String buscaNome,
                                                   @RequestParam(required = false) String buscaCurso,
@@ -79,7 +87,7 @@ public class UsuarioApiController {
         preencherLabsDosProfessores(lista);
         lista = bolsistaService.filtrarPorEscopo(lista, logado);
 
-        return paginar(lista, pagina);
+        return paginar(lista, pagina, tamanho);
     }
 
     @GetMapping("/{id}")
@@ -105,6 +113,63 @@ public class UsuarioApiController {
         usuarioLogado.exigir(logado.getId() == id || bolsistaService.podeGerenciar(logado, b),
                 "Sem permissao para ver este usuario.");
         return UsuarioResponse.de(b);
+    }
+
+    @Operation(summary = "Cargos possiveis de um bolsista dentro do laboratorio.")
+    @GetMapping("/cargos")
+    public List<Map<String, String>> cargos() {
+        /* vem do enum e nao de uma lista chumbada no javascript, para nao
+           existirem duas verdades sobre os cargos validos */
+        return java.util.Arrays.stream(Cargo.values())
+                .map(c -> Map.of("valor", c.name(), "descricao", c.getDescricao()))
+                .toList();
+    }
+
+    @Operation(summary = "Exporta em CSV os usuarios visiveis para quem chama.")
+    @GetMapping("/exportar")
+    public void exportar(HttpSession session, HttpServletResponse response) throws java.io.IOException {
+        Usuario logado = usuarioLogado.obrigatorio(session);
+        usuarioLogado.exigir(!logado.isBolsista(), "Bolsista nao exporta a lista de usuarios.");
+
+        ArrayList<Usuario> lista = new ArrayList<>(bolsistaService.listarTodos());
+        if (logado.isAdmin()) {
+            lista.addAll(professorService.listarTodos());
+        }
+        preencherLabsDosProfessores(lista);
+        lista = bolsistaService.filtrarPorEscopo(lista, logado);
+
+        response.setContentType("text/csv; charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=usuarios.csv");
+        try (java.io.PrintWriter writer = response.getWriter()) {
+            writer.println("ID,Nome,Email,Tipo,Curso,Matricula,Cargo,Laboratorio");
+            for (Usuario u : lista) {
+                UsuarioResponse r = UsuarioResponse.de(u);
+                writer.println(String.join(",",
+                        String.valueOf(r.id()), csv(r.nome()), csv(r.email()), csv(r.tipoUsuario()),
+                        csv(r.curso()), csv(r.matricula()), csv(r.cargo()), csv(r.nomeLaboratorio())));
+            }
+        }
+    }
+
+    /* csv simples: aspas em volta e aspas internas duplicadas, que e o que o excel espera */
+    private static String csv(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        return "\"" + valor.replace("\"", "\"\"") + "\"";
+    }
+
+    @Operation(summary = "Projetos em que o usuario esta vinculado.")
+    @GetMapping("/{id}/projetos")
+    public List<ProjetoResponse> projetos(@PathVariable int id, HttpSession session) {
+        Usuario logado = usuarioLogado.obrigatorio(session);
+        Bolsista b = bolsistaService.buscarPorId(id);
+        if (b == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado.");
+        }
+        usuarioLogado.exigir(logado.getId() == id || bolsistaService.podeGerenciar(logado, b),
+                "Sem permissao para ver os projetos deste usuario.");
+        return projetoService.listarPorBolsista(id).stream().map(ProjetoResponse::de).toList();
     }
 
     @PostMapping
@@ -253,12 +318,16 @@ public class UsuarioApiController {
         }
     }
 
-    private PaginaResponse<UsuarioResponse> paginar(List<Usuario> lista, int pagina) {
+    /* tamanho e opcional: telas que precisam da lista inteira num select pedem mais */
+    private PaginaResponse<UsuarioResponse> paginar(List<Usuario> lista, int pagina, Integer tamanhoPedido) {
+        int tamanho = tamanhoPedido != null && tamanhoPedido > 0
+                ? Math.min(tamanhoPedido, TAMANHO_MAXIMO)
+                : TAMANHO_PADRAO;
         int total = lista.size();
-        int totalPaginas = Math.max(1, (int) Math.ceil(total / (double) TAMANHO_PAGINA));
+        int totalPaginas = Math.max(1, (int) Math.ceil(total / (double) tamanho));
         int atual = Math.min(Math.max(pagina, 1), totalPaginas);
-        int de = (atual - 1) * TAMANHO_PAGINA;
-        int ate = Math.min(de + TAMANHO_PAGINA, total);
+        int de = (atual - 1) * tamanho;
+        int ate = Math.min(de + tamanho, total);
 
         List<UsuarioResponse> itens = de < total
                 ? lista.subList(de, ate).stream().map(UsuarioResponse::de).toList()

@@ -36,7 +36,7 @@ public class SecurityConfig {
             /* a api nao depende de sessao para autenticar: quem manda e o token */
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/cadastro-admin", "/api/auth/admins-restantes").permitAll()
                 .requestMatchers("/api/relatorios/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .formLogin(form -> form.disable())
@@ -60,26 +60,25 @@ public class SecurityConfig {
              */
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                /*
-                 * o forward para a jsp e uma nova passada pelo filtro, e
-                 * /WEB-INF/pages/*.jsp nao esta na lista de rotas publicas.
-                 * sem liberar o dispatch de FORWARD, a tela de login redireciona
-                 * para ela mesma e o browser entra em loop.
-                 */
-                .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                 /*
                  * swagger aberto: e a documentacao do trabalho e precisa abrir
                  * sem login. nao expoe dado nenhum, so a forma dos endpoints -
                  * que continuam exigindo token.
                  */
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/login", "/cadastro-admin/**", "/css/**", "/js/**", "/images/**").permitAll()
+                /*
+                 * as paginas estaticas sao so casca: nao carregam dado nenhum
+                 * sozinhas. quem protege e a api, que devolve 401 sem token -
+                 * e ai o javascript manda o usuario de volta para o login.
+                 */
+                .requestMatchers("/", "/*.html", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 .anyRequest().authenticated())
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .logout(logout -> logout.disable())
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((req, res, e) -> res.sendRedirect(req.getContextPath() + "/login")))
+                .authenticationEntryPoint((req, res, e) -> res.sendRedirect(req.getContextPath() + "/index.html")))
             .addFilterBefore(jwtCookieFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -1,6 +1,6 @@
 # SisBolsa — Gestão de Bolsistas e Laboratórios
 
-Sistema web acadêmico para gerenciamento de bolsistas, laboratórios de pesquisa, projetos e registros de frequência. Desenvolvido com Spring MVC, JSP e JDBC direto sobre PostgreSQL.
+Sistema web acadêmico para gerenciamento de bolsistas, laboratórios de pesquisa, projetos e registros de frequência. API REST em Spring Boot com frontend estático consumindo `/api/**`.
 
 ## Preview do Projeto
 ![Preview](docs/images/previw.gif)
@@ -9,22 +9,22 @@ Sistema web acadêmico para gerenciamento de bolsistas, laboratórios de pesquis
 
 ## Arquitetura
 
-O projeto segue o padrão MVC em camadas com Spring MVC:
+O frontend é estático e conversa com o backend só por HTTP:
 
 ```
-JSP → Controller → Service → DAO → PostgreSQL
+HTML + CSS + JS → fetch /api/** → @RestController → Service → Repository (JPA) → PostgreSQL
 ```
 
 | Camada | Tecnologia | Responsabilidade |
 |---|---|---|
-| View | JSP + JSTL + CSS | Renderização das páginas |
-| Controller | Spring MVC `@Controller` | Recebe requisições HTTP, retorna view names |
-| Service | `@Service` | Regras de negócio e orquestração |
-| DAO | `@Repository` + JDBC direto | Acesso ao banco via `PreparedStatement` |
-| Security | `SecurityConfig`, `JwtCookieFilter` | Autenticação por JWT e proteção de rotas |
-| Config | `WebConfig` | Recursos estáticos |
+| Frontend | HTML + CSS + JS puro | Páginas estáticas que consomem a API por `fetch` |
+| API | `@RestController` + DTOs (`record`) | Endpoints REST em `/api/**`, erros em JSON |
+| Service | `@Service` | Regras de negócio e permissões |
+| Repository | Spring Data JPA | Acesso ao banco |
+| Security | `SecurityConfig`, `JwtCookieFilter` | Autenticação por JWT em cookie e proteção de rotas |
+| Migrations | Flyway | Dono do schema e dos dados iniciais |
 
-**Stack:** Spring Boot 4.x · Java 21 · PostgreSQL · JPA · Flyway · Spring Security + JWT · springdoc/Swagger · Maven · Jakarta EE
+**Stack:** Spring Boot 4.x · Java 21 · PostgreSQL · JPA · Flyway · Spring Security + JWT · springdoc/Swagger · HTML/CSS/JS · Maven
 
 ---
 
@@ -144,19 +144,19 @@ As migrations do Flyway em `src/main/resources/db/migration` criam todas as tabe
 mvn test
 ```
 
-A suíte cobre 78 casos de teste sem dependência de banco de dados:
+A suíte cobre 74 casos de teste sem dependência de banco de dados:
 
 | Classe | Testes | Cobertura |
 |---|---|---|
 | `StringUtilTest` | 11 | `limpar()` e `estaVazio()` com todos os casos de borda |
 | `UsuarioTest` | 6 | `isAdmin()`, `isBolsista()`, `isProfessor()` |
 | `CargoTest` | 4 | `Cargo.deString()` com valores válidos, nulo e inválido |
-| `LoginServiceTest` | 4 | Autenticação via bolsista, fallback para professor, hash verificado |
+| `LoginServiceTest` | 7 | Autenticação BCrypt, fallback para professor, senha nunca em texto puro |
 | `LaboratorioServiceTest` | 9 | `podeGerenciar()` e `temVaga()` por perfil e cenário |
 | `BolsistaServiceTest` | 8 | `podeGerenciar()` e `inserir()` com todos os perfis |
-| `LoginControllerTest` | 4 | GET/POST com MockMvc, redirect e sessão |
-| `ProfessorServiceTest` | 9 | CRUD completo via mock do DAO |
-| `PerfilControllerTest` | 17 | GET/POST com sessão, validações, troca de senha, null do banco |
+| `AuthApiControllerTest` | 18 | Login, cookie JWT, perfil, troca de senha, cadastro de admin |
+| `CadastroBolsistasApplicationTests` | 1 | Contexto Spring sobe |
+| `ProfessorServiceTest` | 10 | CRUD completo e soft delete via mock do repositório |
 
 ---
 
@@ -199,11 +199,15 @@ src/main/java/dev/matheus/cadastroBolsistas/
   model/        ← Entidades: Usuario, Bolsista, Professor, Laboratorio, Projeto, Frequencia, Cargo
   util/         ← StringUtil
 
-src/main/webapp/
-  WEB-INF/pages/   ← JSPs por tela
-  WEB-INF/tags/    ← sidebar.tag (componente reutilizável)
+src/main/resources/static/
+  *.html           ← Uma página por tela
   css/             ← Um arquivo CSS por página
-  js/              ← Validações client-side
+  js/
+    api.js         ← Wrapper de fetch: cookie, 401 e mensagem de erro
+    util.js        ← Escape de HTML, formatação, avisos
+    sessao.js      ← Guarda de sessão e perfil do usuário
+    sidebar.js     ← Menu lateral compartilhado
+    <tela>.js      ← Lógica de cada página
 
 src/main/resources/db/migration/
   V1__schema.sql   ← Criação das tabelas

@@ -56,6 +56,21 @@ public class FrequenciaService {
         return new ArrayList<>(repository.buscarFrequencias(filtro, pageable));
     }
 
+    public ArrayList<Frequencia> buscarPorBolsistas(java.util.List<Integer> ids, Integer limit, Integer offset) {
+        if (ids.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Pageable pageable = Pageable.unpaged();
+        if (limit != null && limit > 0 && offset != null && offset >= 0) {
+            pageable = PageRequest.of(offset / limit, limit);
+        }
+        return new ArrayList<>(repository.buscarPorBolsistas(ids, pageable));
+    }
+
+    public int contarPorBolsistas(java.util.List<Integer> ids) {
+        return ids.isEmpty() ? 0 : repository.contarPorBolsistas(ids);
+    }
+
     public int contarFrequencias(Integer bolsistaId) {
         return repository.contarFrequencias((bolsistaId != null && bolsistaId > 0) ? bolsistaId : null);
     }
