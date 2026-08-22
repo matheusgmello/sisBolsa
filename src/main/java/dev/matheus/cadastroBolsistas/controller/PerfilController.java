@@ -5,7 +5,7 @@ import dev.matheus.cadastroBolsistas.model.Professor;
 import dev.matheus.cadastroBolsistas.model.Usuario;
 import dev.matheus.cadastroBolsistas.service.BolsistaService;
 import dev.matheus.cadastroBolsistas.service.ProfessorService;
-import dev.matheus.cadastroBolsistas.util.SecurityUtil;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -29,6 +29,9 @@ public class PerfilController {
 
     @Autowired
     private ProfessorService professorService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping
     public String perfilPage(HttpSession session, Model model) {
@@ -79,9 +82,8 @@ public class PerfilController {
                 return "perfil";
             }
             
-            // Validar senha atual hasheada com a que está no usuário logado
-            String senhaAtualHashed = SecurityUtil.hashSenha(senhaAtual);
-            if (!senhaAtualHashed.equals(usuarioLogado.getSenha())) {
+            /* bcrypt tem salt, entao comparar strings de hash nao funciona */
+            if (!passwordEncoder.matches(senhaAtual, usuarioLogado.getSenha())) {
                 model.addAttribute("erro", "A senha atual informada está incorreta.");
                 model.addAttribute("usuario", usuarioLogado);
                 return "perfil";
@@ -99,7 +101,7 @@ public class PerfilController {
                 return "perfil";
             }
 
-            senhaParaSalvar = SecurityUtil.hashSenha(senha);
+            senhaParaSalvar = passwordEncoder.encode(senha);
         }
 
         try {

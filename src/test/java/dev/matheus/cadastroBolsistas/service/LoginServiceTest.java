@@ -5,12 +5,12 @@ import dev.matheus.cadastroBolsistas.model.Professor;
 import dev.matheus.cadastroBolsistas.model.Usuario;
 import dev.matheus.cadastroBolsistas.repository.BolsistaRepository;
 import dev.matheus.cadastroBolsistas.repository.ProfessorRepository;
-import dev.matheus.cadastroBolsistas.util.SecurityUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -20,88 +20,99 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class LoginServiceTest {
 
+    private static final String SENHA = "12345678";
+
     @Mock
     private BolsistaRepository bolsistaRepository;
 
     @Mock
     private ProfessorRepository professorRepository;
 
-    @InjectMocks
-    private LoginService loginService;
+    /* encoder de verdade: o ponto do teste e justamente a comparacao do bcrypt */
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    private LoginService loginService() {
+        return new LoginService(bolsistaRepository, professorRepository, passwordEncoder);
+    }
+
+    private Bolsista bolsistaCom(String email, String senhaEmClaro) {
+        Bolsista b = new Bolsista();
+        b.setEmail(email);
+        b.setSenha(passwordEncoder.encode(senhaEmClaro));
+        return b;
+    }
 
     @Test
-    void autenticar_retornaBolsistaQuandoCredenciaisValidas() {
+    void autenticar_retornaBolsistaQuandoSenhaConfere() {
         String email = "bolsista@teste.com";
-        String senha = "teste123";
-        String hashSenha = SecurityUtil.hashSenha(senha);
+        when(bolsistaRepository.findByEmailAndAtivoTrue(email))
+                .thenReturn(Optional.of(bolsistaCom(email, SENHA)));
 
-        Bolsista mockBolsista = new Bolsista();
-        mockBolsista.setEmail(email);
-
-        when(bolsistaRepository.findByEmailAndSenhaAndAtivoTrue(email, hashSenha))
-                .thenReturn(Optional.of(mockBolsista));
-
-        Usuario resultado = loginService.autenticar(email, senha);
+        Usuario resultado = loginService().autenticar(email, SENHA);
 
         assertNotNull(resultado);
         assertEquals(email, resultado.getEmail());
-        verify(bolsistaRepository).findByEmailAndSenhaAndAtivoTrue(email, hashSenha);
         verifyNoInteractions(professorRepository);
     }
 
     @Test
-    void autenticar_tentaProfessorQuandoBolsistaNaoEncontrado() {
+    void autenticar_retornaNullQuandoSenhaNaoConfere() {
+        String email = "bolsista@teste.com";
+        when(bolsistaRepository.findByEmailAndAtivoTrue(email))
+                .thenReturn(Optional.of(bolsistaCom(email, SENHA)));
+
+        assertNull(loginService().autenticar(email, "senhaErrada"));
+    }
+
+    @Test
+    void autenticar_caiParaProfessorQuandoNaoEhBolsista() {
         String email = "professor@teste.com";
-        String senha = "teste123";
-        String hashSenha = SecurityUtil.hashSenha(senha);
+        Professor p = new Professor();
+        p.setEmail(email);
+        p.setSenha(passwordEncoder.encode(SENHA));
 
-        Professor mockProfessor = new Professor();
-        mockProfessor.setEmail(email);
+        when(bolsistaRepository.findByEmailAndAtivoTrue(email)).thenReturn(Optional.empty());
+        when(professorRepository.findByEmailAndAtivoTrue(email)).thenReturn(Optional.of(p));
 
-        when(bolsistaRepository.findByEmailAndSenhaAndAtivoTrue(email, hashSenha))
-                .thenReturn(Optional.empty());
-        when(professorRepository.findByEmailAndSenhaAndAtivoTrue(email, hashSenha))
-                .thenReturn(Optional.of(mockProfessor));
-
-        Usuario resultado = loginService.autenticar(email, senha);
+        Usuario resultado = loginService().autenticar(email, SENHA);
 
         assertNotNull(resultado);
         assertEquals(email, resultado.getEmail());
-        verify(bolsistaRepository).findByEmailAndSenhaAndAtivoTrue(email, hashSenha);
-        verify(professorRepository).findByEmailAndSenhaAndAtivoTrue(email, hashSenha);
     }
 
     @Test
-    void autenticar_retornaNullQuandoNenhumRepositorioEncontra() {
+    void autenticar_retornaNullQuandoEmailNaoExiste() {
         String email = "inexistente@teste.com";
-        String senha = "teste123";
-        String hashSenha = SecurityUtil.hashSenha(senha);
+        when(bolsistaRepository.findByEmailAndAtivoTrue(email)).thenReturn(Optional.empty());
+        when(professorRepository.findByEmailAndAtivoTrue(email)).thenReturn(Optional.empty());
 
-        when(bolsistaRepository.findByEmailAndSenhaAndAtivoTrue(email, hashSenha))
-                .thenReturn(Optional.empty());
-        when(professorRepository.findByEmailAndSenhaAndAtivoTrue(email, hashSenha))
-                .thenReturn(Optional.empty());
-
-        assertNull(loginService.autenticar(email, senha));
-        verify(bolsistaRepository).findByEmailAndSenhaAndAtivoTrue(email, hashSenha);
-        verify(professorRepository).findByEmailAndSenhaAndAtivoTrue(email, hashSenha);
+        assertNull(loginService().autenticar(email, SENHA));
     }
 
     @Test
-    void autenticar_hasheiaSenhaAntesDeConsultarORepositorio() {
+    void autenticar_comEmailOuSenhaNull_retornaNullSemConsultarBanco() {
+        assertNull(loginService().autenticar(null, SENHA));
+        assertNull(loginService().autenticar("alguem@teste.com", null));
+
+        verifyNoInteractions(bolsistaRepository, professorRepository);
+    }
+
+    @Test
+    void senhaNuncaEhGuardadaEmTextoPuro() {
         String email = "bolsista@teste.com";
-        String senha = "teste123";
-        String hashSenha = SecurityUtil.hashSenha(senha);
+        Bolsista b = bolsistaCom(email, SENHA);
 
-        when(bolsistaRepository.findByEmailAndSenhaAndAtivoTrue(email, hashSenha))
-                .thenReturn(Optional.empty());
-        when(professorRepository.findByEmailAndSenhaAndAtivoTrue(email, hashSenha))
-                .thenReturn(Optional.empty());
+        assertNotEquals(SENHA, b.getSenha());
+        assertTrue(b.getSenha().startsWith("$2a$"));
+    }
 
-        loginService.autenticar(email, senha);
+    @Test
+    void buscarPorEmail_procuraBolsistaAntesDeProfessor() {
+        String email = "alguem@teste.com";
+        when(bolsistaRepository.findByEmailAndAtivoTrue(email))
+                .thenReturn(Optional.of(bolsistaCom(email, SENHA)));
 
-        // a senha em texto puro nunca pode chegar no banco
-        verify(bolsistaRepository).findByEmailAndSenhaAndAtivoTrue(email, hashSenha);
-        verify(bolsistaRepository, never()).findByEmailAndSenhaAndAtivoTrue(email, senha);
+        assertNotNull(loginService().buscarPorEmail(email));
+        verifyNoInteractions(professorRepository);
     }
 }

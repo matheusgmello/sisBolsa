@@ -2,7 +2,7 @@ package dev.matheus.cadastroBolsistas.controller;
 
 import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.service.BolsistaService;
-import dev.matheus.cadastroBolsistas.util.SecurityUtil;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import dev.matheus.cadastroBolsistas.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -28,6 +28,9 @@ public class CadastroAdminController {
 
     @Autowired
     private BolsistaService bolsistaService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping
     public String formulario(Model model) {
@@ -74,7 +77,7 @@ public class CadastroAdminController {
             Bolsista admin = new Bolsista();
             admin.setNome(nome);
             admin.setEmail(email);
-            admin.setSenha(SecurityUtil.hashSenha(senha));
+            admin.setSenha(passwordEncoder.encode(senha));
             admin.setTipoUsuario("ADMIN");
             admin.setAtivo(true);
             admin.setDataNascimento(LocalDate.of(1990, 1, 1));

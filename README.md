@@ -21,7 +21,8 @@ JSP → Controller → Service → DAO → PostgreSQL
 | Controller | Spring MVC `@Controller` | Recebe requisições HTTP, retorna view names |
 | Service | `@Service` | Regras de negócio e orquestração |
 | DAO | `@Repository` + JDBC direto | Acesso ao banco via `PreparedStatement` |
-| Config | `AuthInterceptor`, `WebConfig` | Proteção de rotas e recursos estáticos |
+| Security | `SecurityConfig`, `JwtCookieFilter` | Autenticação por JWT e proteção de rotas |
+| Config | `WebConfig` | Recursos estáticos |
 
 **Stack:** Spring Boot 4.x · Java 21 · PostgreSQL · Maven · WAR · Jakarta EE
 
@@ -56,9 +57,10 @@ O sistema possui três perfis com permissões distintas:
 ## Funcionalidades
 
 ### Autenticação e Sessão
-- Login por e-mail e senha com hash SHA-256
+- Login por e-mail e senha com hash BCrypt
 - Sessão gerenciada via `HttpSession`
-- `AuthInterceptor` protege todas as rotas exceto `/login` e recursos estáticos
+- JWT emitido em cookie `httpOnly` + `SameSite=Strict` no login
+- Spring Security protege todas as rotas exceto `/login`, `/cadastro-admin` e recursos estáticos
 - Troca de senha exige confirmação da senha atual
 
 ### Usuários (Bolsistas, Professores e Admins)
@@ -128,9 +130,10 @@ As migrations do Flyway em `src/main/resources/db/migration` criam todas as tabe
 
 ## Segurança
 
-- **Senhas:** armazenadas como hash SHA-256 (hex) via `util/SecurityUtil.java`
+- **Senhas:** BCrypt (`$2a$10$`) via `PasswordEncoder` do Spring Security. SHA-256 puro foi abandonado: é rápido demais e, sem salt, a mesma senha gera sempre o mesmo hash
 - **SQL Injection:** todos os DAOs usam `PreparedStatement` com parâmetros `?`
-- **Controle de acesso:** verificado em cada endpoint via `AuthInterceptor` + lógica nos controllers e services
+- **Controle de acesso:** Spring Security nas rotas + lógica de escopo nos controllers e services
+- **Token:** cookie `httpOnly` (fora do alcance de JavaScript/XSS) com `SameSite=Strict` (cobre CSRF)
 - **Soft delete:** exclusões não removem registros do banco, apenas marcam `ativo = false`
 
 ---
@@ -145,7 +148,6 @@ A suíte cobre 78 casos de teste sem dependência de banco de dados:
 
 | Classe | Testes | Cobertura |
 |---|---|---|
-| `SecurityUtilTest` | 5 | Hash SHA-256: determinismo, null-safety, tamanho |
 | `StringUtilTest` | 11 | `limpar()` e `estaVazio()` com todos os casos de borda |
 | `UsuarioTest` | 6 | `isAdmin()`, `isBolsista()`, `isProfessor()` |
 | `CargoTest` | 4 | `Cargo.deString()` com valores válidos, nulo e inválido |
@@ -162,12 +164,13 @@ A suíte cobre 78 casos de teste sem dependência de banco de dados:
 
 ```
 src/main/java/dev/matheus/cadastroBolsistas/
-  config/       ← AuthInterceptor e WebConfig
+  security/     ← SecurityConfig, JwtService, JwtCookieFilter, CookieJwt
+  config/       ← WebConfig (recursos estáticos)
   controller/   ← Controllers Spring MVC por entidade
   service/      ← Regras de negócio
-  dao/          ← Acesso ao banco via JDBC
+  repository/   ← Spring Data JPA
   model/        ← Entidades: Usuario, Bolsista, Professor, Laboratorio, Projeto, Frequencia, Cargo
-  util/         ← SecurityUtil (SHA-256), StringUtil
+  util/         ← StringUtil
 
 src/main/webapp/
   WEB-INF/pages/   ← JSPs por tela

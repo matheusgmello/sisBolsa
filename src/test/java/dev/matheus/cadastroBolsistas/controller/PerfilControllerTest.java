@@ -1,27 +1,54 @@
 package dev.matheus.cadastroBolsistas.controller;
 
-import dev.matheus.cadastroBolsistas.config.AuthInterceptor;
 import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.model.Professor;
 import dev.matheus.cadastroBolsistas.service.BolsistaService;
 import dev.matheus.cadastroBolsistas.service.ProfessorService;
-import dev.matheus.cadastroBolsistas.util.SecurityUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import dev.matheus.cadastroBolsistas.security.JwtCookieFilter;
+import dev.matheus.cadastroBolsistas.security.SecurityConfig;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(PerfilController.class)
+/*
+ * o SecurityConfig fica de fora: o teste exercita a logica do controller, nao a
+ * protecao de rota. o PasswordEncoder entra de verdade porque as validacoes de
+ * senha dependem do bcrypt.
+ */
+@WebMvcTest(controllers = PerfilController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {SecurityConfig.class, JwtCookieFilter.class}))
+@AutoConfigureMockMvc(addFilters = false)
 class PerfilControllerTest {
+
+    @TestConfiguration
+    static class EncoderDeTeste {
+        @Bean
+        PasswordEncoder passwordEncoder() {
+            return new BCryptPasswordEncoder();
+        }
+    }
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
 
     @Autowired
     private MockMvc mockMvc;
@@ -32,18 +59,15 @@ class PerfilControllerTest {
     @MockitoBean
     private ProfessorService professorService;
 
-    @MockitoBean
-    private AuthInterceptor authInterceptor;
-
     private Bolsista bolsistaLogado;
     private Professor professorLogado;
 
     private static final String SENHA_ORIGINAL = "senha123";
-    private static final String HASH_ORIGINAL = SecurityUtil.hashSenha(SENHA_ORIGINAL);
+    private String HASH_ORIGINAL;
 
     @BeforeEach
     void setUp() throws Exception {
-        when(authInterceptor.preHandle(any(), any(), any())).thenReturn(true);
+        HASH_ORIGINAL = passwordEncoder.encode(SENHA_ORIGINAL);
 
         bolsistaLogado = new Bolsista();
         bolsistaLogado.setId(1);
@@ -214,7 +238,7 @@ class PerfilControllerTest {
         ArgumentCaptor<Bolsista> captor = ArgumentCaptor.forClass(Bolsista.class);
         verify(bolsistaService).atualizar(captor.capture());
         // verifica que a nova senha foi hasheada e nao salva em texto puro
-        assertEquals(SecurityUtil.hashSenha("novaSenha123"), captor.getValue().getSenha());
+        assertTrue(passwordEncoder.matches("novaSenha123", captor.getValue().getSenha()));
     }
 
     @Test
@@ -270,7 +294,7 @@ class PerfilControllerTest {
 
         ArgumentCaptor<Professor> captor = ArgumentCaptor.forClass(Professor.class);
         verify(professorService).atualizar(captor.capture());
-        assertEquals(SecurityUtil.hashSenha("novaSenha456"), captor.getValue().getSenha());
+        assertTrue(passwordEncoder.matches("novaSenha456", captor.getValue().getSenha()));
     }
 
     @Test

@@ -13,7 +13,12 @@ import java.util.Optional;
 @Repository
 public interface BolsistaRepository extends JpaRepository<Bolsista, Integer> {
 
-    Optional<Bolsista> findByEmailAndSenhaAndAtivoTrue(String email, String senha);
+    /*
+     * bcrypt tem salt proprio por hash, entao nao da para comparar senha
+     * dentro do sql como antes. busca so pelo email e quem confere e o
+     * PasswordEncoder no LoginService.
+     */
+    Optional<Bolsista> findByEmailAndAtivoTrue(String email);
 
     List<Bolsista> findByAtivoTrueOrderByNome();
 

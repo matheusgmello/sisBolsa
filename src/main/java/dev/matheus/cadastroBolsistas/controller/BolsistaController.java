@@ -9,7 +9,7 @@ import dev.matheus.cadastroBolsistas.service.BolsistaService;
 import dev.matheus.cadastroBolsistas.service.ProfessorService;
 import dev.matheus.cadastroBolsistas.service.LaboratorioService;
 import dev.matheus.cadastroBolsistas.util.StringUtil;
-import dev.matheus.cadastroBolsistas.util.SecurityUtil;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +44,9 @@ public class BolsistaController {
 
     @Autowired
     private ProfessorService professorService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping
     public String listar(@RequestParam(value = "pagina", defaultValue = "1") Integer pagina,
@@ -311,7 +314,7 @@ public class BolsistaController {
                         p.setSenha(profExistente.getSenha());
                     }
                 } else {
-                    p.setSenha(SecurityUtil.hashSenha(p.getSenha()));
+                    p.setSenha(passwordEncoder.encode(p.getSenha()));
                 }
 
                 boolean sucesso = p.getId() > 0 ? professorService.atualizar(p) : professorService.inserir(p);
@@ -394,7 +397,7 @@ public class BolsistaController {
                     b.setSenha(bolsExistente.getSenha());
                 }
             } else {
-                b.setSenha(SecurityUtil.hashSenha(b.getSenha()));
+                b.setSenha(passwordEncoder.encode(b.getSenha()));
             }
 
             boolean sucesso = b.getId() > 0 ? bolsistaService.atualizar(b) : bolsistaService.inserir(b);

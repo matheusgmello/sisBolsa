@@ -149,8 +149,8 @@ diego.almeida@aluno.sisbolsa.com   / 12345678  → Lab de Ciencias Biologicas
 bruno.carvalho@aluno.sisbolsa.com  / 12345678  → Lab de Engenharia Mecatronica
 ```
 
-> As senhas são armazenadas como hash SHA-256. O `V2__seed.sql` já contém os hashes
-> pré-calculados — não é necessário nenhuma migração manual.
+> As senhas são armazenadas como hash BCrypt. O `V4__senhas_bcrypt.sql` converte
+> os hashes do seed — não é necessário nenhuma migração manual.
 
 ---
 

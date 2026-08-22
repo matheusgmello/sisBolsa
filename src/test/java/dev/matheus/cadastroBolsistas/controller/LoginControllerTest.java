@@ -1,12 +1,17 @@
 package dev.matheus.cadastroBolsistas.controller;
 
-import dev.matheus.cadastroBolsistas.config.AuthInterceptor;
 import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.service.LoginService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import dev.matheus.cadastroBolsistas.security.JwtService;
+import dev.matheus.cadastroBolsistas.security.JwtCookieFilter;
+import dev.matheus.cadastroBolsistas.security.SecurityConfig;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -16,7 +21,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(LoginController.class)
+@WebMvcTest(controllers = LoginController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {SecurityConfig.class, JwtCookieFilter.class}))
+@AutoConfigureMockMvc(addFilters = false)
 class LoginControllerTest {
 
     @Autowired
@@ -26,12 +33,11 @@ class LoginControllerTest {
     private LoginService loginService;
 
     @MockitoBean
-    private AuthInterceptor authInterceptor;
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() throws Exception {
         // Mockamos o comportamento do interceptor para retornar true e liberar o teste de controller
-        when(authInterceptor.preHandle(any(), any(), any())).thenReturn(true);
     }
 
     @Test
