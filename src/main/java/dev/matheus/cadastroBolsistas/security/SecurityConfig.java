@@ -3,15 +3,21 @@ package dev.matheus.cadastroBolsistas.security;
 import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /*
- * substitui o AuthInterceptor artesanal. as rotas publicas continuam as mesmas
- * de antes: login, cadastro de admin e os estaticos.
+ * duas cadeias, porque as duas frentes falham de jeitos diferentes:
+ * - /api/** responde 401/403 em json, que e o que um cliente rest espera
+ * - o resto redireciona para a tela de login, que e o que um browser espera
  */
 @Configuration
 public class SecurityConfig {
@@ -22,12 +28,30 @@ public class SecurityConfig {
     }
 
     @Bean
-    /*
-     * o filtro entra como parametro do metodo, e nao do construtor: esta classe
-     * tambem publica o passwordEncoder, entao receber o filtro no construtor
-     * fecharia um ciclo (filtro -> LoginService -> passwordEncoder).
-     */
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtCookieFilter jwtCookieFilter) throws Exception {
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http, JwtCookieFilter jwtCookieFilter) throws Exception {
+        http
+            .securityMatcher("/api/**")
+            .csrf(csrf -> csrf.disable())
+            /* a api nao depende de sessao para autenticar: quem manda e o token */
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/relatorios/**").hasRole("ADMIN")
+                .anyRequest().authenticated())
+            .formLogin(form -> form.disable())
+            .httpBasic(basic -> basic.disable())
+            .logout(logout -> logout.disable())
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> escreverErro(res, HttpStatus.UNAUTHORIZED, "Nao autenticado."))
+                .accessDeniedHandler((req, res, e) -> escreverErro(res, HttpStatus.FORBIDDEN, "Acesso negado.")))
+            .addFilterBefore(jwtCookieFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    public SecurityFilterChain webFilterChain(HttpSecurity http, JwtCookieFilter jwtCookieFilter) throws Exception {
         http
             /*
              * csrf desligado porque nenhum formulario jsp manda token. o que
@@ -45,7 +69,6 @@ public class SecurityConfig {
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                 .requestMatchers("/login", "/cadastro-admin/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .anyRequest().authenticated())
-            /* login e logout sao os nossos controllers, nao os do spring */
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .logout(logout -> logout.disable())
@@ -54,5 +77,13 @@ public class SecurityConfig {
             .addFilterBefore(jwtCookieFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private static void escreverErro(jakarta.servlet.http.HttpServletResponse res, HttpStatus status, String mensagem)
+            throws java.io.IOException {
+        res.setStatus(status.value());
+        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        res.setCharacterEncoding("UTF-8");
+        res.getWriter().write("{\"mensagem\":\"" + mensagem + "\"}");
     }
 }

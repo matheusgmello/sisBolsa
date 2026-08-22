@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,60 +21,60 @@ public class ProjetoService {
     @Autowired
     private ProjetoRepository repository;
 
-    public boolean cadastrar(Projeto p) throws SQLException {
+    public boolean cadastrar(Projeto p) {
         p.setAtivo(true);
         repository.save(p);
         return true;
     }
 
-    public ArrayList<Projeto> listarTodos() throws SQLException {
+    public ArrayList<Projeto> listarTodos() {
         return buscarProjetos(null, null);
     }
 
-    public ArrayList<Projeto> buscarProjetos(String buscaNome, Integer labId) throws SQLException {
+    public ArrayList<Projeto> buscarProjetos(String buscaNome, Integer labId) {
         String nome = buscaNome != null ? buscaNome.trim() : "";
         Integer lab = (labId != null && labId > 0) ? labId : null;
         return new ArrayList<>(repository.buscarProjetos(nome, lab));
     }
 
-    public ArrayList<Projeto> listarPorLaboratorio(int labId) throws SQLException {
+    public ArrayList<Projeto> listarPorLaboratorio(int labId) {
         return new ArrayList<>(repository.buscarPorLaboratorio(labId));
     }
 
-    public Projeto buscarPorId(int id) throws SQLException {
+    public Projeto buscarPorId(int id) {
         return repository.findById(id).orElse(null);
     }
 
-    public boolean atualizar(Projeto p) throws SQLException {
+    public boolean atualizar(Projeto p) {
         repository.save(p);
         return true;
     }
 
     /* soft delete */
     @Transactional
-    public boolean excluir(int id) throws SQLException {
+    public boolean excluir(int id) {
         return repository.desativar(id) > 0;
     }
 
     @Transactional
-    public boolean vincularBolsista(int bolsistaId, int projetoId) throws SQLException {
+    public boolean vincularBolsista(int bolsistaId, int projetoId) {
         repository.vincularBolsista(bolsistaId, projetoId);
         return true;
     }
 
     @Transactional
-    public boolean desvincularBolsista(int bolsistaId, int projetoId) throws SQLException {
+    public boolean desvincularBolsista(int bolsistaId, int projetoId) {
         repository.desvincularBolsista(bolsistaId, projetoId);
         return true;
     }
 
     @Transactional
-    public boolean desvincularBolsistaDeTodosProjetos(int bolsistaId) throws SQLException {
+    public boolean desvincularBolsistaDeTodosProjetos(int bolsistaId) {
         repository.desvincularBolsistaDeTodosProjetos(bolsistaId);
         return true;
     }
 
-    public ArrayList<Projeto> listarPorBolsista(int bolsistaId) throws SQLException {
+    public ArrayList<Projeto> listarPorBolsista(int bolsistaId) {
         return new ArrayList<>(repository.buscarPorBolsista(bolsistaId));
     }
 
@@ -84,7 +83,7 @@ public class ProjetoService {
      * uma para os vinculos e outra para carregar os projetos de uma vez.
      * o dao antigo resolvia isso com um join manual so para fugir do n+1.
      */
-    public Map<Integer, ArrayList<Projeto>> getProjetosDosBolsistasDoLaboratorio(int labId) throws SQLException {
+    public Map<Integer, ArrayList<Projeto>> getProjetosDosBolsistasDoLaboratorio(int labId) {
         List<Object[]> vinculos = repository.buscarVinculosDoLaboratorio(labId);
         if (vinculos.isEmpty()) {
             return new HashMap<>();

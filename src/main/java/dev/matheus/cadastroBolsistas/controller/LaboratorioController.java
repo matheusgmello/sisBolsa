@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 @Controller
@@ -57,7 +56,7 @@ public class LaboratorioController {
         }
         try {
             model.addAttribute("professores", professorService.listarTodos());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return "cadastro-laboratorio";
@@ -276,7 +275,7 @@ public class LaboratorioController {
     private void carregarProfessores(Model model) {
         try {
             model.addAttribute("professores", professorService.listarTodos());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

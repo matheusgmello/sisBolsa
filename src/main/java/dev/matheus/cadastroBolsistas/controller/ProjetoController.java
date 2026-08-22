@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 /*
@@ -75,7 +74,7 @@ public class ProjetoController {
             }
 
             model.addAttribute("listaProjetos", lista);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -155,7 +154,7 @@ public class ProjetoController {
                 labsDisponiveis = laboratorioService.listarPorCoordenador(usuarioLogado.getId());
             }
             model.addAttribute("laboratorios", labsDisponiveis);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -253,7 +252,7 @@ public class ProjetoController {
             } else {
                 projetoService.cadastrar(p);
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -288,7 +287,7 @@ public class ProjetoController {
                 return "redirect:/laboratorio/editar?id=" + labId + "&sucesso=Projeto+desativado+com+sucesso";
             }
             return "redirect:/laboratorio/detalhes?id=" + labId + "&sucesso=Projeto+desativado+com+sucesso";
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             if ("projeto".equals(origem)) {
                 return "redirect:/projeto?erro=Erro+ao+desativar+projeto";
@@ -321,7 +320,7 @@ public class ProjetoController {
                 return "redirect:/projeto/detalhes?id=" + projetoId + "&sucesso=" + successMsg;
             }
             return "redirect:/laboratorio/detalhes?id=" + labId + "&sucesso=" + successMsg;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             String errorMsg = "Erro+ao+vincular+bolsista";
             if ("detalhes-projeto".equals(origem)) {
@@ -352,7 +351,7 @@ public class ProjetoController {
                 return "redirect:/projeto/detalhes?id=" + projetoId + "&sucesso=" + successMsg;
             }
             return "redirect:/laboratorio/detalhes?id=" + labId + "&sucesso=" + successMsg;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             String errorMsg = "Erro+ao+desvincular+bolsista";
             if ("detalhes-projeto".equals(origem)) {

@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
@@ -79,7 +78,7 @@ public class FrequenciaController {
             }
         } catch (NumberFormatException e) {
             model.addAttribute("erro", "ID da frequencia invalido.");
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("erro", "Erro ao buscar frequencia.");
         }
@@ -106,7 +105,7 @@ public class FrequenciaController {
             }
         } catch (NumberFormatException e) {
             return "redirect:/frequencia?erro=ID+da+frequencia+invalido";
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return "redirect:/frequencia?erro=Erro+ao+excluir+frequencia";
         }
@@ -166,7 +165,7 @@ public class FrequenciaController {
                     carregarPagina(model, usuarioLogado, 1, null);
                     return "frequencia";
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 model.addAttribute("erro", "Erro ao atualizar frequencia.");
                 carregarPagina(model, usuarioLogado, 1, null);
@@ -214,7 +213,7 @@ public class FrequenciaController {
                 carregarPagina(model, usuarioLogado, 1, null);
                 return "frequencia";
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("erro", "Erro ao registrar frequencia.");
             carregarPagina(model, usuarioLogado, 1, null);
@@ -270,7 +269,7 @@ public class FrequenciaController {
                 writer.println(f.getId() + "," + f.getNomeBolsista() + "," + f.getData() + "," +
                         f.getHorasTrabalhadas() + ",\"" + desc + "\"");
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -335,7 +334,7 @@ public class FrequenciaController {
                 model.addAttribute("totalHorasAcumulado", totalHorasAcumulado);
                 model.addAttribute("totalHorasMesCorrente", totalHorasMesCorrente);
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -348,7 +347,7 @@ public class FrequenciaController {
             try {
                 Bolsista b = bolsistaService.buscarPorId(f.getBolsistaId());
                 return bolsistaService.podeGerenciar(usuarioLogado, b);
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 return false;
             }
         }

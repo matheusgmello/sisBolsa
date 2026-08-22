@@ -160,10 +160,29 @@ A suíte cobre 78 casos de teste sem dependência de banco de dados:
 
 ---
 
+## API REST
+
+Todos os endpoints ficam sob `/api/**`, autenticados pelo mesmo cookie JWT das
+telas. Erros saem sempre como `{"mensagem": "..."}`.
+
+| Recurso | Endpoints |
+|---|---|
+| Autenticação | `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me` |
+| Usuários | `GET/POST /api/usuarios` · `GET/PUT/DELETE /api/usuarios/{id}` |
+| Laboratórios | `GET/POST /api/laboratorios` · `GET/PUT/DELETE /api/laboratorios/{id}` · `GET /api/laboratorios/{id}/bolsistas` · `GET /api/laboratorios/{id}/projetos` |
+| Projetos | `GET/POST /api/projetos` · `GET/PUT/DELETE /api/projetos/{id}` · `GET /api/projetos/{id}/membros` · `POST/DELETE /api/projetos/{id}/membros/{bolsistaId}` |
+| Frequências | `GET/POST /api/frequencias` · `GET/PUT/DELETE /api/frequencias/{id}` |
+| Relatórios (admin) | `GET /api/relatorios/resumo` · `/horas-mes` · `/projetos-por-laboratorio` · `/bolsistas-por-cargo` · `/ocupacao` |
+
+As regras de escopo valem igual na API: professor só alcança os laboratórios que
+coordena, bolsista só as próprias frequências e os colegas do próprio laboratório.
+
 ## Estrutura do Projeto
 
 ```
 src/main/java/dev/matheus/cadastroBolsistas/
+  api/          ← Controllers REST (/api/**) e tratamento de erro
+  dto/          ← Records de entrada e saída da API
   security/     ← SecurityConfig, JwtService, JwtCookieFilter, CookieJwt
   config/       ← WebConfig (recursos estáticos)
   controller/   ← Controllers Spring MVC por entidade

@@ -4,7 +4,6 @@ import dev.matheus.cadastroBolsistas.repository.RelatorioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.SQLException;
 import java.util.List;
 
 /*
@@ -16,19 +15,19 @@ public class RelatorioService {
     @Autowired
     private RelatorioRepository repository;
 
-    public List<RelatorioRepository.HorasBolsista> getHorasBolsistasMesCorrente() throws SQLException {
+    public List<RelatorioRepository.HorasBolsista> getHorasBolsistasMesCorrente() {
         return repository.horasBolsistasMesCorrente();
     }
 
-    public List<RelatorioRepository.ProjetosPorLaboratorio> getProjetosAtivosPorLaboratorio() throws SQLException {
+    public List<RelatorioRepository.ProjetosPorLaboratorio> getProjetosAtivosPorLaboratorio() {
         return repository.projetosAtivosPorLaboratorio();
     }
 
-    public List<RelatorioRepository.BolsistasPorCargo> getBolsistasPorCargo() throws SQLException {
+    public List<RelatorioRepository.BolsistasPorCargo> getBolsistasPorCargo() {
         return repository.bolsistasPorCargo();
     }
 
-    public List<RelatorioRepository.OcupacaoLaboratorio> getLaboratoriosOcupacao() throws SQLException {
+    public List<RelatorioRepository.OcupacaoLaboratorio> getLaboratoriosOcupacao() {
         return repository.laboratoriosOcupacao();
     }
 }

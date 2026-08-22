@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
@@ -110,7 +109,7 @@ public class BolsistaController {
                 }
             }
 
-            lista = filtrarUsuariosPorPermissao(lista, usuarioLogado);
+            lista = bolsistaService.filtrarPorEscopo(lista, usuarioLogado);
 
 
             int tamanho = 10;
@@ -239,11 +238,11 @@ public class BolsistaController {
                     return "redirect:/bolsista?erro=Sem+permissao+para+excluir";
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return "redirect:/bolsista?erro=Erro+ao+excluir+usuario";
         } catch (NumberFormatException e) {
             return "redirect:/bolsista?erro=ID+do+usuario+invalido";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "redirect:/bolsista?erro=Erro+ao+excluir+usuario";
         }
     }
 
@@ -326,7 +325,7 @@ public class BolsistaController {
                     carregarLaboratoriosDisponiveis(model, usuarioLogado);
                     return "cadastro-bolsista";
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 model.addAttribute("erro", "Algo aconteceu: " + e.getMessage());
                 model.addAttribute("bolsista", p);
@@ -381,7 +380,7 @@ public class BolsistaController {
                     carregarLaboratoriosDisponiveis(model, usuarioLogado);
                     return "cadastro-bolsista";
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             b.setLaboratorioId(labId);
@@ -410,7 +409,7 @@ public class BolsistaController {
                 carregarLaboratoriosDisponiveis(model, usuarioLogado);
                 return "cadastro-bolsista";
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("erro", "Algo aconteceu: " + e.getMessage());
             model.addAttribute("bolsista", b);
@@ -448,7 +447,7 @@ public class BolsistaController {
                 }
             }
 
-            lista = filtrarUsuariosPorPermissao(lista, usuarioLogado);
+            lista = bolsistaService.filtrarPorEscopo(lista, usuarioLogado);
             for (Usuario u : lista) {
                 String curso = u instanceof Bolsista ? ((Bolsista) u).getCurso() : "";
                 Cargo cargoObj = u instanceof Bolsista ? ((Bolsista) u).getCargo() : null;
@@ -457,7 +456,7 @@ public class BolsistaController {
                         curso + "," + u.getNomeLaboratorio() + "," + (u.isAtivo() ? "Ativo" : "Inativo") + "," +
                         cargoStr + "," + u.getTipoUsuario());
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -475,39 +474,6 @@ public class BolsistaController {
         }
     }
 
-    private ArrayList<Usuario> filtrarUsuariosPorPermissao(ArrayList<Usuario> list, Usuario usuarioLogado) throws SQLException {
-        if (usuarioLogado.isAdmin()) {
-            return list;
-        }
-        if (usuarioLogado.isProfessor()) {
-            ArrayList<Laboratorio> labsCoordenados = laboratorioService.listarPorCoordenador(usuarioLogado.getId());
-            ArrayList<Usuario> filtrados = new ArrayList<>();
-            for (Usuario u : list) {
-                if (u instanceof Bolsista) {
-                    Bolsista b = (Bolsista) u;
-                    boolean pertence = labsCoordenados.stream().anyMatch(l -> l.getId() == b.getLaboratorioId());
-                    if (pertence) {
-                        filtrados.add(b);
-                    }
-                }
-            }
-            return filtrados;
-        }
-        if (usuarioLogado.isBolsista()) {
-            int labId = ((Bolsista) usuarioLogado).getLaboratorioId();
-            ArrayList<Usuario> filtrados = new ArrayList<>();
-            for (Usuario u : list) {
-                if (u instanceof Bolsista) {
-                    Bolsista b = (Bolsista) u;
-                    if (b.getLaboratorioId() == labId) {
-                        filtrados.add(b);
-                    }
-                }
-            }
-            return filtrados;
-        }
-        return new ArrayList<>();
-    }
 
     private String validarBolsista(Bolsista b, String dataNascimentoStr, String laboratorioIdStr, Usuario usuarioLogado) {
         if (StringUtil.estaVazio(b.getNome()) || b.getNome().length() < 3) {

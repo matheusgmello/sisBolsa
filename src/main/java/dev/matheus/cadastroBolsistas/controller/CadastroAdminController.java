@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.sql.SQLException;
 import java.time.LocalDate;
 
 /*
@@ -43,7 +42,7 @@ public class CadastroAdminController {
             }
 
             model.addAttribute("adminsRestantes", LIMITE_ADMINS - total);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("erro", "Erro ao verificar administradores: " + e.getMessage());
             return "login";
@@ -92,7 +91,7 @@ public class CadastroAdminController {
                 model.addAttribute("erro", "Nao foi possivel cadastrar o administrador.");
                 return "cadastro-admin";
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("erro", "Erro ao cadastrar administrador: " + e.getMessage());
             return "cadastro-admin";
