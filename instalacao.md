@@ -32,8 +32,8 @@ Na raiz do projeto, execute:
 docker compose up -d
 ```
 
-O Docker sobe o PostgreSQL na porta `5436` e executa o `db/init.sql` automaticamente,
-criando as tabelas e inserindo os dados iniciais.
+O Docker sobe o PostgreSQL vazio na porta `5436`. As tabelas e os dados iniciais
+são criados pelas migrations do Flyway quando a aplicação sobe.
 
 Comandos úteis:
 
@@ -64,19 +64,18 @@ Porta:   5436
 1. Abra o pgAdmin.
 2. Crie um banco de dados chamado exatamente `cadastroBolsista` (B maiúsculo).
 3. Abra o Query Tool no banco criado.
-4. Execute o arquivo `db/init.sql`.
+4. Não precisa rodar script nenhum: o Flyway cria e popula as tabelas no primeiro start da aplicação.
 
-Após isso, ajuste a porta no arquivo de conexão:
+Após isso, ajuste a porta no arquivo de configuração:
 
 ```
-src/main/java/dev/matheus/cadastroBolsistas/dao/ConectaDBPostgres.java
+src/main/resources/application.properties
 ```
 
-Altere a URL de `5436` para `5432` (porta padrão do PostgreSQL local):
-
-```java
-"jdbc:postgresql://localhost:5432/cadastroBolsista"
-```
+Altere a porta de `5436` para `5432` (porta padrão do PostgreSQL local), ou
+exporte a variável de ambiente `DB_PORT=5432` antes de subir a aplicação.
+As credenciais também aceitam as variáveis `DB_HOST`, `DB_NAME`, `DB_USER`
+e `DB_PASSWORD`.
 
 ---
 
@@ -126,7 +125,7 @@ http://localhost:8080
 
 ## 6. Credenciais iniciais
 
-O `db/init.sql` cria os seguintes usuários para teste:
+As migrations criam os seguintes usuários para teste:
 
 ### Administrador
 ```
@@ -144,13 +143,13 @@ felipe.andrade@sisbolsa.com  / 12345678  → Lab de Engenharia Mecatronica
 
 ### Bolsistas (exemplos)
 ```
-thiago.rocha@sisbolsa.com    / 12345678  → Lab de Desenvolvimento de Software
-camila.pires@sisbolsa.com    / 12345678  → Lab de Desenvolvimento de Software
-diego.almeida@sisbolsa.com   / 12345678  → Lab de Ciencias Biologicas
-bruno.carvalho@sisbolsa.com  / 12345678  → Lab de Engenharia Mecatronica
+thiago.rocha@aluno.sisbolsa.com    / 12345678  → Lab de Desenvolvimento de Software
+camila.pires@aluno.sisbolsa.com    / 12345678  → Lab de Desenvolvimento de Software
+diego.almeida@aluno.sisbolsa.com   / 12345678  → Lab de Ciencias Biologicas
+bruno.carvalho@aluno.sisbolsa.com  / 12345678  → Lab de Engenharia Mecatronica
 ```
 
-> As senhas são armazenadas como hash SHA-256. O `init.sql` já contém os hashes
+> As senhas são armazenadas como hash SHA-256. O `V2__seed.sql` já contém os hashes
 > pré-calculados — não é necessário nenhuma migração manual.
 
 ---
@@ -167,7 +166,7 @@ O sistema suporta no máximo 3 administradores. Para cadastrar um novo:
 
 ## 8. Estrutura do banco
 
-O arquivo `db/init.sql` cria e popula as seguintes tabelas:
+As migrations do Flyway criam e populam as seguintes tabelas:
 
 | Tabela | Conteúdo inicial |
 |---|---|

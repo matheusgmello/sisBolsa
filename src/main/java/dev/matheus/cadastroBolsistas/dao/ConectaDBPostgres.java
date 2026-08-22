@@ -1,31 +1,36 @@
 package dev.matheus.cadastroBolsistas.dao;
 
+import org.springframework.stereotype.Component;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /*
- * responsavel por abrir a conexao com o banco de dados postgresql.
- * todos os daos chamam getConexao() para obter a conexao.
- * as credenciais estao fixas no codigo — se mudar o banco, atualizar aqui.
+ * ponte entre os daos legados e o pool de conexao do spring.
+ * os daos chamam getConexao() de forma estatica, entao o datasource injetado
+ * fica guardado num campo static ate os daos virarem repositories.
+ *
+ * ponytail: gambiarra proposital de campo static. some inteira na etapa 2,
+ * quando os repositories do spring data assumem o acesso ao banco.
  */
+@Component
 public class ConectaDBPostgres {
 
+    private static DataSource dataSource;
+
+    public ConectaDBPostgres(DataSource dataSource) {
+        ConectaDBPostgres.dataSource = dataSource;
+    }
+
     public static Connection getConexao() {
+        if (dataSource == null) {
+            throw new IllegalStateException("DataSource ainda nao foi injetado pelo spring.");
+        }
         try {
-            Class.forName("org.postgresql.Driver");
-            Connection conn = DriverManager.getConnection(
-                    "jdbc:postgresql://localhost:5436/cadastroBolsista",
-                    "postgres",
-                    "1234");
-            if (conn == null) {
-                throw new RuntimeException("Falha ao abrir conexao: conexao obtida e nula.");
-            }
-            return conn;
-        } catch (ClassNotFoundException ex) {
-            throw new RuntimeException("Classe do driver PostgreSQL nao encontrada ao conectar ao banco de dados.", ex);
+            return dataSource.getConnection();
         } catch (SQLException ex) {
-            throw new RuntimeException("Erro ao abrir conexao com o banco de dados PostgreSQL na porta 5436.", ex);
+            throw new RuntimeException("Erro ao obter conexao do pool.", ex);
         }
     }
 }

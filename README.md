@@ -122,7 +122,7 @@ O sistema possui três perfis com permissões distintas:
 - Um bolsista pode participar de vários projetos (e vice-versa)
 - Um bolsista pode ter vários registros de frequência
 
-O script `db/init.sql` cria todas as tabelas e insere dados iniciais com 3 professores, 3 laboratórios, 6 projetos (2 por laboratório), 7 bolsistas, 1 admin e frequências de exemplo.
+As migrations do Flyway em `src/main/resources/db/migration` criam todas as tabelas (`V1__schema.sql`) e inserem os dados iniciais (`V2__seed.sql`) com 3 professores, 3 laboratórios, 6 projetos (2 por laboratório), 7 bolsistas, 1 admin e frequências de exemplo. São aplicadas automaticamente na subida da aplicação.
 
 ---
 
@@ -175,7 +175,9 @@ src/main/webapp/
   css/             ← Um arquivo CSS por página
   js/              ← Validações client-side
 
-db/init.sql        ← Script de criação e dados iniciais
+src/main/resources/db/migration/
+  V1__schema.sql   ← Criação das tabelas
+  V2__seed.sql     ← Dados iniciais
 ```
 
 ---
