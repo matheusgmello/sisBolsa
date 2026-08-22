@@ -58,9 +58,9 @@ O sistema possui três perfis com permissões distintas:
 
 ### Autenticação e Sessão
 - Login por e-mail e senha com hash BCrypt
-- Sessão gerenciada via `HttpSession`
 - JWT emitido em cookie `httpOnly` + `SameSite=Strict` no login
-- Spring Security protege todas as rotas exceto `/login`, `/cadastro-admin` e recursos estáticos
+- Spring Security protege `/api/**`; as páginas são casca sem dado e não precisam de proteção própria
+- Requisição sem token válido recebe 401 em JSON, e o JavaScript devolve o usuário ao login
 - Troca de senha exige confirmação da senha atual
 
 ### Usuários (Bolsistas, Professores e Admins)
@@ -124,15 +124,28 @@ O sistema possui três perfis com permissões distintas:
 - Um bolsista pode participar de vários projetos (e vice-versa)
 - Um bolsista pode ter vários registros de frequência
 
-As migrations do Flyway em `src/main/resources/db/migration` criam todas as tabelas (`V1__schema.sql`) e inserem os dados iniciais (`V2__seed.sql`) com 3 professores, 3 laboratórios, 6 projetos (2 por laboratório), 7 bolsistas, 1 admin e frequências de exemplo. São aplicadas automaticamente na subida da aplicação.
+### Migrations
+
+O Flyway é dono do schema. As migrations ficam em `src/main/resources/db/migration`
+e são aplicadas automaticamente na subida da aplicação:
+
+| Arquivo | O que faz |
+|---|---|
+| `V1__schema.sql` | Cria as 6 tabelas |
+| `V2__seed.sql` | 3 professores, 3 laboratórios, 6 projetos, 7 bolsistas, 1 admin e 28 frequências |
+| `V3__professor_tipo_usuario.sql` | Adiciona `tipo_usuario` em `professor`, o que permite às duas tabelas de usuário compartilharem o mesmo `@MappedSuperclass` |
+| `V4__senhas_bcrypt.sql` | Converte os hashes do seed de SHA-256 para BCrypt |
+
+Migration já aplicada nunca é editada — mudança de schema entra como arquivo novo.
 
 ---
 
 ## Segurança
 
 - **Senhas:** BCrypt (`$2a$10$`) via `PasswordEncoder` do Spring Security. SHA-256 puro foi abandonado: é rápido demais e, sem salt, a mesma senha gera sempre o mesmo hash
-- **SQL Injection:** todos os DAOs usam `PreparedStatement` com parâmetros `?`
-- **Controle de acesso:** Spring Security nas rotas + lógica de escopo nos controllers e services
+- **SQL Injection:** consultas via Spring Data JPA, sempre com parâmetros nomeados — nenhuma query é montada por concatenação
+- **XSS:** todo dado vindo da API passa por `Util.escapar()` antes de virar HTML
+- **Controle de acesso:** Spring Security nas rotas + escopo por perfil nos services (`podeGerenciar`, `filtrarPorEscopo`), para a regra não existir em duas versões
 - **Token:** cookie `httpOnly` (fora do alcance de JavaScript/XSS) com `SameSite=Strict` (cobre CSRF)
 - **Soft delete:** exclusões não removem registros do banco, apenas marcam `ativo = false`
 
@@ -175,11 +188,11 @@ telas. Erros saem sempre como `{"mensagem": "..."}`.
 
 | Recurso | Endpoints |
 |---|---|
-| Autenticação | `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me` |
-| Usuários | `GET/POST /api/usuarios` · `GET/PUT/DELETE /api/usuarios/{id}` |
+| Autenticação | `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me` · `PUT /api/auth/perfil` · `POST /api/auth/cadastro-admin` |
+| Usuários | `GET/POST /api/usuarios` · `GET/PUT/DELETE /api/usuarios/{id}` · `GET /api/usuarios/{id}/projetos` · `GET /api/usuarios/exportar` |
 | Laboratórios | `GET/POST /api/laboratorios` · `GET/PUT/DELETE /api/laboratorios/{id}` · `GET /api/laboratorios/{id}/bolsistas` · `GET /api/laboratorios/{id}/projetos` |
 | Projetos | `GET/POST /api/projetos` · `GET/PUT/DELETE /api/projetos/{id}` · `GET /api/projetos/{id}/membros` · `POST/DELETE /api/projetos/{id}/membros/{bolsistaId}` |
-| Frequências | `GET/POST /api/frequencias` · `GET/PUT/DELETE /api/frequencias/{id}` |
+| Frequências | `GET/POST /api/frequencias` · `GET/PUT/DELETE /api/frequencias/{id}` · `GET /api/frequencias/resumo` · `GET /api/frequencias/exportar` |
 | Relatórios (admin) | `GET /api/relatorios/resumo` · `/horas-mes` · `/projetos-por-laboratorio` · `/bolsistas-por-cargo` · `/ocupacao` |
 
 As regras de escopo valem igual na API: professor só alcança os laboratórios que
@@ -192,9 +205,8 @@ src/main/java/dev/matheus/cadastroBolsistas/
   api/          ← Controllers REST (/api/**) e tratamento de erro
   dto/          ← Records de entrada e saída da API
   security/     ← SecurityConfig, JwtService, JwtCookieFilter, CookieJwt
-  config/       ← WebConfig (recursos estáticos)
-  controller/   ← Controllers Spring MVC por entidade
-  service/      ← Regras de negócio
+  config/       ← OpenApiConfig (metadados do Swagger)
+  service/      ← Regras de negócio e permissões
   repository/   ← Spring Data JPA
   model/        ← Entidades: Usuario, Bolsista, Professor, Laboratorio, Projeto, Frequencia, Cargo
   util/         ← StringUtil
@@ -212,6 +224,11 @@ src/main/resources/static/
 src/main/resources/db/migration/
   V1__schema.sql   ← Criação das tabelas
   V2__seed.sql     ← Dados iniciais
+  V3__*.sql        ← tipo_usuario em professor
+  V4__*.sql        ← Senhas para BCrypt
+
+Dockerfile         ← Build multi-stage (Maven → JRE)
+docker-compose.yml ← Serviços app + db
 ```
 
 ---
@@ -238,6 +255,78 @@ Configuração por variável de ambiente, com default para desenvolvimento local
 | `DB_NAME` / `DB_USER` / `DB_PASSWORD` | `cadastroBolsista` / `postgres` / `1234` | Credenciais |
 | `JWT_SECRET` | valor de desenvolvimento | **Trocar em produção** |
 | `JWT_EXPIRACAO_MINUTOS` | `120` | Validade do token |
+
+---
+
+## Histórico: migração para REST API
+
+Este projeto nasceu como **Spring MVC + JSP + JDBC puro** e foi migrado para
+**API REST + frontend estático**. A migração aconteceu na branch `trabalho/poow2`,
+em sete etapas, cada uma fechando com o sistema rodando e verificada contra o
+banco de verdade — não só com testes de unidade.
+
+### Antes e depois
+
+| | Antes | Depois |
+|---|---|---|
+| Persistência | JDBC puro, `PreparedStatement` na mão | Spring Data JPA |
+| Schema | `db/init.sql` rodado pelo entrypoint do Postgres | Flyway, 4 migrations versionadas |
+| Senha | SHA-256 sem salt | BCrypt |
+| Autenticação | `AuthInterceptor` artesanal + `HttpSession` | Spring Security + JWT em cookie `httpOnly` |
+| Interface | 14 JSPs com JSTL | HTML + CSS + JS estático consumindo `/api/**` |
+| API | não existia | 28 rotas / 41 operações REST documentadas no Swagger |
+| Conexão | credenciais chumbadas no código | variáveis de ambiente |
+| Empacotamento | WAR | JAR executável em container |
+
+### As sete etapas
+
+| # | Etapa | Commit |
+|---|---|---|
+| 1 | Flyway + `DataSource` real | `2575f4a` |
+| 2 | JPA, `dao/` vira `repository/` | `9aab33c` |
+| 3 | Spring Security + JWT + BCrypt | `27b8b96` |
+| 4 | REST em `/api/**` + DTOs | `e219dc1` |
+| 5 | Swagger (springdoc) | `716085d` |
+| 6 | Frontend estático, remoção da camada MVC | `2b7b7da` |
+| 7 | Docker | `05d3de1` |
+
+### Decisões que valem registro
+
+- **Frontend estático, sem template engine.** Thymeleaf renderiza no servidor, mesma
+  categoria do JSP — não serviria para um frontend que consome REST. Sem React ou Vue
+  porque o porte das ~680 expressões JSTL custaria igual, e o framework só somaria uma
+  segunda toolchain. Os 12 arquivos CSS foram reaproveitados **sem uma linha alterada**.
+- **JWT em cookie `httpOnly`, não `localStorage`.** Navegação direta pelo browser não
+  manda header `Authorization`, e os downloads de CSV são link comum. O cookie resolve
+  os dois casos e ainda tira o token do alcance de JavaScript.
+- **`Usuario` é `@MappedSuperclass`, não uma hierarquia JPA.** `bolsista` e `professor`
+  são tabelas separadas com sequences independentes — `bolsista.id=1` e `professor.id=1`
+  coexistem. Nenhuma estratégia de herança do JPA mapeia isso.
+- **Soft delete por query explícita.** O `delete()` do `JpaRepository` apagaria a linha
+  de verdade, e o `ON DELETE CASCADE` levaria frequências e vínculos junto.
+- **A camada MVC sobreviveu até a etapa 6.** O plano original a matava na etapa 4, mas
+  o frontend estático só chegou na 6 — derrubar antes deixaria o sistema quebrado por
+  duas etapas. As duas frentes conviveram dividindo o mesmo cookie e os mesmos services.
+
+### Bugs que só apareceram com o sistema rodando
+
+Nenhum destes seria pego por teste com mock:
+
+| Sintoma | Causa |
+|---|---|
+| Flyway não migrava nada, sem erro nenhum | No Boot 4 a autoconfiguração saiu do `flyway-core` para um módulo próprio |
+| `/projeto` retornava 500: `function lower(bytea) does not exist` | Postgres não infere o tipo de um parâmetro `String` nulo dentro de `LOWER()` |
+| `/login` redirecionava para si mesmo, em loop | O forward do Spring MVC para a JSP passa pelo filtro de autorização de novo |
+| `/api/frequencias` retornava 500 com `NullPointerException` | Ternário misturando `int` e `Integer` faz unboxing dos dois lados |
+| Professor via a folha de frequência do sistema inteiro | A listagem não aplicava escopo nem validava o parâmetro `bolsistaId` |
+
+### Pontos em aberto
+
+- **CSRF** está desligado; hoje quem cobre é o `SameSite=Strict` do cookie. Com o
+  frontend estático no lugar, dá para reavaliar.
+- **`JWT_SECRET`** tem valor de desenvolvimento no `docker-compose.yml`. Em produção
+  precisa vir do ambiente.
+- **Não há testes de integração com banco** — a suíte é toda mockada.
 
 ---
 
