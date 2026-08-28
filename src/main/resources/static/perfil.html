@@ -3,57 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Perfil - SisBolsa</title>
+    <title>Meu Perfil - SisBolsa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/perfil.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="main-content">
-        <div class="container form-container">
-            <h1><i class="fas fa-user-cog"></i> Editar Perfil</h1>
+        <div class="header-actions">
+            <div>
+                <h1>Meu Perfil</h1>
+                <p class="header-subtitle">Gerencie seus dados cadastrais e credenciais de acesso</p>
+            </div>
+            <div class="header-buttons">
+                <a href="/dashboard.html" class="btn-new btn-export">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    <span>Voltar ao Painel</span>
+                </a>
+            </div>
+        </div>
 
-            <div class="profile-header-display" id="cabecalho"></div>
-            <div id="avisos"></div>
+        <div id="avisos" aria-live="polite" role="status"></div>
+
+        <div class="container form-container">
+            <div class="profile-header-display" id="cabecalho">
+                <div class="avatar-wrapper" id="avatar-container">
+                    <div id="avatar-placeholder" class="avatar-placeholder-large" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                </div>
+                <div class="profile-meta">
+                    <h2 id="meta-nome" class="profile-meta-title">Carregando...</h2>
+                    <span id="meta-tipo" class="badge"></span>
+                </div>
+            </div>
 
             <form id="formPerfil">
-                <div class="form-grid">
-                    <div class="form-group form-group-full">
-                        <label>Nome Completo <span class="asterisco">*</span></label>
-                        <input type="text" id="nome" required minlength="3" placeholder="Ex: João da Silva">
+                <div class="form-section">
+                    <h2 class="section-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span>Informações Pessoais</span>
+                    </h2>
+
+                    <div class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label for="nome">Nome Completo <span class="asterisco">*</span></label>
+                            <input type="text" id="nome" required minlength="3" placeholder="Ex: João da Silva">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">E-mail de Acesso <span class="asterisco">*</span></label>
+                            <input type="email" id="email" required placeholder="Ex: joao@universidade.edu.br">
+                        </div>
+                        <div class="form-group">
+                            <label for="fotoUrl">URL da Foto de Perfil</label>
+                            <input type="url" id="fotoUrl" placeholder="https://exemplo.com/sua-foto.jpg">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>E-mail <span class="asterisco">*</span></label>
-                        <input type="email" id="email" required placeholder="Ex: email@universidade.edu.br">
+                </div>
+
+                <div class="form-section password-section">
+                    <h2 class="section-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span>Segurança e Senha</span>
+                    </h2>
+                    <p class="section-desc">Deixe os campos de senha em branco se não desejar alterá-la.</p>
+
+                    <div class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label for="senhaAtual">Senha Atual</label>
+                            <div class="password-field-wrapper">
+                                <input type="password" id="senhaAtual" placeholder="Digite sua senha atual para autorizar alterações de credenciais">
+                                <button type="button" class="password-toggle-btn" data-target="senhaAtual" aria-label="Mostrar ou ocultar senha atual">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="senha">Nova Senha</label>
+                            <div class="password-field-wrapper">
+                                <input type="password" id="senha" minlength="6" placeholder="Mínimo de 6 caracteres">
+                                <button type="button" class="password-toggle-btn" data-target="senha" aria-label="Mostrar ou ocultar nova senha">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmaSenha">Confirmar Nova Senha</label>
+                            <div class="password-field-wrapper">
+                                <input type="password" id="confirmaSenha" minlength="6" placeholder="Repita a nova senha">
+                                <button type="button" class="password-toggle-btn" data-target="confirmaSenha" aria-label="Mostrar ou ocultar confirmação da senha">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>URL da Foto de Perfil</label>
-                        <input type="text" id="fotoUrl" placeholder="https://exemplo.com/foto.jpg">
-                    </div>
-                    <div class="form-group form-group-full">
-                        <label>Biografia / Sobre Mim</label>
-                        <textarea id="bio" rows="4" placeholder="Escreva um resumo sobre você, suas habilidades, hobbies e interesses..."></textarea>
-                    </div>
-                    <div class="form-group form-group-full" style="border-top:1px solid #ddd;margin-top:15px;padding-top:15px;">
-                        <h3 style="margin-bottom:5px;font-size:1.1rem;color:#333;">Alterar Senha</h3>
-                        <p style="font-size:0.85rem;color:#666;margin-bottom:5px;">Preencha os campos abaixo apenas se desejar alterar sua senha.</p>
-                    </div>
-                    <div class="form-group form-group-full">
-                        <label>Senha Atual</label>
-                        <input type="password" id="senhaAtual" placeholder="Digite sua senha atual para autorizar a alteração">
-                    </div>
-                    <div class="form-group">
-                        <label>Nova Senha</label>
-                        <input type="password" id="senha" minlength="6" placeholder="Mínimo 6 caracteres">
-                    </div>
-                    <div class="form-group">
-                        <label>Confirmar Nova Senha</label>
-                        <input type="password" id="confirmaSenha" minlength="6" placeholder="Confirme a nova senha">
-                    </div>
-                    <div class="actions">
-                        <button type="submit" class="btn btn-submit"><i class="fas fa-save"></i> Salvar Alterações</button>
-                        <a href="/dashboard.html" class="btn btn-cancel">Voltar</a>
-                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="submit-button" id="btn-salvar-perfil">
+                        <span class="btn-spinner" aria-hidden="true"></span>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="btn-icon"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        <span>Salvar Alterações</span>
+                    </button>
+                    <a href="/dashboard.html" class="cancel-button">Cancelar</a>
                 </div>
             </form>
         </div>

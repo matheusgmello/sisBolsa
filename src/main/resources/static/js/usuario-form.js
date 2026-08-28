@@ -26,7 +26,6 @@
     }
     if (edicao) {
         grupo("foto").hidden = false;
-        grupo("bio").hidden = false;
         campo("senha-obrigatoria").hidden = true;
         campo("senha").placeholder = "Deixe em branco para não alterar";
     } else {
@@ -54,7 +53,6 @@
             campo("curso").value = u.curso || "";
             campo("matricula").value = u.matricula || "";
             campo("fotoUrl").value = u.fotoUrl || "";
-            campo("bio").value = u.bio || "";
             campo("tipoUsuario").value = u.tipoUsuario;
             campo("laboratorioId").value = u.laboratorioId || "";
             campo("cargo").value = u.cargo || "";
@@ -94,6 +92,22 @@
         if (!mostraCargo) campo("cargo").value = "";
     }
 
+    /* Mostrar / Ocultar Senha */
+    document.querySelectorAll(".password-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const targetId = btn.dataset.target;
+            const input = document.getElementById(targetId);
+            if (!input) return;
+
+            const ehPassword = input.type === "password";
+            input.type = ehPassword ? "text" : "password";
+
+            btn.innerHTML = ehPassword
+                ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+                : `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+        });
+    });
+
     document.getElementById("formBolsista").addEventListener("submit", async (e) => {
         e.preventDefault();
         Util.limpaAviso();
@@ -120,13 +134,18 @@
             senha: senha || null,
             tipoUsuario: campo("tipoUsuario").value,
             fotoUrl: campo("fotoUrl").value || null,
-            bio: campo("bio").value || null,
             dataNascimento: ehProfessor ? null : (campo("dataNascimento").value || null),
             curso: ehProfessor ? null : campo("curso").value,
             matricula: ehProfessor ? null : campo("matricula").value,
             laboratorioId: ehProfessor || !campo("laboratorioId").value ? null : Number(campo("laboratorioId").value),
             cargo: campo("cargo").value || null
         };
+
+        const btnSubmit = document.getElementById("btn-submit");
+        if (btnSubmit) {
+            btnSubmit.classList.add("is-loading");
+            btnSubmit.disabled = true;
+        }
 
         try {
             if (edicao) {
@@ -136,6 +155,10 @@
             }
             window.location.href = "/usuarios.html";
         } catch (erro) {
+            if (btnSubmit) {
+                btnSubmit.classList.remove("is-loading");
+                btnSubmit.disabled = false;
+            }
             Util.aviso(erro.message);
         }
     });
