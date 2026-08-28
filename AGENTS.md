@@ -9,10 +9,10 @@ Migracao para REST API concluida (7 etapas, ver `PLANO.md` para o historico e
 as decisoes). A branch `trabalho/poow2` foi mesclada na `main` e apagada.
 
 Stack: Spring Boot 4.0.6, Java 21, JPA, Flyway, Spring Security + JWT,
-springdoc 3.1.0, frontend estatico em `resources/static`, PostgreSQL, Docker.
+springdoc 3.1.0, frontend em React + Vite + TypeScript (SPA em `frontend/`), PostgreSQL, Docker.
 
-Fluxo: `HTML/CSS/JS -> fetch /api/** -> @RestController -> Service ->
-Repository -> PostgreSQL`. Nao existe mais camada MVC nem view no servidor.
+Fluxo: `React (SPA) -> fetch /api/** -> @RestController -> Service ->
+Repository -> PostgreSQL`. Nao existe camada MVC nem view no servidor.
 
 ## Padroes de codigo
 
