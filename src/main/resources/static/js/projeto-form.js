@@ -16,7 +16,13 @@
         document.getElementById("rotulo-salvar").textContent = "Salvar Alterações";
     }
 
-    const labs = await Api.get("/laboratorios");
+    let labs = [];
+    try {
+        labs = await Api.get("/laboratorios");
+    } catch (e) {
+        Util.aviso("Erro ao carregar lista de laboratórios.");
+    }
+
     campo("laboratorioId").innerHTML =
         `<option value="">Selecione o laboratório...</option>` +
         labs.map(l => `<option value="${l.id}">${Util.escapar(l.nome)}</option>`).join("");
@@ -50,6 +56,12 @@
             laboratorioId: campo("laboratorioId").value ? Number(campo("laboratorioId").value) : null
         };
 
+        const btn = document.getElementById("btn-salvar-proj");
+        if (btn) {
+            btn.classList.add("is-loading");
+            btn.disabled = true;
+        }
+
         try {
             if (edicao) {
                 await Api.put(`/projetos/${id}`, corpo);
@@ -59,6 +71,11 @@
             window.location.href = "/projetos.html";
         } catch (erro) {
             Util.aviso(erro.message);
+        } finally {
+            if (btn) {
+                btn.classList.remove("is-loading");
+                btn.disabled = false;
+            }
         }
     });
 })();

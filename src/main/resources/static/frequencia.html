@@ -4,63 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frequência - SisBolsa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/frequencia.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="main-content">
-        <h1><i class="fas fa-calendar-check"></i> Registro de Frequência</h1>
-
-        <div class="stats-grid" id="resumo" style="display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap;" hidden></div>
-
-        <div id="avisos"></div>
-
-        <div class="container form-container">
-            <h2 id="titulo-form">Novo Registro</h2>
-            <form class="frequency-form" id="form-frequencia">
-                <div class="form-group-full">
-                    <label>Bolsista</label>
-                    <select id="bolsistaSelect" required hidden>
-                        <option value="">Selecione o bolsista...</option>
-                    </select>
-                    <input type="text" id="bolsistaFixo" disabled hidden>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label>Data</label>
-                        <input type="date" id="data" required>
-                    </div>
-                    <div class="form-col">
-                        <label>Horas</label>
-                        <input type="number" step="0.5" id="horas" required placeholder="Ex: 4.5">
-                    </div>
-                </div>
-                <div>
-                    <label>Descrição das Atividades</label>
-                    <textarea id="descricao" rows="3"></textarea>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="submit-button"><i class="fas fa-save"></i> <span id="rotulo-salvar">Registrar Horas</span></button>
-                    <a href="/frequencia.html" class="cancel-button" id="cancelar" hidden><i class="fas fa-times"></i> Cancelar</a>
-                </div>
-            </form>
+        <div class="header-actions">
+            <div>
+                <h1>Registro de Frequência</h1>
+                <p class="header-subtitle">Acompanhamento e lançamento de horas de atividades dos bolsistas</p>
+            </div>
+            <div class="header-buttons">
+                <button type="button" class="btn-new btn-primary" id="btn-nova-frequencia">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>Registrar Horas</span>
+                </button>
+                <a href="/api/frequencias/exportar" id="btn-exportar" class="btn-new btn-export">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Exportar CSV</span>
+                </a>
+            </div>
         </div>
 
+        <div class="stats-grid" id="resumo" hidden></div>
+
+        <div id="avisos" aria-live="polite" role="status"></div>
+
         <div class="container">
-            <div class="history-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:15px;">
-                <h2 style="margin:0;"><i class="fas fa-history"></i> Histórico de Atividades</h2>
-                <div class="history-actions" style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;">
-                    <form class="filter-form" id="form-filtro" style="display:flex;gap:10px;align-items:center;" hidden>
-                        <select id="filtro-bolsista" style="padding:8px 12px;border:1px solid #ccc;border-radius:4px;font-size:0.9rem;">
+            <div class="history-header">
+                <h2 class="section-title" style="margin:0;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><polyline points="12 7 12 12 15 15"/></svg>
+                    <span>Histórico de Atividades</span>
+                </h2>
+                <div class="history-actions">
+                    <form class="filter-form" id="form-filtro" hidden>
+                        <label for="filtro-bolsista" class="sr-only">Filtrar por bolsista</label>
+                        <select id="filtro-bolsista" aria-label="Filtrar por bolsista">
                             <option value="">Todos os Bolsistas</option>
                         </select>
-                        <button type="submit" class="submit-button" style="padding:8px 15px;border-radius:4px;font-size:0.9rem;margin:0;"><i class="fas fa-filter"></i> Filtrar</button>
+                        <button type="submit" class="btn-filter" aria-label="Filtrar frequências">
+                            <span>Filtrar</span>
+                        </button>
                     </form>
-                    <a href="/api/frequencias/exportar" id="btn-exportar" class="submit-button"
-                       style="padding:8px 15px;border-radius:4px;font-size:0.9rem;margin:0;background-color:#27ae60;text-decoration:none;display:inline-flex;align-items:center;gap:5px;color:white;">
-                        <i class="fas fa-file-csv"></i> Exportar CSV
-                    </a>
                 </div>
             </div>
 
@@ -71,7 +59,56 @@
                 </table>
             </div>
 
-            <div class="pagination" id="paginacao" style="display:flex;justify-content:center;gap:15px;margin-top:20px;align-items:center;"></div>
+            <div class="pagination-container" id="paginacao"></div>
+        </div>
+    </div>
+
+    <!-- Modal Registro / Edicao de Frequencia -->
+    <div class="modal-overlay" id="modal-frequencia" role="dialog" aria-modal="true" aria-labelledby="modal-freq-titulo">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="modal-freq-titulo">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--primary-color);"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span id="label-modal-freq">Novo Registro de Horas</span>
+                </h2>
+                <button type="button" class="modal-close-btn" data-fecha-modal="modal-frequencia" aria-label="Fechar janela modal">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="form-frequencia">
+                <input type="hidden" id="frequencia-id">
+                <div class="modal-body">
+                    <div class="form-group" id="grupo-bolsista" style="margin-bottom: 14px;">
+                        <label for="bolsistaSelect" style="font-weight:600;font-size:0.875rem;margin-bottom:6px;display:block;">Bolsista <span class="asterisco">*</span></label>
+                        <select id="bolsistaSelect" required hidden style="width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-grid);background-color:var(--surface-color);font-family:inherit;font-size:0.875rem;box-sizing:border-box;">
+                            <option value="">Selecione o bolsista...</option>
+                        </select>
+                        <input type="text" id="bolsistaFixo" disabled hidden style="width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-grid);background-color:#f1f5f9;font-family:inherit;font-size:0.875rem;box-sizing:border-box;color:var(--text-muted);">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                        <div class="form-group">
+                            <label for="data" style="font-weight:600;font-size:0.875rem;margin-bottom:6px;display:block;">Data da Atividade <span class="asterisco">*</span></label>
+                            <input type="date" id="data" required style="width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-grid);background-color:var(--surface-color);font-family:inherit;font-size:0.875rem;box-sizing:border-box;">
+                        </div>
+                        <div class="form-group">
+                            <label for="horas" style="font-weight:600;font-size:0.875rem;margin-bottom:6px;display:block;">Horas Trabalhadas <span class="asterisco">*</span></label>
+                            <input type="number" step="0.5" id="horas" required min="0.5" max="24" placeholder="Ex: 4.5" style="width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-grid);background-color:var(--surface-color);font-family:inherit;font-size:0.875rem;box-sizing:border-box;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao" style="font-weight:600;font-size:0.875rem;margin-bottom:6px;display:block;">Descrição das Atividades Realizadas <span class="asterisco">*</span></label>
+                        <textarea id="descricao" rows="4" required placeholder="Descreva as tarefas e atividades desenvolvidas no período..." style="width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-grid);background-color:var(--surface-color);font-family:inherit;font-size:0.875rem;box-sizing:border-box;resize:vertical;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-fecha-modal="modal-frequencia" style="flex:0 1 auto;padding:9px 18px;">Cancelar</button>
+                    <button type="submit" class="btn btn-submit" id="btn-salvar-freq" style="flex:0 1 auto;padding:9px 20px;">
+                        <span class="btn-spinner" aria-hidden="true"></span>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="btn-icon"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        <span id="rotulo-salvar">Registrar Horas</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

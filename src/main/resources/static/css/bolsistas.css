@@ -3,7 +3,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.header-actions h1 {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .header-buttons {
@@ -15,9 +25,8 @@
     text-decoration: none;
     padding: 10px 18px;
     border-radius: var(--radius-sm);
-    color: white;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -28,90 +37,64 @@
 
 .btn-export {
     background-color: var(--surface-color);
-    color: var(--text-muted);
+    color: var(--text-secondary);
     border: 1px solid var(--border-grid);
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-export:hover {
-    background-color: #f1f5f9;
-    color: var(--text-main);
+    background-color: var(--primary-subtle);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
 .btn-create {
     background-color: var(--primary-color);
-    color: white;
+    color: #ffffff;
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-create:hover {
     background-color: var(--primary-hover);
 }
 
-/* Área de Filtros / Busca */
-.search-section {
+/* Filtros rápidos por Tipo */
+.filter-pills {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 25px;
-    background: #f8fafc;
-    padding: 20px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-grid);
-}
-
-.search-form {
-    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
     align-items: center;
-    gap: 10px;
-    flex: 1;
 }
 
-.search-input {
-    padding: 10px 14px;
-    border: 1px solid var(--border-grid);
-    border-radius: var(--radius-sm);
-    font-size: 0.85rem;
-    color: var(--text-main);
-    flex: 1;
-    transition: var(--transition-smooth);
-    background-color: var(--surface-color);
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-.search-button,
-.reset-button {
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 0.85rem;
+.filter-label {
     font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-right: 4px;
+}
+
+.pill-btn {
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background-color: var(--surface-color);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-grid);
     transition: var(--transition-smooth);
 }
 
-.search-button {
-    background-color: var(--accent-color);
+.pill-btn:hover {
+    background-color: var(--primary-subtle);
+    color: var(--primary-color);
 }
 
-.search-button:hover {
-    filter: brightness(0.95);
-}
-
-.reset-button {
-    background-color: var(--text-muted);
-}
-
-.reset-button:hover {
-    background-color: #475569;
+.pill-btn.active {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
 }
 
 .table-container {
@@ -121,65 +104,103 @@
 /* Links de Ações */
 .action-link {
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: var(--radius-sm);
     transition: var(--transition-smooth);
+    border: 1px solid transparent;
+}
+
+.action-link svg {
+    width: 16px;
+    height: 16px;
 }
 
 .action-link-edit {
-    color: var(--accent-color);
-    background-color: #eff6ff;
-    border: 1px solid #dbeafe;
-    margin-right: 8px;
+    color: var(--primary-color);
+    background-color: var(--primary-subtle);
+    border-color: #bfdbfe;
+    margin-right: 6px;
 }
 
 .action-link-edit:hover {
     background-color: #dbeafe;
+    color: var(--primary-hover);
 }
 
 .action-link-delete {
     color: var(--danger-color);
     background-color: var(--danger-bg);
-    border: 1px solid #fecaca;
+    border-color: var(--danger-border);
 }
 
 .action-link-delete:hover {
-    background-color: #fecaca;
+    background-color: #fee2e2;
+    color: #991b1b;
 }
 
-/* Filtros rápidos por Tipo */
-.filter-pills {
+/* Paginação */
+.pagination {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 22px;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
     align-items: center;
 }
 
-.pill-btn {
-    text-decoration: none;
-    font-size: 0.8rem;
-    font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 50px;
-    background-color: #f1f5f9;
-    color: var(--text-muted);
+.btn-pagination {
+    padding: 8px 16px;
+    background-color: var(--surface-color);
+    color: var(--primary-color);
     border: 1px solid var(--border-grid);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     transition: var(--transition-smooth);
 }
 
-.pill-btn:hover {
-    background-color: #e2e8f0;
-    color: var(--text-main);
+.btn-pagination:hover {
+    background-color: var(--primary-subtle);
+    border-color: var(--primary-color);
 }
 
-.pill-btn.active {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
+.pagination-info {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.empty-state-cell {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.empty-state-cell svg {
+    width: 36px;
+    height: 36px;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
 }

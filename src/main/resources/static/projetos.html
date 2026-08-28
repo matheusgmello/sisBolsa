@@ -4,50 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projetos - SisBolsa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/laboratorios.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .membros-list-container { display:flex; flex-wrap:wrap; gap:6px; max-width:300px; }
-        .badge-membro {
-            background-color:#e0f2fe; color:#0369a1; padding:3px 8px;
-            border-radius:var(--radius-sm); font-size:0.75rem; font-weight:500;
-            border:1px solid #bae6fd; display:inline-flex; align-items:center; gap:4px;
-        }
-        .projeto-desc {
-            max-width:350px; overflow:hidden; text-overflow:ellipsis; white-space:normal;
-            font-size:0.85rem; color:var(--text-muted); line-height:1.4;
-        }
-        .btn-new-proj { background-color:var(--primary-color); color:white; }
-        .btn-new-proj:hover { background-color:var(--primary-hover); }
-    </style>
 </head>
 <body>
     <div class="main-content">
         <div class="header-actions">
-            <h1>Gerenciar Projetos</h1>
-            <a href="/projeto-form.html" class="btn-new btn-new-proj" id="btn-novo" hidden>
-                <i class="fas fa-plus"></i> Cadastrar Novo Projeto
-            </a>
+            <div>
+                <h1>Gerenciar Projetos</h1>
+                <p class="header-subtitle">Pesquisa, alocação de equipes e acompanhamento de projetos</p>
+            </div>
+            <button type="button" class="btn-new btn-primary" id="btn-novo" hidden>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Cadastrar Novo Projeto</span>
+            </button>
         </div>
 
-        <div id="avisos"></div>
+        <div id="avisos" aria-live="polite" role="status"></div>
 
         <div class="container">
             <div class="search-section">
-                <form class="search-form" id="form-busca">
-                    <input type="text" id="busca-nome" placeholder="Pesquisar projeto por nome ou descrição..." class="search-input">
-                    <button type="submit" class="search-button"><i class="fas fa-search"></i> Pesquisar</button>
+                <form class="search-toolbar" id="form-busca">
+                    <div class="search-field">
+                        <label for="busca-nome" class="sr-only">Pesquisar projeto</label>
+                        <input type="text" id="busca-nome" placeholder="Pesquisar por nome ou descrição..." class="search-input" aria-label="Pesquisar projeto por nome ou descrição">
+                    </div>
+                    
+                    <div class="search-field" style="max-width: 280px;">
+                        <label for="filtro-lab" class="sr-only">Filtrar por laboratório</label>
+                        <select id="filtro-lab" class="search-input" aria-label="Filtrar por laboratório">
+                            <option value="">Todos os Laboratórios</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="search-button" aria-label="Buscar projetos">
+                        <span>Buscar</span>
+                    </button>
+                    
+                    <a href="/projetos.html" class="reset-button" id="limpar" title="Limpar busca e filtros" aria-label="Limpar busca e filtros" hidden>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        <span>Limpar</span>
+                    </a>
                 </form>
-                <form class="search-form">
-                    <select id="filtro-lab" class="search-input">
-                        <option value="">Todos os Laboratórios</option>
-                    </select>
-                </form>
-                <a href="/projetos.html" class="reset-button" id="limpar" title="Limpar todos os filtros" hidden><i class="fas fa-sync"></i></a>
             </div>
 
-            <h2><i class="fas fa-project-diagram"></i> Listagem de Projetos Ativos</h2>
+            <h2 class="section-title">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                <span>Listagem de Projetos Ativos</span>
+            </h2>
 
             <div class="table-container">
                 <table>
@@ -60,6 +67,48 @@
                     <tbody id="corpo"></tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Cadastro / Edicao de Projeto -->
+    <div class="modal-overlay" id="modal-projeto" role="dialog" aria-modal="true" aria-labelledby="modal-projeto-titulo">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="modal-projeto-titulo">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--primary-color);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                    <span id="label-modal-projeto">Cadastrar Novo Projeto</span>
+                </h2>
+                <button type="button" class="modal-close-btn" data-fecha-modal="modal-projeto" aria-label="Fechar janela modal">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="form-modal-projeto">
+                <input type="hidden" id="projeto-id">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="modal-nome-projeto" style="font-weight:600;font-size:0.875rem;margin-bottom:6px;display:block;">Nome do Projeto <span class="asterisco">*</span></label>
+                        <input type="text" id="modal-nome-projeto" required minlength="3" placeholder="Ex: IA Generativa na Educação" style="width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-grid);background-color:var(--surface-color);font-family:inherit;font-size:0.875rem;box-sizing:border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="modal-lab-projeto" style="font-weight:600;font-size:0.875rem;margin-bottom:6px;display:block;">Laboratório Responsável <span class="asterisco">*</span></label>
+                        <select id="modal-lab-projeto" required style="width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-grid);background-color:var(--surface-color);font-family:inherit;font-size:0.875rem;box-sizing:border-box;">
+                            <option value="">Selecione o laboratório...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-desc-projeto" style="font-weight:600;font-size:0.875rem;margin-bottom:6px;display:block;">Descrição do Projeto</label>
+                        <textarea id="modal-desc-projeto" rows="4" placeholder="Descreva os objetivos, tecnologias e escopo do projeto..." style="width:100%;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-grid);background-color:var(--surface-color);font-family:inherit;font-size:0.875rem;box-sizing:border-box;resize:vertical;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-fecha-modal="modal-projeto" style="flex:0 1 auto;padding:9px 18px;">Cancelar</button>
+                    <button type="submit" class="btn btn-submit" id="btn-modal-salvar-proj" style="flex:0 1 auto;padding:9px 20px;">
+                        <span class="btn-spinner" aria-hidden="true"></span>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="btn-icon"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        <span id="label-btn-salvar-proj">Salvar Projeto</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
