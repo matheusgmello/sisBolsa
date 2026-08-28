@@ -10,22 +10,22 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 /*
- * registro de horas trabalhadas por um bolsista.
+ * registro de horas trabalhadas por um bolsista com id UUID.
  */
 @Entity
 @Table(name = "frequencia")
 public class Frequencia {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(name = "bolsista_id")
-    private Integer bolsistaId;
+    private UUID bolsistaId;
 
-    /* so leitura, serve para o getNomeBolsista() das telas de frequencia */
     @ManyToOne
     @JoinColumn(name = "bolsista_id", insertable = false, updatable = false)
     private Bolsista bolsista;
@@ -40,20 +40,20 @@ public class Frequencia {
 
     public Frequencia() {}
 
-    public Frequencia(int id, int bolsistaId, LocalDate data, double horasTrabalhadas, String descricao, boolean ativo) {
+    public Frequencia(UUID id, UUID bolsistaId, LocalDate data, double horasTrabalhadas, String descricao, boolean ativo) {
         this.id = id;
-        setBolsistaId(bolsistaId);
+        this.bolsistaId = bolsistaId;
         this.data = data;
         this.horasTrabalhadas = horasTrabalhadas;
         this.descricao = descricao;
         this.ativo = ativo;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public int getBolsistaId() { return bolsistaId != null ? bolsistaId : 0; }
-    public void setBolsistaId(int bolsistaId) { this.bolsistaId = bolsistaId > 0 ? bolsistaId : null; }
+    public UUID getBolsistaId() { return bolsistaId; }
+    public void setBolsistaId(UUID bolsistaId) { this.bolsistaId = bolsistaId; }
 
     public String getNomeBolsista() {
         return bolsista != null ? bolsista.getNome() : null;

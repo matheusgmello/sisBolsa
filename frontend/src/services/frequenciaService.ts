@@ -2,21 +2,21 @@ import { api } from './api';
 import type { Frequencia, FrequenciaRequest, FrequenciaResumo, Paginacao } from '../types';
 
 export const frequenciaService = {
-  listar: (params?: { bolsistaId?: number | string; pagina?: number; tamanho?: number }) =>
+  listar: (params?: { bolsistaId?: string; pagina?: number; tamanho?: number }) =>
     api.get<Paginacao<Frequencia>>('/frequencias', params),
 
-  buscarPorId: (id: number) =>
+  buscarPorId: (id: string) =>
     api.get<Frequencia>(`/frequencias/${id}`),
 
   criar: (dados: FrequenciaRequest) =>
     api.post<Frequencia>('/frequencias', dados),
 
-  atualizar: (id: number, dados: FrequenciaRequest) =>
+  atualizar: (id: string, dados: FrequenciaRequest) =>
     api.put<Frequencia>(`/frequencias/${id}`, dados),
 
-  excluir: (id: number) =>
+  excluir: (id: string) =>
     api.delete<void>(`/frequencias/${id}`),
 
-  obterResumo: () =>
-    api.get<FrequenciaResumo>('/frequencias/resumo'),
+  obterResumo: (bolsistaId?: string) =>
+    api.get<FrequenciaResumo>('/frequencias/resumo', bolsistaId ? { bolsistaId } : undefined),
 };

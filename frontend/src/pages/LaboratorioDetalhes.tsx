@@ -19,7 +19,7 @@ import { Modal } from '../components/ui/Modal';
 
 export const LaboratorioDetalhes: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const labId = Number(id);
+  const labId = id || '';
 
   const { canManage } = useAuth();
   const { showToast } = useToast();

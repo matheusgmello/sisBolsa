@@ -1,5 +1,6 @@
 -- ============================================================
--- SisBolsa - Script Principal de Inicialização (UUID)
+-- V5__migrar_para_uuid.sql
+-- Migracao das chaves primarias e estrangeiras de Integer para UUID
 -- ============================================================
 
 DROP TABLE IF EXISTS frequencia CASCADE;
@@ -72,7 +73,7 @@ CREATE TABLE frequencia (
 );
 
 -- ============================================================
--- Inserção dos Dados de Apresentação
+-- Seed de Apresentacao em UUID
 -- ============================================================
 INSERT INTO professor (id, nome, email, senha, tipo_usuario, ativo, foto_url, bio) VALUES
 ('b1111111-1111-1111-1111-111111111111', 'Dr. Roberto Mendes', 'roberto.mendes@sisbolsa.com', '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', 'PROFESSOR', true, 'https://i.pravatar.cc/150?img=11', NULL),

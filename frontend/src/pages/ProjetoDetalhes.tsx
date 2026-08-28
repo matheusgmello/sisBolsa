@@ -19,7 +19,7 @@ import { Modal } from '../components/ui/Modal';
 
 export const ProjetoDetalhes: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const projId = Number(id);
+  const projId = id || '';
 
   const { canManage } = useAuth();
   const { showToast } = useToast();
@@ -70,7 +70,7 @@ export const ProjetoDetalhes: React.FC = () => {
 
     setSaving(true);
     try {
-      await projetoService.vincularBolsista(projId, Number(selectedBolsistaId));
+      await projetoService.vincularBolsista(projId, selectedBolsistaId);
       showToast('Bolsista vinculado ao projeto com sucesso!', 'sucesso');
       setIsModalOpen(false);
       setSelectedBolsistaId('');

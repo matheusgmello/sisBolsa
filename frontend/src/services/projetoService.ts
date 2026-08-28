@@ -2,27 +2,27 @@ import { api } from './api';
 import type { Projeto, ProjetoRequest, MembroProjeto } from '../types';
 
 export const projetoService = {
-  listar: (filtros?: { buscaNome?: string; labId?: number | string }) =>
+  listar: (filtros?: { buscaNome?: string; labId?: string }) =>
     api.get<Projeto[]>('/projetos', filtros),
 
-  buscarPorId: (id: number) =>
+  buscarPorId: (id: string) =>
     api.get<Projeto>(`/projetos/${id}`),
 
   criar: (dados: ProjetoRequest) =>
     api.post<Projeto>('/projetos', dados),
 
-  atualizar: (id: number, dados: ProjetoRequest) =>
+  atualizar: (id: string, dados: ProjetoRequest) =>
     api.put<Projeto>(`/projetos/${id}`, dados),
 
-  excluir: (id: number) =>
+  excluir: (id: string) =>
     api.delete<void>(`/projetos/${id}`),
 
-  listarMembros: (id: number) =>
+  listarMembros: (id: string) =>
     api.get<MembroProjeto[]>(`/projetos/${id}/membros`),
 
-  vincularBolsista: (projetoId: number, bolsistaId: number) =>
-    api.post<void>(`/projetos/${projetoId}/membros`, { bolsistaId }),
+  vincularBolsista: (projetoId: string, bolsistaId: string) =>
+    api.post<void>(`/projetos/${projetoId}/membros/${bolsistaId}`),
 
-  desvincularBolsista: (projetoId: number, bolsistaId: number) =>
+  desvincularBolsista: (projetoId: string, bolsistaId: string) =>
     api.delete<void>(`/projetos/${projetoId}/membros/${bolsistaId}`),
 };

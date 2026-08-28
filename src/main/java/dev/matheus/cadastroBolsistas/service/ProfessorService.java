@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 @Service
 public class ProfessorService {
@@ -27,7 +28,8 @@ public class ProfessorService {
         return new ArrayList<>(repository.findByNomeContainingIgnoreCaseAndAtivoTrueOrderByNome(nome));
     }
 
-    public Professor buscarPorId(int id) {
+    public Professor buscarPorId(UUID id) {
+        if (id == null) return null;
         return repository.findById(id).orElse(null);
     }
 
@@ -38,7 +40,8 @@ public class ProfessorService {
 
     /* soft delete */
     @Transactional
-    public boolean excluir(int id) {
+    public boolean excluir(UUID id) {
+        if (id == null) return false;
         return repository.desativar(id) > 0;
     }
 }

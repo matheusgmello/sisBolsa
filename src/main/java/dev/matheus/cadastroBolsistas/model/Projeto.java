@@ -9,25 +9,24 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import java.util.UUID;
+
 /*
- * projeto vinculado a um laboratorio. o vinculo com bolsistas mora na tabela
- * bolsista_projeto e e manipulado por queries do ProjetoRepository, nao por
- * uma colecao mapeada - o Bolsista vai parar na HttpSession e colecao lazy
- * em objeto de sessao so da dor de cabeca.
+ * projeto vinculado a um laboratorio com id UUID.
  */
 @Entity
 @Table(name = "projeto")
 public class Projeto {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String nome;
     private String descricao;
 
     @Column(name = "laboratorio_id")
-    private Integer laboratorioId;
+    private UUID laboratorioId;
 
     @ManyToOne
     @JoinColumn(name = "laboratorio_id", insertable = false, updatable = false)
@@ -37,16 +36,16 @@ public class Projeto {
 
     public Projeto() {}
 
-    public Projeto(int id, String nome, String descricao, int laboratorioId, String nomeLaboratorio, boolean ativo) {
+    public Projeto(UUID id, String nome, String descricao, UUID laboratorioId, String nomeLaboratorio, boolean ativo) {
         this.id = id;
         this.nome = nome;
         this.descricao = descricao;
-        setLaboratorioId(laboratorioId);
+        this.laboratorioId = laboratorioId;
         this.ativo = ativo;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
@@ -54,8 +53,8 @@ public class Projeto {
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
 
-    public int getLaboratorioId() { return laboratorioId != null ? laboratorioId : 0; }
-    public void setLaboratorioId(int laboratorioId) { this.laboratorioId = laboratorioId > 0 ? laboratorioId : null; }
+    public UUID getLaboratorioId() { return laboratorioId; }
+    public void setLaboratorioId(UUID laboratorioId) { this.laboratorioId = laboratorioId; }
 
     public String getNomeLaboratorio() {
         return laboratorio != null ? laboratorio.getNome() : null;

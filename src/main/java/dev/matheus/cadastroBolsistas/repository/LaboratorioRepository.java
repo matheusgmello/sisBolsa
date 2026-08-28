@@ -8,21 +8,20 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface LaboratorioRepository extends JpaRepository<Laboratorio, Integer> {
+public interface LaboratorioRepository extends JpaRepository<Laboratorio, UUID> {
 
     List<Laboratorio> findByAtivoTrueOrderByNome();
 
-    /* jpql explicito: coordenadorId e coordenadorProfessor deixam o nome derivado ambiguo */
     @Query("SELECT l FROM Laboratorio l WHERE l.coordenadorId = :professorId AND l.ativo = true ORDER BY l.nome")
-    List<Laboratorio> buscarPorCoordenador(@Param("professorId") int professorId);
+    List<Laboratorio> buscarPorCoordenador(@Param("professorId") UUID professorId);
 
     @Query("SELECT COUNT(b) FROM Bolsista b WHERE b.laboratorioId = :labId AND b.ativo = true")
-    int contarBolsistasAtivos(@Param("labId") int labId);
+    int contarBolsistasAtivos(@Param("labId") UUID labId);
 
-    /* soft delete, mesmo motivo do BolsistaRepository */
     @Modifying
     @Query("UPDATE Laboratorio l SET l.ativo = false WHERE l.id = :id")
-    int desativar(@Param("id") int id);
+    int desativar(@Param("id") UUID id);
 }

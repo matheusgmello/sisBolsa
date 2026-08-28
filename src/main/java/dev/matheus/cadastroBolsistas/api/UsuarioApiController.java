@@ -23,10 +23,11 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 /*
- * bolsistas, admins e professores saem pela mesma rota porque para quem consome
- * sao todos usuario - o que muda e o tipoUsuario.
+ * bolsistas, admins e professores saem pela mesma rota com IDs em UUID.
  */
 @Tag(name = "Usuarios", description = "Bolsistas, administradores e professores. O que muda entre eles e o campo tipoUsuario.")
 @RestController
@@ -91,7 +92,7 @@ public class UsuarioApiController {
     }
 
     @GetMapping("/{id}")
-    public UsuarioResponse buscar(@PathVariable int id,
+    public UsuarioResponse buscar(@PathVariable UUID id,
                                   @RequestParam(defaultValue = "BOLSISTA") String tipo,
                                   HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
@@ -109,8 +110,7 @@ public class UsuarioApiController {
         if (b == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado.");
         }
-        /* o proprio usuario sempre pode se ver; fora isso vale o podeGerenciar */
-        usuarioLogado.exigir(logado.getId() == id || bolsistaService.podeGerenciar(logado, b),
+        usuarioLogado.exigir(Objects.equals(logado.getId(), id) || bolsistaService.podeGerenciar(logado, b),
                 "Sem permissao para ver este usuario.");
         return UsuarioResponse.de(b);
     }
@@ -118,8 +118,6 @@ public class UsuarioApiController {
     @Operation(summary = "Cargos possiveis de um bolsista dentro do laboratorio.")
     @GetMapping("/cargos")
     public List<Map<String, String>> cargos() {
-        /* vem do enum e nao de uma lista chumbada no javascript, para nao
-           existirem duas verdades sobre os cargos validos */
         return java.util.Arrays.stream(Cargo.values())
                 .map(c -> Map.of("valor", c.name(), "descricao", c.getDescricao()))
                 .toList();
@@ -151,7 +149,6 @@ public class UsuarioApiController {
         }
     }
 
-    /* csv simples: aspas em volta e aspas internas duplicadas, que e o que o excel espera */
     private static String csv(String valor) {
         if (valor == null) {
             return "";
@@ -161,13 +158,13 @@ public class UsuarioApiController {
 
     @Operation(summary = "Projetos em que o usuario esta vinculado.")
     @GetMapping("/{id}/projetos")
-    public List<ProjetoResponse> projetos(@PathVariable int id, HttpSession session) {
+    public List<ProjetoResponse> projetos(@PathVariable UUID id, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Bolsista b = bolsistaService.buscarPorId(id);
         if (b == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado.");
         }
-        usuarioLogado.exigir(logado.getId() == id || bolsistaService.podeGerenciar(logado, b),
+        usuarioLogado.exigir(Objects.equals(logado.getId(), id) || bolsistaService.podeGerenciar(logado, b),
                 "Sem permissao para ver os projetos deste usuario.");
         return projetoService.listarPorBolsista(id).stream().map(ProjetoResponse::de).toList();
     }
@@ -205,7 +202,7 @@ public class UsuarioApiController {
 
     @Operation(summary = "Atualiza um usuario. Senha em branco mantem a que ja esta gravada.")
     @PutMapping("/{id}")
-    public UsuarioResponse atualizar(@PathVariable int id,
+    public UsuarioResponse atualizar(@PathVariable UUID id,
                                      @RequestBody BolsistaRequest body,
                                      HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
@@ -229,13 +226,12 @@ public class UsuarioApiController {
         if (b == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado.");
         }
-        usuarioLogado.exigir(logado.getId() == id || bolsistaService.podeGerenciar(logado, b),
+        usuarioLogado.exigir(Objects.equals(logado.getId(), id) || bolsistaService.podeGerenciar(logado, b),
                 "Sem permissao para editar este usuario.");
 
         String senhaAtual = b.getSenha();
         aplicarComuns(b, body);
         aplicarCamposDeBolsista(b, body, logado);
-        /* senha vazia na edicao significa manter a que ja esta gravada */
         b.setSenha(StringUtil.estaVazio(body.senha()) ? senhaAtual : passwordEncoder.encode(body.senha()));
         bolsistaService.atualizar(b);
         return UsuarioResponse.de(b);
@@ -243,7 +239,7 @@ public class UsuarioApiController {
 
     @Operation(summary = "Desativa o usuario (soft delete). A linha e o historico de frequencia permanecem no banco.")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(@PathVariable int id,
+    public ResponseEntity<Void> excluir(@PathVariable UUID id,
                                         @RequestParam(defaultValue = "BOLSISTA") String tipo,
                                         HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
@@ -298,9 +294,8 @@ public class UsuarioApiController {
         b.setCargo(Cargo.deString(body.cargo()));
         b.setTipoUsuario("ADMIN".equalsIgnoreCase(body.tipoUsuario()) ? "ADMIN" : "BOLSISTA");
 
-        int labId = body.laboratorioId() != null ? body.laboratorioId() : 0;
-        if (labId > 0) {
-            /* professor so aloca bolsista em lab que ele coordena */
+        UUID labId = body.laboratorioId();
+        if (labId != null) {
             usuarioLogado.exigir(laboratorioService.podeGerenciar(logado, labId),
                     "Sem permissao para vincular usuario a este laboratorio.");
         }
@@ -318,7 +313,6 @@ public class UsuarioApiController {
         }
     }
 
-    /* tamanho e opcional: telas que precisam da lista inteira num select pedem mais */
     private PaginaResponse<UsuarioResponse> paginar(List<Usuario> lista, int pagina, Integer tamanhoPedido) {
         int tamanho = tamanhoPedido != null && tamanhoPedido > 0
                 ? Math.min(tamanhoPedido, TAMANHO_MAXIMO)

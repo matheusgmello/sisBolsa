@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 @Tag(name = "Laboratorios", description = "Laboratorios de pesquisa, sua ocupacao, equipe e projetos.")
 @RestController
@@ -45,20 +46,20 @@ public class LaboratorioApiController {
     }
 
     @GetMapping("/{id}")
-    public LaboratorioResponse buscar(@PathVariable int id, HttpSession session) {
+    public LaboratorioResponse buscar(@PathVariable UUID id, HttpSession session) {
         usuarioLogado.obrigatorio(session);
         return comOcupacao(exigirLab(id));
     }
 
     @GetMapping("/{id}/bolsistas")
-    public List<UsuarioResponse> bolsistas(@PathVariable int id, HttpSession session) {
+    public List<UsuarioResponse> bolsistas(@PathVariable UUID id, HttpSession session) {
         usuarioLogado.obrigatorio(session);
         exigirLab(id);
         return bolsistaService.buscarPorLaboratorio(id).stream().map(UsuarioResponse::de).toList();
     }
 
     @GetMapping("/{id}/projetos")
-    public List<ProjetoResponse> projetos(@PathVariable int id, HttpSession session) {
+    public List<ProjetoResponse> projetos(@PathVariable UUID id, HttpSession session) {
         usuarioLogado.obrigatorio(session);
         exigirLab(id);
         return projetoService.listarPorLaboratorio(id).stream().map(ProjetoResponse::de).toList();
@@ -77,7 +78,7 @@ public class LaboratorioApiController {
     }
 
     @PutMapping("/{id}")
-    public LaboratorioResponse atualizar(@PathVariable int id, @RequestBody LaboratorioRequest body, HttpSession session) {
+    public LaboratorioResponse atualizar(@PathVariable UUID id, @RequestBody LaboratorioRequest body, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Laboratorio lab = exigirLab(id);
         usuarioLogado.exigir(laboratorioService.podeGerenciar(logado, id), "Sem permissao para editar este laboratorio.");
@@ -90,7 +91,7 @@ public class LaboratorioApiController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(@PathVariable int id, HttpSession session) {
+    public ResponseEntity<Void> excluir(@PathVariable UUID id, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         exigirLab(id);
         usuarioLogado.exigir(laboratorioService.podeGerenciar(logado, id), "Sem permissao para excluir este laboratorio.");
@@ -98,7 +99,7 @@ public class LaboratorioApiController {
         return ResponseEntity.noContent().build();
     }
 
-    private Laboratorio exigirLab(int id) {
+    private Laboratorio exigirLab(UUID id) {
         Laboratorio lab = laboratorioService.buscarPorId(id);
         if (lab == null || !lab.isAtivo()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Laboratorio nao encontrado.");
@@ -120,7 +121,7 @@ public class LaboratorioApiController {
         lab.setAreaPesquisa(body.areaPesquisa());
         lab.setStatus(StringUtil.estaVazio(body.status()) ? "Ativo" : body.status());
         lab.setCapacidade(body.capacidade());
-        lab.setCoordenadorId(body.coordenadorId() != null ? body.coordenadorId() : 0);
+        lab.setCoordenadorId(body.coordenadorId());
     }
 
     private LaboratorioResponse comOcupacao(Laboratorio lab) {

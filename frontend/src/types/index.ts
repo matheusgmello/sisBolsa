@@ -3,17 +3,17 @@ export type TipoUsuario = 'ADMIN' | 'PROFESSOR' | 'BOLSISTA';
 export type LaboratorioStatus = 'Ativo' | 'Em Pausa' | 'Concluido';
 
 export interface UsuarioAuth {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   tipoUsuario: TipoUsuario;
-  laboratorioId: number | null;
+  laboratorioId: string | null;
   fotoUrl: string | null;
   ativo: boolean;
 }
 
 export interface Usuario {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   tipoUsuario: TipoUsuario;
@@ -23,7 +23,7 @@ export interface Usuario {
   cpf?: string | null;
   telefone?: string | null;
   dataNascimento?: string | null;
-  laboratorioId?: number | null;
+  laboratorioId?: string | null;
   nomeLaboratorio?: string | null;
   cargo?: string | null;
   ativo: boolean;
@@ -40,7 +40,7 @@ export interface UsuarioRequest {
   matricula?: string | null;
   cpf?: string | null;
   telefone?: string | null;
-  laboratorioId?: number | null;
+  laboratorioId?: string | null;
   cargo?: string | null;
 }
 
@@ -57,12 +57,12 @@ export interface Paginacao<T> {
 }
 
 export interface Laboratorio {
-  id: number;
+  id: string;
   nome: string;
   areaPesquisa: string;
   status: LaboratorioStatus;
   capacidade: number;
-  coordenadorId: number | null;
+  coordenadorId: string | null;
   coordenador: string | null;
   totalBolsistas: number;
   ativo: boolean;
@@ -74,14 +74,14 @@ export interface LaboratorioRequest {
   areaPesquisa: string;
   status: LaboratorioStatus;
   capacidade: number;
-  coordenadorId: number | null;
+  coordenadorId: string | null;
 }
 
 export interface Projeto {
-  id: number;
+  id: string;
   nome: string;
   descricao: string | null;
-  laboratorioId: number;
+  laboratorioId: string;
   nomeLaboratorio: string;
   ativo: boolean;
   membros?: MembroProjeto[];
@@ -90,11 +90,11 @@ export interface Projeto {
 export interface ProjetoRequest {
   nome: string;
   descricao?: string | null;
-  laboratorioId: number;
+  laboratorioId: string;
 }
 
 export interface MembroProjeto {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   curso?: string | null;
@@ -103,8 +103,8 @@ export interface MembroProjeto {
 }
 
 export interface Frequencia {
-  id: number;
-  bolsistaId: number;
+  id: string;
+  bolsistaId: string;
   nomeBolsista: string;
   data: string;
   horasTrabalhadas: number;
@@ -113,7 +113,7 @@ export interface Frequencia {
 }
 
 export interface FrequenciaRequest {
-  bolsistaId?: number | null;
+  bolsistaId?: string | null;
   data: string;
   horasTrabalhadas: number;
   descricao: string;
@@ -132,7 +132,7 @@ export interface DashboardMetricas {
 }
 
 export interface RelatorioItem {
-  id: number;
+  id: string;
   nome: string;
   capacidade: number;
   ocupacao: number;

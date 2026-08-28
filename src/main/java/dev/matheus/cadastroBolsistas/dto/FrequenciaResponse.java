@@ -3,10 +3,11 @@ package dev.matheus.cadastroBolsistas.dto;
 import dev.matheus.cadastroBolsistas.model.Frequencia;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record FrequenciaResponse(
-        int id,
-        int bolsistaId,
+        UUID id,
+        UUID bolsistaId,
         String nomeBolsista,
         LocalDate data,
         double horasTrabalhadas,

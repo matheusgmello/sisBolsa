@@ -2,11 +2,13 @@ package dev.matheus.cadastroBolsistas.dto;
 
 import dev.matheus.cadastroBolsistas.model.Projeto;
 
+import java.util.UUID;
+
 public record ProjetoResponse(
-        int id,
+        UUID id,
         String nome,
         String descricao,
-        Integer laboratorioId,
+        UUID laboratorioId,
         String nomeLaboratorio,
         boolean ativo) {
 
@@ -16,7 +18,7 @@ public record ProjetoResponse(
         }
         return new ProjetoResponse(
                 p.getId(), p.getNome(), p.getDescricao(),
-                p.getLaboratorioId() > 0 ? p.getLaboratorioId() : null,
+                p.getLaboratorioId(),
                 p.getNomeLaboratorio(), p.isAtivo());
     }
 }

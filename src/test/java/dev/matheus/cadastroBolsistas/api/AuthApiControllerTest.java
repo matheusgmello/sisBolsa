@@ -24,6 +24,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -31,8 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /*
- * cobre login e edicao de perfil pela api, que e onde essa logica passou a morar
- * depois que os controllers mvc sairam.
+ * cobre login e edicao de perfil pela api com UUIDs.
  */
 @WebMvcTest(controllers = AuthApiController.class,
         excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE,
@@ -54,6 +55,7 @@ class AuthApiControllerTest {
     }
 
     private static final String SENHA_ATUAL = "senha123";
+    private static final UUID USUARIO_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @Autowired
     private MockMvc mockMvc;
@@ -78,7 +80,7 @@ class AuthApiControllerTest {
     @BeforeEach
     void setUp() {
         bolsistaLogado = new Bolsista();
-        bolsistaLogado.setId(1);
+        bolsistaLogado.setId(USUARIO_ID);
         bolsistaLogado.setNome("Thiago Rocha");
         bolsistaLogado.setEmail("thiago@teste.com");
         bolsistaLogado.setSenha(passwordEncoder.encode(SENHA_ATUAL));
@@ -96,7 +98,7 @@ class AuthApiControllerTest {
     @Test
     void login_comCredenciaisValidas_gravaCookieComOToken() throws Exception {
         Bolsista u = new Bolsista();
-        u.setId(1);
+        u.setId(USUARIO_ID);
         u.setNome("Thiago");
         u.setEmail("thiago@teste.com");
         when(loginService.autenticar("thiago@teste.com", "12345678")).thenReturn(u);
@@ -160,7 +162,7 @@ class AuthApiControllerTest {
 
     @Test
     void perfil_semTrocarSenha_atualizaOsDados() throws Exception {
-        when(bolsistaService.buscarPorId(1)).thenReturn(bolsistaLogado);
+        when(bolsistaService.buscarPorId(USUARIO_ID)).thenReturn(bolsistaLogado);
 
         mockMvc.perform(put("/api/auth/perfil")
                         .sessionAttr("usuario", bolsistaLogado)
@@ -177,7 +179,7 @@ class AuthApiControllerTest {
 
     @Test
     void perfil_comSenhaAtualCorreta_gravaNovoHash() throws Exception {
-        when(bolsistaService.buscarPorId(1)).thenReturn(bolsistaLogado);
+        when(bolsistaService.buscarPorId(USUARIO_ID)).thenReturn(bolsistaLogado);
 
         mockMvc.perform(put("/api/auth/perfil")
                         .sessionAttr("usuario", bolsistaLogado)
@@ -194,7 +196,7 @@ class AuthApiControllerTest {
 
     @Test
     void perfil_comSenhaAtualErrada_recusa() throws Exception {
-        when(bolsistaService.buscarPorId(1)).thenReturn(bolsistaLogado);
+        when(bolsistaService.buscarPorId(USUARIO_ID)).thenReturn(bolsistaLogado);
 
         mockMvc.perform(put("/api/auth/perfil")
                         .sessionAttr("usuario", bolsistaLogado)
@@ -209,7 +211,7 @@ class AuthApiControllerTest {
 
     @Test
     void perfil_comConfirmacaoDiferente_recusa() throws Exception {
-        when(bolsistaService.buscarPorId(1)).thenReturn(bolsistaLogado);
+        when(bolsistaService.buscarPorId(USUARIO_ID)).thenReturn(bolsistaLogado);
 
         mockMvc.perform(put("/api/auth/perfil")
                         .sessionAttr("usuario", bolsistaLogado)
@@ -223,7 +225,7 @@ class AuthApiControllerTest {
 
     @Test
     void perfil_comSenhaNovaCurta_recusa() throws Exception {
-        when(bolsistaService.buscarPorId(1)).thenReturn(bolsistaLogado);
+        when(bolsistaService.buscarPorId(USUARIO_ID)).thenReturn(bolsistaLogado);
 
         mockMvc.perform(put("/api/auth/perfil")
                         .sessionAttr("usuario", bolsistaLogado)
@@ -247,12 +249,13 @@ class AuthApiControllerTest {
 
     @Test
     void perfil_deProfessor_usaOServicoDeProfessor() throws Exception {
+        UUID profId = UUID.randomUUID();
         Professor professor = new Professor();
-        professor.setId(7);
+        professor.setId(profId);
         professor.setNome("Dr. Roberto");
         professor.setEmail("roberto@teste.com");
         professor.setSenha(passwordEncoder.encode(SENHA_ATUAL));
-        when(professorService.buscarPorId(7)).thenReturn(professor);
+        when(professorService.buscarPorId(profId)).thenReturn(professor);
 
         mockMvc.perform(put("/api/auth/perfil")
                         .sessionAttr("usuario", professor)
@@ -266,7 +269,7 @@ class AuthApiControllerTest {
 
     @Test
     void perfil_quandoOUsuarioSumiuDoBanco_retorna404() throws Exception {
-        when(bolsistaService.buscarPorId(1)).thenReturn(null);
+        when(bolsistaService.buscarPorId(USUARIO_ID)).thenReturn(null);
 
         mockMvc.perform(put("/api/auth/perfil")
                         .sessionAttr("usuario", bolsistaLogado)

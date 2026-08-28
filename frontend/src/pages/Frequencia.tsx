@@ -35,7 +35,7 @@ export const FrequenciaPage: React.FC = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FrequenciaRequest>({
     bolsistaId: isBolsista ? user?.id : null,
     data: new Date().toISOString().split('T')[0],
@@ -325,7 +325,7 @@ export const FrequenciaPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      bolsistaId: e.target.value ? Number(e.target.value) : null,
+                      bolsistaId: e.target.value || null,
                     })
                   }
                 >

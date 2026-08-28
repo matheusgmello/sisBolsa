@@ -5,16 +5,16 @@ import dev.matheus.cadastroBolsistas.model.Laboratorio;
 import dev.matheus.cadastroBolsistas.model.Usuario;
 import dev.matheus.cadastroBolsistas.repository.BolsistaRepository;
 import dev.matheus.cadastroBolsistas.repository.LaboratorioRepository;
-import dev.matheus.cadastroBolsistas.repository.ProjetoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.UUID;
 
 /*
- * regras de negocio de bolsistas. concentra podeGerenciar e o filtro de escopo
- * para nenhuma camada acima repetir checagem de permissao.
+ * regras de negocio de bolsistas com IDs em UUID.
  */
 @Service
 public class BolsistaService {
@@ -29,9 +29,9 @@ public class BolsistaService {
         if (usuarioLogado == null || b == null) return false;
         if (usuarioLogado.isAdmin()) return true;
         if (usuarioLogado.isProfessor()) {
-            if (b.getLaboratorioId() > 0) {
+            if (b.getLaboratorioId() != null) {
                 Laboratorio lab = laboratorioRepository.findById(b.getLaboratorioId()).orElse(null);
-                return lab != null && lab.getCoordenadorId() == usuarioLogado.getId();
+                return lab != null && Objects.equals(lab.getCoordenadorId(), usuarioLogado.getId());
             }
         }
         return false;
@@ -47,7 +47,8 @@ public class BolsistaService {
         return new ArrayList<>(repository.findByAtivoTrueOrderByNome());
     }
 
-    public Bolsista buscarPorId(int id) {
+    public Bolsista buscarPorId(UUID id) {
+        if (id == null) return null;
         return repository.findById(id).orElse(null);
     }
 
@@ -59,11 +60,13 @@ public class BolsistaService {
         return new ArrayList<>(repository.findByCursoContainingIgnoreCaseAndAtivoTrueOrderByNome(curso));
     }
 
-    public ArrayList<Bolsista> buscarPorLaboratorio(int laboratorioId) {
+    public ArrayList<Bolsista> buscarPorLaboratorio(UUID laboratorioId) {
+        if (laboratorioId == null) return new ArrayList<>();
         return new ArrayList<>(repository.buscarPorLaboratorio(laboratorioId));
     }
 
-    public ArrayList<Bolsista> buscarPorProjeto(int projetoId) {
+    public ArrayList<Bolsista> buscarPorProjeto(UUID projetoId) {
+        if (projetoId == null) return new ArrayList<>();
         return new ArrayList<>(repository.buscarPorProjeto(projetoId));
     }
 
@@ -74,18 +77,11 @@ public class BolsistaService {
 
     /* soft delete: marca ativo = false, nunca apaga a linha */
     @Transactional
-    public boolean excluir(int id) {
+    public boolean excluir(UUID id) {
+        if (id == null) return false;
         return repository.desativar(id) > 0;
     }
 
-    /*
-     * corta a lista para o que o usuario logado tem direito de ver:
-     * admin ve tudo, professor ve os bolsistas dos labs que coordena e bolsista
-     * ve so os colegas do proprio lab. professor nao aparece para nao-admin.
-     *
-     * mora aqui, e nao no controller, porque a api rest e as jsp precisam da
-     * mesma regra - regra de permissao duplicada e como buraco de seguranca nasce.
-     */
     public ArrayList<Usuario> filtrarPorEscopo(ArrayList<Usuario> lista, Usuario usuarioLogado) {
         if (usuarioLogado == null) {
             return new ArrayList<>();
@@ -97,11 +93,11 @@ public class BolsistaService {
             ArrayList<Laboratorio> labsCoordenados =
                     new ArrayList<>(laboratorioRepository.buscarPorCoordenador(usuarioLogado.getId()));
             return somenteBolsistas(lista, b ->
-                    labsCoordenados.stream().anyMatch(l -> l.getId() == b.getLaboratorioId()));
+                    labsCoordenados.stream().anyMatch(l -> Objects.equals(l.getId(), b.getLaboratorioId())));
         }
         if (usuarioLogado.isBolsista()) {
-            int labId = ((Bolsista) usuarioLogado).getLaboratorioId();
-            return somenteBolsistas(lista, b -> b.getLaboratorioId() == labId);
+            UUID labId = ((Bolsista) usuarioLogado).getLaboratorioId();
+            return somenteBolsistas(lista, b -> Objects.equals(b.getLaboratorioId(), labId));
         }
         return new ArrayList<>();
     }

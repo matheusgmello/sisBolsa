@@ -4,13 +4,13 @@ import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.model.Usuario;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 /*
- * representacao publica de um usuario. a senha nunca entra aqui - e o motivo
- * principal de existir dto em vez de devolver a entidade direto.
+ * representacao publica de um usuario com IDs em UUID.
  */
 public record UsuarioResponse(
-        int id,
+        UUID id,
         String nome,
         String email,
         String tipoUsuario,
@@ -22,7 +22,7 @@ public record UsuarioResponse(
         String cpf,
         String telefone,
         LocalDate dataNascimento,
-        Integer laboratorioId,
+        UUID laboratorioId,
         String nomeLaboratorio,
         String cargo) {
 
@@ -35,7 +35,7 @@ public record UsuarioResponse(
                     b.getId(), b.getNome(), b.getEmail(), b.getTipoUsuario(), b.getFotoUrl(), b.getBio(),
                     b.isAtivo(), b.getCurso(), b.getMatricula(), b.getCpf(), b.getTelefone(),
                     b.getDataNascimento(),
-                    b.getLaboratorioId() > 0 ? b.getLaboratorioId() : null,
+                    b.getLaboratorioId(),
                     b.getNomeLaboratorio(),
                     b.getCargo() != null ? b.getCargo().name() : null);
         }

@@ -6,17 +6,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 /*
- * queries analiticas da tela de relatorios. sao agregacoes com group by, entao
- * ficam em sql nativo mesmo, devolvendo projection no lugar do Map<String,Object>
- * que o dao antigo montava na mao.
- *
- * herda de Laboratorio so para ter um repositorio onde pendurar as queries -
- * nenhuma delas mexe na entidade.
+ * queries analiticas da tela de relatorios com IDs UUID.
  */
 @Repository
-public interface RelatorioRepository extends JpaRepository<Laboratorio, Integer> {
+public interface RelatorioRepository extends JpaRepository<Laboratorio, UUID> {
 
     interface HorasBolsista {
         String getNome();
@@ -34,7 +30,7 @@ public interface RelatorioRepository extends JpaRepository<Laboratorio, Integer>
     }
 
     interface OcupacaoLaboratorio {
-        Integer getId();
+        UUID getId();
         String getNome();
         Integer getCapacidade();
         Integer getTotalBolsistas();

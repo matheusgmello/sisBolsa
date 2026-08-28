@@ -5,21 +5,21 @@ export const laboratorioService = {
   listar: () =>
     api.get<Laboratorio[]>('/laboratorios'),
 
-  buscarPorId: (id: number) =>
+  buscarPorId: (id: string) =>
     api.get<Laboratorio>(`/laboratorios/${id}`),
 
   criar: (dados: LaboratorioRequest) =>
     api.post<Laboratorio>('/laboratorios', dados),
 
-  atualizar: (id: number, dados: LaboratorioRequest) =>
+  atualizar: (id: string, dados: LaboratorioRequest) =>
     api.put<Laboratorio>(`/laboratorios/${id}`, dados),
 
-  excluir: (id: number) =>
+  excluir: (id: string) =>
     api.delete<void>(`/laboratorios/${id}`),
 
-  listarProjetos: (id: number) =>
+  listarProjetos: (id: string) =>
     api.get<Projeto[]>(`/laboratorios/${id}/projetos`),
 
-  listarBolsistas: (id: number) =>
+  listarBolsistas: (id: string) =>
     api.get<Usuario[]>(`/laboratorios/${id}/bolsistas`),
 };

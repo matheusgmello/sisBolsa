@@ -10,16 +10,16 @@ export const usuarioService = {
     tamanho?: number;
   }) => api.get<Paginacao<Usuario>>('/usuarios', params),
 
-  buscarPorId: (id: number, tipo?: string) =>
+  buscarPorId: (id: string, tipo?: string) =>
     api.get<Usuario>(`/usuarios/${id}`, tipo ? { tipo } : undefined),
 
   criar: (dados: UsuarioRequest) =>
     api.post<Usuario>('/usuarios', dados),
 
-  atualizar: (id: number, dados: UsuarioRequest) =>
+  atualizar: (id: string, dados: UsuarioRequest) =>
     api.put<Usuario>(`/usuarios/${id}`, dados),
 
-  excluir: (id: number, tipo?: string) =>
+  excluir: (id: string, tipo?: string) =>
     api.delete<void>(`/usuarios/${id}`, tipo ? { tipo } : undefined),
 
   listarCargos: () =>

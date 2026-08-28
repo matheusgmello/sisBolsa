@@ -10,10 +10,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /*
- * regras de negocio de projetos, incluindo o vinculo n:n com bolsistas
- * (tabela bolsista_projeto).
+ * regras de negocio de projetos com IDs em UUID.
  */
 @Service
 public class ProjetoService {
@@ -31,17 +31,18 @@ public class ProjetoService {
         return buscarProjetos(null, null);
     }
 
-    public ArrayList<Projeto> buscarProjetos(String buscaNome, Integer labId) {
+    public ArrayList<Projeto> buscarProjetos(String buscaNome, UUID labId) {
         String nome = buscaNome != null ? buscaNome.trim() : "";
-        Integer lab = (labId != null && labId > 0) ? labId : null;
-        return new ArrayList<>(repository.buscarProjetos(nome, lab));
+        return new ArrayList<>(repository.buscarProjetos(nome, labId));
     }
 
-    public ArrayList<Projeto> listarPorLaboratorio(int labId) {
+    public ArrayList<Projeto> listarPorLaboratorio(UUID labId) {
+        if (labId == null) return new ArrayList<>();
         return new ArrayList<>(repository.buscarPorLaboratorio(labId));
     }
 
-    public Projeto buscarPorId(int id) {
+    public Projeto buscarPorId(UUID id) {
+        if (id == null) return null;
         return repository.findById(id).orElse(null);
     }
 
@@ -52,57 +53,58 @@ public class ProjetoService {
 
     /* soft delete */
     @Transactional
-    public boolean excluir(int id) {
+    public boolean excluir(UUID id) {
+        if (id == null) return false;
         return repository.desativar(id) > 0;
     }
 
     @Transactional
-    public boolean vincularBolsista(int bolsistaId, int projetoId) {
+    public boolean vincularBolsista(UUID bolsistaId, UUID projetoId) {
+        if (bolsistaId == null || projetoId == null) return false;
         repository.vincularBolsista(bolsistaId, projetoId);
         return true;
     }
 
     @Transactional
-    public boolean desvincularBolsista(int bolsistaId, int projetoId) {
+    public boolean desvincularBolsista(UUID bolsistaId, UUID projetoId) {
+        if (bolsistaId == null || projetoId == null) return false;
         repository.desvincularBolsista(bolsistaId, projetoId);
         return true;
     }
 
     @Transactional
-    public boolean desvincularBolsistaDeTodosProjetos(int bolsistaId) {
+    public boolean desvincularBolsistaDeTodosProjetos(UUID bolsistaId) {
+        if (bolsistaId == null) return false;
         repository.desvincularBolsistaDeTodosProjetos(bolsistaId);
         return true;
     }
 
-    public ArrayList<Projeto> listarPorBolsista(int bolsistaId) {
+    public ArrayList<Projeto> listarPorBolsista(UUID bolsistaId) {
+        if (bolsistaId == null) return new ArrayList<>();
         return new ArrayList<>(repository.buscarPorBolsista(bolsistaId));
     }
 
-    /*
-     * monta o mapa bolsista -> projetos do laboratorio inteiro em duas queries:
-     * uma para os vinculos e outra para carregar os projetos de uma vez.
-     * o dao antigo resolvia isso com um join manual so para fugir do n+1.
-     */
-    public Map<Integer, ArrayList<Projeto>> getProjetosDosBolsistasDoLaboratorio(int labId) {
+    public Map<UUID, ArrayList<Projeto>> getProjetosDosBolsistasDoLaboratorio(UUID labId) {
+        if (labId == null) return new HashMap<>();
         List<Object[]> vinculos = repository.buscarVinculosDoLaboratorio(labId);
         if (vinculos.isEmpty()) {
             return new HashMap<>();
         }
 
-        List<Integer> projetoIds = vinculos.stream()
-                .map(v -> ((Number) v[1]).intValue())
+        List<UUID> projetoIds = vinculos.stream()
+                .map(v -> (UUID) v[1])
                 .distinct()
                 .toList();
 
-        Map<Integer, Projeto> porId = new HashMap<>();
+        Map<UUID, Projeto> porId = new HashMap<>();
         for (Projeto p : repository.findAllById(projetoIds)) {
             porId.put(p.getId(), p);
         }
 
-        Map<Integer, ArrayList<Projeto>> mapa = new HashMap<>();
+        Map<UUID, ArrayList<Projeto>> mapa = new HashMap<>();
         for (Object[] vinculo : vinculos) {
-            int bolsistaId = ((Number) vinculo[0]).intValue();
-            Projeto projeto = porId.get(((Number) vinculo[1]).intValue());
+            UUID bolsistaId = (UUID) vinculo[0];
+            Projeto projeto = porId.get((UUID) vinculo[1]);
             if (projeto != null) {
                 mapa.computeIfAbsent(bolsistaId, k -> new ArrayList<>()).add(projeto);
             }

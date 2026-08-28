@@ -20,7 +20,7 @@ export const Laboratorios: React.FC = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<LaboratorioRequest>({
     nome: '',
     areaPesquisa: '',
@@ -297,7 +297,7 @@ export const Laboratorios: React.FC = () => {
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      coordenadorId: e.target.value ? Number(e.target.value) : null,
+                      coordenadorId: e.target.value || null,
                     })
                   }
                 >

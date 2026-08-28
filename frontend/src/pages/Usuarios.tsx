@@ -48,7 +48,7 @@ export const Usuarios: React.FC = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<UsuarioRequest>({
     nome: '',
@@ -193,7 +193,7 @@ export const Usuarios: React.FC = () => {
       matricula: ehProf || ehAdm ? null : formData.matricula || null,
       cpf: ehProf || ehAdm ? null : formData.cpf || null,
       telefone: ehProf || ehAdm ? null : formData.telefone || null,
-      laboratorioId: ehProf || ehAdm || !formData.laboratorioId ? null : Number(formData.laboratorioId),
+      laboratorioId: ehProf || ehAdm || !formData.laboratorioId ? null : formData.laboratorioId,
       cargo: ehProf || ehAdm ? null : formData.cargo || null,
     };
 
@@ -543,7 +543,7 @@ export const Usuarios: React.FC = () => {
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            laboratorioId: e.target.value ? Number(e.target.value) : null,
+                            laboratorioId: e.target.value || null,
                           })
                         }
                       >

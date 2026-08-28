@@ -1,6 +1,7 @@
 package dev.matheus.cadastroBolsistas.dto;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 /*
  * o que a api aceita para criar ou editar um usuario.
@@ -15,7 +16,7 @@ public record BolsistaRequest(
         String matricula,
         String cpf,
         String telefone,
-        Integer laboratorioId,
+        UUID laboratorioId,
         String tipoUsuario,
         String fotoUrl,
         String cargo,

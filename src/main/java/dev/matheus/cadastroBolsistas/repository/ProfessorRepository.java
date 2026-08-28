@@ -9,23 +9,18 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface ProfessorRepository extends JpaRepository<Professor, Integer> {
+public interface ProfessorRepository extends JpaRepository<Professor, UUID> {
 
-    /*
-     * bcrypt tem salt proprio por hash, entao nao da para comparar senha
-     * dentro do sql como antes. busca so pelo email e quem confere e o
-     * PasswordEncoder no LoginService.
-     */
     Optional<Professor> findByEmailAndAtivoTrue(String email);
 
     List<Professor> findByAtivoTrueOrderByNome();
 
     List<Professor> findByNomeContainingIgnoreCaseAndAtivoTrueOrderByNome(String nome);
 
-    /* soft delete, mesmo motivo do BolsistaRepository */
     @Modifying
     @Query("UPDATE Professor p SET p.ativo = false WHERE p.id = :id")
-    int desativar(@Param("id") int id);
+    int desativar(@Param("id") UUID id);
 }

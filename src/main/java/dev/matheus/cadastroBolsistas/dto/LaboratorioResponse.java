@@ -2,13 +2,15 @@ package dev.matheus.cadastroBolsistas.dto;
 
 import dev.matheus.cadastroBolsistas.model.Laboratorio;
 
+import java.util.UUID;
+
 public record LaboratorioResponse(
-        int id,
+        UUID id,
         String nome,
         String areaPesquisa,
         String status,
         int capacidade,
-        Integer coordenadorId,
+        UUID coordenadorId,
         String coordenador,
         boolean ativo,
         int totalBolsistas,
@@ -23,7 +25,7 @@ public record LaboratorioResponse(
                 : 0.0;
         return new LaboratorioResponse(
                 l.getId(), l.getNome(), l.getAreaPesquisa(), l.getStatus(), l.getCapacidade(),
-                l.getCoordenadorId() > 0 ? l.getCoordenadorId() : null,
+                l.getCoordenadorId(),
                 l.getCoordenador(), l.isAtivo(), totalBolsistas, percentual);
     }
 }

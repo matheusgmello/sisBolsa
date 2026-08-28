@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 @Tag(name = "Projetos", description = "Projetos de cada laboratorio e o vinculo com bolsistas.")
 @RestController
@@ -38,20 +39,20 @@ public class ProjetoApiController {
 
     @GetMapping
     public List<ProjetoResponse> listar(@RequestParam(required = false) String buscaNome,
-                                        @RequestParam(required = false) Integer labId,
+                                        @RequestParam(required = false) UUID labId,
                                         HttpSession session) {
         usuarioLogado.obrigatorio(session);
         return projetoService.buscarProjetos(buscaNome, labId).stream().map(ProjetoResponse::de).toList();
     }
 
     @GetMapping("/{id}")
-    public ProjetoResponse buscar(@PathVariable int id, HttpSession session) {
+    public ProjetoResponse buscar(@PathVariable UUID id, HttpSession session) {
         usuarioLogado.obrigatorio(session);
         return ProjetoResponse.de(exigirProjeto(id));
     }
 
     @GetMapping("/{id}/membros")
-    public List<UsuarioResponse> membros(@PathVariable int id, HttpSession session) {
+    public List<UsuarioResponse> membros(@PathVariable UUID id, HttpSession session) {
         usuarioLogado.obrigatorio(session);
         exigirProjeto(id);
         return bolsistaService.buscarPorProjeto(id).stream().map(UsuarioResponse::de).toList();
@@ -71,7 +72,7 @@ public class ProjetoApiController {
     }
 
     @PutMapping("/{id}")
-    public ProjetoResponse atualizar(@PathVariable int id, @RequestBody ProjetoRequest body, HttpSession session) {
+    public ProjetoResponse atualizar(@PathVariable UUID id, @RequestBody ProjetoRequest body, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Projeto p = exigirProjeto(id);
         validar(body);
@@ -86,7 +87,7 @@ public class ProjetoApiController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(@PathVariable int id, HttpSession session) {
+    public ResponseEntity<Void> excluir(@PathVariable UUID id, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Projeto p = exigirProjeto(id);
         exigirPermissaoNoLab(logado, p.getLaboratorioId());
@@ -95,7 +96,7 @@ public class ProjetoApiController {
     }
 
     @PostMapping("/{id}/membros/{bolsistaId}")
-    public ResponseEntity<Void> vincular(@PathVariable int id, @PathVariable int bolsistaId, HttpSession session) {
+    public ResponseEntity<Void> vincular(@PathVariable UUID id, @PathVariable UUID bolsistaId, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Projeto p = exigirProjeto(id);
         exigirPermissaoNoLab(logado, p.getLaboratorioId());
@@ -107,7 +108,7 @@ public class ProjetoApiController {
     }
 
     @DeleteMapping("/{id}/membros/{bolsistaId}")
-    public ResponseEntity<Void> desvincular(@PathVariable int id, @PathVariable int bolsistaId, HttpSession session) {
+    public ResponseEntity<Void> desvincular(@PathVariable UUID id, @PathVariable UUID bolsistaId, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Projeto p = exigirProjeto(id);
         exigirPermissaoNoLab(logado, p.getLaboratorioId());
@@ -115,7 +116,7 @@ public class ProjetoApiController {
         return ResponseEntity.noContent().build();
     }
 
-    private Projeto exigirProjeto(int id) {
+    private Projeto exigirProjeto(UUID id) {
         Projeto p = projetoService.buscarPorId(id);
         if (p == null || !p.isAtivo()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Projeto nao encontrado.");
@@ -123,7 +124,7 @@ public class ProjetoApiController {
         return p;
     }
 
-    private void exigirPermissaoNoLab(Usuario logado, int labId) {
+    private void exigirPermissaoNoLab(Usuario logado, UUID labId) {
         usuarioLogado.exigir(laboratorioService.podeGerenciar(logado, labId),
                 "Sem permissao para gerenciar projetos deste laboratorio.");
     }
@@ -132,7 +133,7 @@ public class ProjetoApiController {
         if (StringUtil.estaVazio(body.nome())) {
             throw new IllegalArgumentException("Nome do projeto e obrigatorio.");
         }
-        if (body.laboratorioId() == null || body.laboratorioId() < 1) {
+        if (body.laboratorioId() == null) {
             throw new IllegalArgumentException("Projeto precisa estar vinculado a um laboratorio.");
         }
     }

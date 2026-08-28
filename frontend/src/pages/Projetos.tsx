@@ -20,11 +20,11 @@ export const Projetos: React.FC = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProjetoRequest>({
     nome: '',
     descricao: '',
-    laboratorioId: 0,
+    laboratorioId: '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -57,7 +57,7 @@ export const Projetos: React.FC = () => {
     setFormData({
       nome: '',
       descricao: '',
-      laboratorioId: laboratorios[0]?.id || 0,
+      laboratorioId: laboratorios[0]?.id || '',
     });
     setIsModalOpen(true);
   };
@@ -282,7 +282,7 @@ export const Projetos: React.FC = () => {
                 required
                 value={formData.laboratorioId || ''}
                 onChange={(e) =>
-                  setFormData({ ...formData, laboratorioId: Number(e.target.value) })
+                  setFormData({ ...formData, laboratorioId: e.target.value })
                 }
               >
                 <option value="">Selecione um laboratório...</option>

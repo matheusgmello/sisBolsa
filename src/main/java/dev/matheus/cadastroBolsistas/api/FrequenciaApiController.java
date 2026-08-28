@@ -22,6 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 @Tag(name = "Frequencias", description = "Registro de horas trabalhadas pelos bolsistas.")
 @RestController
@@ -46,18 +48,11 @@ public class FrequenciaApiController {
     @Operation(summary = "Lista frequencias paginadas. Bolsista comum ve apenas as proprias, e o filtro bolsistaId e ignorado para ele.")
     @GetMapping
     public PaginaResponse<FrequenciaResponse> listar(@RequestParam(defaultValue = "1") int pagina,
-                                                     @RequestParam(required = false) Integer bolsistaId,
+                                                     @RequestParam(required = false) UUID bolsistaId,
                                                      HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
+        UUID filtro = logado.isBolsista() ? logado.getId() : bolsistaId;
 
-        /*
-         * bolsista comum so ve as proprias frequencias, ignorando o filtro pedido.
-         * o Integer.valueOf e proposital: com int de um lado e Integer do outro,
-         * o ternario faz unboxing dos dois e estoura NPE quando bolsistaId e null.
-         */
-        Integer filtro = logado.isBolsista() ? Integer.valueOf(logado.getId()) : bolsistaId;
-
-        /* filtro apontando para outro bolsista so passa se houver permissao sobre ele */
         if (filtro != null) {
             exigirPermissao(logado, filtro);
         }
@@ -67,11 +62,7 @@ public class FrequenciaApiController {
         int atual;
 
         if (filtro == null && logado.isProfessor()) {
-            /*
-             * professor sem filtro nao ve a folha do sistema inteiro: so a dos
-             * bolsistas dos laboratorios que ele coordena.
-             */
-            List<Integer> ids = idsDosMeusBolsistas(logado);
+            List<UUID> ids = idsDosMeusBolsistas(logado);
             total = frequenciaService.contarPorBolsistas(ids);
             atual = paginaValida(pagina, total);
             pagina1 = frequenciaService.buscarPorBolsistas(ids, TAMANHO_PAGINA, (atual - 1) * TAMANHO_PAGINA);
@@ -87,9 +78,9 @@ public class FrequenciaApiController {
 
     @Operation(summary = "Horas do mes corrente e total acumulado do bolsista.")
     @GetMapping("/resumo")
-    public Map<String, Double> resumo(@RequestParam(required = false) Integer bolsistaId, HttpSession session) {
+    public Map<String, Double> resumo(@RequestParam(required = false) UUID bolsistaId, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
-        int alvo = logado.isBolsista() ? logado.getId()
+        UUID alvo = logado.isBolsista() ? logado.getId()
                  : (bolsistaId != null ? bolsistaId : logado.getId());
         exigirPermissao(logado, alvo);
 
@@ -106,11 +97,11 @@ public class FrequenciaApiController {
 
     @Operation(summary = "Exporta em CSV as frequencias visiveis para quem chama.")
     @GetMapping("/exportar")
-    public void exportar(@RequestParam(required = false) Integer bolsistaId,
+    public void exportar(@RequestParam(required = false) UUID bolsistaId,
                          HttpSession session,
                          HttpServletResponse response) throws java.io.IOException {
         Usuario logado = usuarioLogado.obrigatorio(session);
-        Integer filtro = logado.isBolsista() ? Integer.valueOf(logado.getId()) : bolsistaId;
+        UUID filtro = logado.isBolsista() ? logado.getId() : bolsistaId;
         if (filtro != null) {
             exigirPermissao(logado, filtro);
         }
@@ -134,7 +125,6 @@ public class FrequenciaApiController {
         }
     }
 
-
     private static String csv(String valor) {
         if (valor == null) {
             return "";
@@ -143,7 +133,7 @@ public class FrequenciaApiController {
     }
 
     @GetMapping("/{id}")
-    public FrequenciaResponse buscar(@PathVariable int id, HttpSession session) {
+    public FrequenciaResponse buscar(@PathVariable UUID id, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Frequencia f = exigirFrequencia(id);
         exigirPermissao(logado, f.getBolsistaId());
@@ -156,7 +146,7 @@ public class FrequenciaApiController {
         Usuario logado = usuarioLogado.obrigatorio(session);
         validar(body);
 
-        int alvo = resolverBolsistaAlvo(logado, body.bolsistaId());
+        UUID alvo = resolverBolsistaAlvo(logado, body.bolsistaId());
         exigirPermissao(logado, alvo);
 
         Frequencia f = new Frequencia();
@@ -169,7 +159,7 @@ public class FrequenciaApiController {
     }
 
     @PutMapping("/{id}")
-    public FrequenciaResponse atualizar(@PathVariable int id, @RequestBody FrequenciaRequest body, HttpSession session) {
+    public FrequenciaResponse atualizar(@PathVariable UUID id, @RequestBody FrequenciaRequest body, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Frequencia f = exigirFrequencia(id);
         exigirPermissao(logado, f.getBolsistaId());
@@ -183,7 +173,7 @@ public class FrequenciaApiController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(@PathVariable int id, HttpSession session) {
+    public ResponseEntity<Void> excluir(@PathVariable UUID id, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Frequencia f = exigirFrequencia(id);
         exigirPermissao(logado, f.getBolsistaId());
@@ -196,7 +186,7 @@ public class FrequenciaApiController {
         return Math.min(Math.max(pedida, 1), totalPaginas);
     }
 
-    private List<Integer> idsDosMeusBolsistas(Usuario professor) {
+    private List<UUID> idsDosMeusBolsistas(Usuario professor) {
         return laboratorioService.listarPorCoordenador(professor.getId()).stream()
                 .flatMap(lab -> bolsistaService.buscarPorLaboratorio(lab.getId()).stream())
                 .map(Bolsista::getId)
@@ -204,7 +194,7 @@ public class FrequenciaApiController {
                 .toList();
     }
 
-    private Frequencia exigirFrequencia(int id) {
+    private Frequencia exigirFrequencia(UUID id) {
         Frequencia f = frequenciaService.buscarPorId(id);
         if (f == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Frequencia nao encontrada.");
@@ -212,19 +202,18 @@ public class FrequenciaApiController {
         return f;
     }
 
-    /* bolsista comum sempre registra para si mesmo, ignorando o id que mandar */
-    private int resolverBolsistaAlvo(Usuario logado, Integer pedido) {
+    private UUID resolverBolsistaAlvo(Usuario logado, UUID pedido) {
         if (logado.isBolsista()) {
             return logado.getId();
         }
-        if (pedido == null || pedido < 1) {
+        if (pedido == null) {
             throw new IllegalArgumentException("Informe o bolsista da frequencia.");
         }
         return pedido;
     }
 
-    private void exigirPermissao(Usuario logado, int bolsistaId) {
-        if (logado.isAdmin() || logado.getId() == bolsistaId) {
+    private void exigirPermissao(Usuario logado, UUID bolsistaId) {
+        if (logado.isAdmin() || Objects.equals(logado.getId(), bolsistaId)) {
             return;
         }
         Bolsista alvo = bolsistaService.buscarPorId(bolsistaId);
