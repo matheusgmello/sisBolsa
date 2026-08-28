@@ -4,77 +4,165 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Administrador - SisBolsa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/cadastro-admin.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="cadastro-container">
-        <div class="logo-icon"><i class="fas fa-user-shield"></i></div>
+    <main class="cadastro-container">
+        <div class="logo-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+        </div>
         <h1>SisBolsa</h1>
         <h2>Cadastro de Administrador</h2>
         <p class="subtitulo">
-            Crie uma conta de administrador do sistema.
-            <br><small id="vagas"></small>
+            Crie sua conta de administrador do sistema.
+            <br>
+            <span id="vagas" class="vagas-badge">Consultando vagas...</span>
         </p>
 
-        <p class="legenda-obrigatorio"><span class="asterisco">*</span> Campos obrigatórios</p>
-
-        <form id="form-admin">
+        <form id="form-admin" novalidate>
             <div class="form-group">
-                <label for="nome">Nome completo <span class="asterisco">*</span></label>
-                <input type="text" id="nome" placeholder="Seu nome completo" required>
+                <label for="nome">Nome completo <span class="asterisco" aria-hidden="true">*</span></label>
+                <input type="text" id="nome" name="nome" placeholder="Seu nome completo" autocomplete="name" required>
             </div>
+            
             <div class="form-group">
-                <label for="email">E-mail <span class="asterisco">*</span></label>
-                <input type="email" id="email" placeholder="admin@exemplo.com" required>
+                <label for="email">E-mail institucional <span class="asterisco" aria-hidden="true">*</span></label>
+                <input type="email" id="email" name="email" placeholder="admin@exemplo.com" autocomplete="email" required>
             </div>
+            
             <div class="form-group">
-                <label for="senha">Senha <span class="asterisco">*</span></label>
-                <input type="password" id="senha" placeholder="Mínimo 6 caracteres" required>
+                <label for="senha">Senha <span class="asterisco" aria-hidden="true">*</span></label>
+                <div class="input-wrapper">
+                    <input type="password" id="senha" name="senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required minlength="6">
+                    <button type="button" class="btn-toggle-pwd" id="btn-toggle-pwd1" aria-label="Mostrar ou ocultar senha" title="Mostrar/ocultar senha">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
+            
             <div class="form-group">
-                <label for="confirmaSenha">Confirmar senha <span class="asterisco">*</span></label>
-                <input type="password" id="confirmaSenha" placeholder="Repita a senha" required>
+                <label for="confirmaSenha">Confirmar senha <span class="asterisco" aria-hidden="true">*</span></label>
+                <div class="input-wrapper">
+                    <input type="password" id="confirmaSenha" name="confirmaSenha" placeholder="Repita a mesma senha" autocomplete="new-password" required minlength="6">
+                    <button type="button" class="btn-toggle-pwd" id="btn-toggle-pwd2" aria-label="Mostrar ou ocultar confirmação de senha" title="Mostrar/ocultar confirmação de senha">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <button type="submit" class="btn-cadastrar"><i class="fas fa-user-plus"></i> CADASTRAR ADMINISTRADOR</button>
+            
+            <button type="submit" class="btn-cadastrar" id="btn-submit">
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span class="btn-text">Cadastrar Administrador</span>
+                <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="8.5" cy="7" r="4"/>
+                    <line x1="20" y1="8" x2="20" y2="14"/>
+                    <line x1="23" y1="11" x2="17" y2="11"/>
+                </svg>
+            </button>
         </form>
 
-        <div id="avisos"></div>
+        <div id="avisos" aria-live="polite" role="status"></div>
 
         <div class="link-voltar">
-            <a href="/index.html"><i class="fas fa-arrow-left"></i> Voltar para o login</a>
+            <a href="/index.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="19" y1="12" x2="5" y2="12"/>
+                    <polyline points="12 19 5 12 12 5"/>
+                </svg>
+                Voltar para o login
+            </a>
         </div>
-    </div>
+    </main>
 
     <script src="/js/api.js"></script>
     <script src="/js/util.js"></script>
     <script>
+        const form = document.getElementById("form-admin");
+        const btnSubmit = document.getElementById("btn-submit");
+        const elVagas = document.getElementById("vagas");
+        const inputNome = document.getElementById("nome");
+        const inputEmail = document.getElementById("email");
+        const inputSenha = document.getElementById("senha");
+        const inputConfirma = document.getElementById("confirmaSenha");
+
+        const setupToggle = (btnId, inputEl) => {
+            const btn = document.getElementById(btnId);
+            if (!btn || !inputEl) return;
+            btn.addEventListener("click", () => {
+                const isPassword = inputEl.type === "password";
+                inputEl.type = isPassword ? "text" : "password";
+                btn.setAttribute("aria-label", isPassword ? "Ocultar senha" : "Show senha");
+            });
+        };
+
+        setupToggle("btn-toggle-pwd1", inputSenha);
+        setupToggle("btn-toggle-pwd2", inputConfirma);
+
         (async () => {
             try {
                 const r = await Api.get("/auth/admins-restantes");
-                document.getElementById("vagas").textContent = `Vagas disponíveis: ${r.restantes} de 3.`;
+                elVagas.textContent = `Vagas disponíveis: ${r.restantes} de 3`;
                 if (r.restantes === 0) {
-                    document.getElementById("form-admin").hidden = true;
-                    Util.aviso("O sistema já possui o número máximo de administradores (3).");
+                    form.hidden = true;
+                    elVagas.style.backgroundColor = "var(--danger-bg)";
+                    elVagas.style.color = "var(--danger-text)";
+                    Util.aviso("O sistema já atingiu o limite máximo de administradores (3).");
                 }
             } catch (e) {
+                elVagas.textContent = "Limite: até 3 administradores";
                 Util.aviso(e.message);
             }
         })();
 
-        document.getElementById("form-admin").addEventListener("submit", async (e) => {
+        form.addEventListener("submit", async (e) => {
             e.preventDefault();
             Util.limpaAviso();
+
+            const nome = inputNome.value.trim();
+            const email = inputEmail.value.trim();
+            const senha = inputSenha.value;
+            const confirmaSenha = inputConfirma.value;
+
+            if (!nome || !email || !senha || !confirmaSenha) {
+                Util.aviso("Por favor, preencha todos os campos obrigatórios.");
+                return;
+            }
+
+            if (senha.length < 6) {
+                Util.aviso("A senha deve ter no mínimo 6 caracteres.");
+                inputSenha.focus();
+                return;
+            }
+
+            if (senha !== confirmaSenha) {
+                Util.aviso("As senhas informadas não conferem.");
+                inputConfirma.focus();
+                return;
+            }
+
+            btnSubmit.disabled = true;
+            btnSubmit.classList.add("is-loading");
+
             try {
-                await Api.post("/auth/cadastro-admin", {
-                    nome: document.getElementById("nome").value,
-                    email: document.getElementById("email").value,
-                    senha: document.getElementById("senha").value,
-                    confirmaSenha: document.getElementById("confirmaSenha").value
-                });
+                await Api.post("/auth/cadastro-admin", { nome, email, senha, confirmaSenha });
                 window.location.href = "/index.html?cadastro=ok";
             } catch (erro) {
-                Util.aviso(erro.message);
+                Util.aviso(erro.message || "Erro ao realizar cadastro.");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove("is-loading");
             }
         });
     </script>

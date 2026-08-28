@@ -4,55 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SisBolsa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/login.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <div class="login-container">
-        <div class="logo-icon">
-            <i class="fas fa-graduation-cap"></i>
+    <main class="login-container">
+        <div class="logo-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
         </div>
         <h1>SisBolsa</h1>
         <h2>Acesse sua conta</h2>
 
-        <form id="form-login">
+        <form id="form-login" novalidate>
             <div class="form-group">
                 <label for="email">E-mail</label>
-                <input id="email" type="email" placeholder="seu@email.com" name="email" required>
+                <input id="email" type="email" placeholder="seu@email.com" name="email" autocomplete="username" required>
             </div>
 
             <div class="form-group">
                 <label for="senha">Senha</label>
-                <input id="senha" type="password" placeholder="Sua senha" name="senha" required>
+                <div class="input-wrapper">
+                    <input id="senha" type="password" placeholder="Sua senha" name="senha" autocomplete="current-password" required>
+                    <button type="button" class="btn-toggle-pwd" id="btn-toggle-pwd" aria-label="Mostrar ou ocultar senha" title="Mostrar/ocultar senha">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt"></i> ENTRAR
+            <button type="submit" class="btn-login" id="btn-submit">
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span class="btn-text">Entrar</span>
+                <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                    <polyline points="10 17 15 12 10 7"/>
+                    <line x1="15" y1="12" x2="3" y2="12"/>
+                </svg>
             </button>
         </form>
 
-        <div id="avisos"></div>
+        <div id="avisos" aria-live="polite" role="status"></div>
 
         <div class="link-cadastro-admin">
-            <a href="/cadastro-admin.html"><i class="fas fa-user-shield"></i> Cadastrar administrador</a>
+            <a href="/cadastro-admin.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                Cadastrar administrador
+            </a>
         </div>
-    </div>
+    </main>
 
     <script src="/js/api.js"></script>
     <script src="/js/util.js"></script>
     <script>
-        document.getElementById("form-login").addEventListener("submit", async (e) => {
+        const form = document.getElementById("form-login");
+        const btnSubmit = document.getElementById("btn-submit");
+        const btnTogglePwd = document.getElementById("btn-toggle-pwd");
+        const inputSenha = document.getElementById("senha");
+        const inputEmail = document.getElementById("email");
+
+        btnTogglePwd.addEventListener("click", () => {
+            const isPassword = inputSenha.type === "password";
+            inputSenha.type = isPassword ? "text" : "password";
+            btnTogglePwd.setAttribute("aria-label", isPassword ? "Ocultar senha" : "Show senha");
+        });
+
+        if (Util.parametro("cadastro") === "ok") {
+            Util.aviso("Cadastro de administrador realizado com sucesso! Faça login para continuar.", "sucesso");
+        }
+
+        form.addEventListener("submit", async (e) => {
             e.preventDefault();
             Util.limpaAviso();
+
+            const email = inputEmail.value.trim();
+            const senha = inputSenha.value.trim();
+
+            if (!email || !senha) {
+                Util.aviso("Por favor, preencha todos os campos.");
+                return;
+            }
+
+            btnSubmit.disabled = true;
+            btnSubmit.classList.add("is-loading");
+
             try {
-                await Api.post("/auth/login", {
-                    email: document.getElementById("email").value.trim(),
-                    senha: document.getElementById("senha").value.trim()
-                });
+                await Api.post("/auth/login", { email, senha });
                 window.location.href = "/dashboard.html";
             } catch (erro) {
-                Util.aviso(erro.message);
+                Util.aviso(erro.message || "E-mail ou senha incorretos.");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove("is-loading");
             }
         });
     </script>

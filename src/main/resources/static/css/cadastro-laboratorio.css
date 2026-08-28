@@ -37,7 +37,7 @@
 
 .form-group label {
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     color: var(--text-main);
 }
 
@@ -48,7 +48,7 @@
     border: 1px solid var(--border-grid);
     border-radius: var(--radius-sm);
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     color: var(--text-main);
     background-color: var(--surface-color);
     transition: var(--transition-smooth);
@@ -59,7 +59,7 @@
 .form-group textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
 }
 
 .actions {
@@ -83,6 +83,7 @@
     text-decoration: none;
     cursor: pointer;
     flex: 1;
+    position: relative;
 }
 
 .btn-submit {
@@ -91,13 +92,18 @@
     border: none;
 }
 
-.btn-submit:hover {
+.btn-submit:hover:not(:disabled) {
     background-color: var(--primary-hover);
+}
+
+.btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 .btn-cancel {
     background-color: var(--surface-color);
-    color: var(--text-muted);
+    color: var(--text-secondary);
     border: 1px solid var(--border-grid);
 }
 
@@ -110,12 +116,13 @@
 .secao-projetos {
     margin-top: 40px;
     padding-top: 30px;
-    border-top: 2px solid var(--border-grid);
+    border-top: 1px solid var(--border-grid);
 }
 
 .secao-projetos h2 {
     font-family: 'Outfit', sans-serif;
-    font-size: 1.4rem;
+    font-size: 1.35rem;
+    font-weight: 700;
     color: var(--text-main);
     margin-bottom: 20px;
     display: flex;
@@ -140,7 +147,7 @@
     background: var(--surface-color);
     border: 1px solid var(--border-grid);
     border-radius: var(--radius-md);
-    padding: 16px;
+    padding: 18px;
     box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
@@ -164,20 +171,20 @@
 
 .projeto-info p {
     font-size: 0.85rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     margin: 0 0 16px 0;
     line-height: 1.5;
 }
 
 .projeto-acoes {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-end;
 }
 
 .btn-mini {
     padding: 6px 12px;
-    font-size: 0.75rem;
+    font-size: 0.775rem;
     border-radius: var(--radius-sm);
     text-decoration: none;
     font-weight: 600;
@@ -188,31 +195,38 @@
     transition: var(--transition-smooth);
 }
 
+.btn-mini svg {
+    width: 14px;
+    height: 14px;
+}
+
 .btn-mini-edit {
-    background-color: #eff6ff;
-    color: var(--accent-color);
-    border: 1px solid #dbeafe;
+    background-color: var(--primary-subtle);
+    color: var(--primary-color);
+    border: 1px solid #bfdbfe;
 }
 
 .btn-mini-edit:hover {
     background-color: #dbeafe;
+    color: var(--primary-hover);
 }
 
 .btn-mini-delete {
     background-color: var(--danger-bg);
     color: var(--danger-color);
-    border: 1px solid #fecaca;
+    border: 1px solid var(--danger-border);
 }
 
 .btn-mini-delete:hover {
-    background-color: #fecaca;
+    background-color: #fee2e2;
+    color: #991b1b;
 }
 
 .form-projeto-box {
     background: #f8fafc;
     border: 1px solid var(--border-grid);
     border-radius: var(--radius-md);
-    padding: 20px;
+    padding: 24px;
 }
 
 .form-projeto-box h3 {
@@ -220,7 +234,7 @@
     margin-bottom: 16px;
     color: var(--text-main);
     font-family: 'Outfit', sans-serif;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -239,7 +253,16 @@
     border: 1px solid var(--border-grid);
     border-radius: var(--radius-sm);
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    background-color: var(--surface-color);
+}
+
+.form-projeto-grid .form-group input:focus,
+.form-projeto-grid .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
 }
 
 .form-projeto-grid .form-group textarea {
@@ -256,25 +279,33 @@
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 10px 16px;
+    padding: 10px 18px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.btn-proj-save:hover {
+.btn-proj-save:hover:not(:disabled) {
     background-color: var(--primary-hover);
+}
+
+.btn-proj-save:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 .btn-proj-cancel {
     background-color: var(--surface-color);
-    color: var(--text-muted);
+    color: var(--text-secondary);
     border: 1px solid var(--border-grid);
     padding: 10px 16px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     border-radius: var(--radius-sm);
     text-decoration: none;
     text-align: center;
@@ -285,4 +316,29 @@
 .btn-proj-cancel:hover {
     background-color: #f1f5f9;
     color: var(--text-main);
+}
+
+/* Spinner */
+.btn-spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+.btn.is-loading .btn-spinner,
+.btn-proj-save.is-loading .btn-spinner {
+    display: inline-block;
+}
+
+.btn.is-loading .btn-icon,
+.btn-proj-save.is-loading .btn-icon {
+    display: none;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
