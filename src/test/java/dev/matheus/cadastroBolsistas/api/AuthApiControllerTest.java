@@ -83,6 +83,9 @@ class AuthApiControllerTest {
     @MockitoBean
     private LoginAttemptService loginAttemptService;
 
+    @MockitoBean
+    private dev.matheus.cadastroBolsistas.security.PasswordResetService passwordResetService;
+
     private Bolsista bolsistaLogado;
 
     @BeforeEach

@@ -7,6 +7,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 
 import { Login } from './pages/Login';
+import { EsqueciSenha } from './pages/EsqueciSenha';
 import { Dashboard } from './pages/Dashboard';
 import { Laboratorios } from './pages/Laboratorios';
 import { LaboratorioDetalhes } from './pages/LaboratorioDetalhes';
@@ -27,6 +28,7 @@ export const App: React.FC = () => {
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/esqueci-senha" element={<EsqueciSenha />} />
 
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>

@@ -40,12 +40,14 @@ public class AuthApiController {
     private final PasswordEncoder passwordEncoder;
     private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
     private final dev.matheus.cadastroBolsistas.security.LoginAttemptService loginAttemptService;
+    private final dev.matheus.cadastroBolsistas.security.PasswordResetService passwordResetService;
 
     public AuthApiController(LoginService loginService, JwtService jwtService, UsuarioLogado usuarioLogado,
                              BolsistaService bolsistaService, ProfessorService professorService,
                              PasswordEncoder passwordEncoder,
                              dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService,
-                             dev.matheus.cadastroBolsistas.security.LoginAttemptService loginAttemptService) {
+                             dev.matheus.cadastroBolsistas.security.LoginAttemptService loginAttemptService,
+                             dev.matheus.cadastroBolsistas.security.PasswordResetService passwordResetService) {
         this.loginService = loginService;
         this.jwtService = jwtService;
         this.usuarioLogado = usuarioLogado;
@@ -54,6 +56,7 @@ public class AuthApiController {
         this.passwordEncoder = passwordEncoder;
         this.auditoriaService = auditoriaService;
         this.loginAttemptService = loginAttemptService;
+        this.passwordResetService = passwordResetService;
     }
 
     @Operation(summary = "Autentica e grava o token jwt num cookie httpOnly. As chamadas seguintes nao precisam mandar nada a mais.")
@@ -244,5 +247,81 @@ public class AuthApiController {
         bolsistaService.inserir(admin);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.de(admin));
+    }
+
+    @Operation(summary = "Solicita codigo de recuperacao/redefinicao de senha para o email informado.")
+    @PostMapping("/esqueci-senha")
+    public Map<String, String> esqueciSenha(@RequestBody dev.matheus.cadastroBolsistas.dto.EsqueciSenhaRequest body,
+                                           jakarta.servlet.http.HttpServletRequest request) {
+        String email = StringUtil.limpar(body.email());
+        if (StringUtil.estaVazio(email) || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw new IllegalArgumentException("Informe um e-mail válido.");
+        }
+
+        Usuario u = loginService.buscarPorEmail(email);
+        if (u == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nenhum usuário cadastrado encontrado com este e-mail.");
+        }
+
+        String codigo = passwordResetService.gerarCodigo(email);
+        String ip = extrairIp(request);
+        auditoriaService.registrar(u, "SOLICITAR_RECUPERACAO_SENHA", "AUTH", "Código de recuperação gerado para " + email, ip);
+
+        return Map.of(
+                "mensagem", "Código de verificação enviado para o e-mail informado (Válido por 15 minutos).",
+                "codigoDev", codigo
+        );
+    }
+
+    @Operation(summary = "Redefine a senha utilizando o codigo de 6 digitos verificado.")
+    @PostMapping("/redefinir-senha")
+    public Map<String, String> redefinirSenha(@RequestBody dev.matheus.cadastroBolsistas.dto.RedefinirSenhaRequest body,
+                                              jakarta.servlet.http.HttpServletRequest request) {
+        String email = StringUtil.limpar(body.email());
+        String codigo = StringUtil.limpar(body.codigo());
+        String novaSenha = StringUtil.limpar(body.novaSenha());
+        String confirma = StringUtil.limpar(body.confirmaSenha());
+
+        if (StringUtil.estaVazio(email) || StringUtil.estaVazio(codigo)) {
+            throw new IllegalArgumentException("E-mail e código de verificação são obrigatórios.");
+        }
+
+        if (!passwordResetService.validarCodigo(email, codigo)) {
+            throw new IllegalArgumentException("Código de verificação inválido ou expirado.");
+        }
+
+        if (novaSenha.length() < 6) {
+            throw new IllegalArgumentException("A nova senha deve ter pelo menos 6 caracteres.");
+        }
+
+        if (!novaSenha.equals(confirma)) {
+            throw new IllegalArgumentException("A nova senha e a confirmação não conferem.");
+        }
+
+        Usuario u = loginService.buscarPorEmail(email);
+        if (u == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado.");
+        }
+
+        String hash = passwordEncoder.encode(novaSenha);
+        if (u.isProfessor()) {
+            Professor p = professorService.buscarPorId(u.getId());
+            if (p != null) {
+                p.setSenha(hash);
+                professorService.atualizar(p);
+            }
+        } else {
+            Bolsista b = bolsistaService.buscarPorId(u.getId());
+            if (b != null) {
+                b.setSenha(hash);
+                bolsistaService.atualizar(b);
+            }
+        }
+
+        passwordResetService.invalidarCodigo(email);
+        String ip = extrairIp(request);
+        auditoriaService.registrar(u, "REDEFINICAO_SENHA", "AUTH", "Senha redefinida com sucesso via código de verificação.", ip);
+
+        return Map.of("mensagem", "Senha redefinida com sucesso! Você já pode acessar sua conta com a nova senha.");
     }
 }

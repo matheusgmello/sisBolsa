@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -113,7 +113,7 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '24px' }}>
+          <div className="form-group" style={{ marginBottom: '12px' }}>
             <label htmlFor="senha">Senha</label>
             <div className="password-field-wrapper">
               <input
@@ -134,6 +134,20 @@ export const Login: React.FC = () => {
                 }}
               />
             </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+            <Link
+              to="/esqueci-senha"
+              style={{
+                fontSize: '0.85rem',
+                color: 'var(--primary-color)',
+                textDecoration: 'none',
+                fontWeight: 500,
+              }}
+            >
+              Esqueceu a senha?
+            </Link>
           </div>
 
           <button
