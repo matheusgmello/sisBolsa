@@ -28,13 +28,16 @@ public class ProjetoApiController {
     private final LaboratorioService laboratorioService;
     private final BolsistaService bolsistaService;
     private final UsuarioLogado usuarioLogado;
+    private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
 
     public ProjetoApiController(ProjetoService projetoService, LaboratorioService laboratorioService,
-                                BolsistaService bolsistaService, UsuarioLogado usuarioLogado) {
+                                BolsistaService bolsistaService, UsuarioLogado usuarioLogado,
+                                dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService) {
         this.projetoService = projetoService;
         this.laboratorioService = laboratorioService;
         this.bolsistaService = bolsistaService;
         this.usuarioLogado = usuarioLogado;
+        this.auditoriaService = auditoriaService;
     }
 
     @GetMapping
@@ -68,6 +71,7 @@ public class ProjetoApiController {
         Projeto p = new Projeto();
         aplicar(p, body);
         projetoService.cadastrar(p);
+        auditoriaService.registrar(logado, "CRIAR_PROJETO", "PROJETO", "Projeto '" + p.getNome() + "' criado com sucesso.", null);
         return ResponseEntity.status(HttpStatus.CREATED).body(ProjetoResponse.de(p));
     }
 
@@ -83,6 +87,7 @@ public class ProjetoApiController {
         aplicar(p, body);
         p.setAtivo(true);
         projetoService.atualizar(p);
+        auditoriaService.registrar(logado, "ATUALIZAR_PROJETO", "PROJETO", "Projeto '" + p.getNome() + "' atualizado.", null);
         return ProjetoResponse.de(p);
     }
 
@@ -92,6 +97,7 @@ public class ProjetoApiController {
         Projeto p = exigirProjeto(id);
         exigirPermissaoNoLab(logado, p.getLaboratorioId());
         projetoService.excluir(id);
+        auditoriaService.registrar(logado, "EXCLUIR_PROJETO", "PROJETO", "Projeto '" + p.getNome() + "' desativado.", null);
         return ResponseEntity.noContent().build();
     }
 
@@ -104,6 +110,7 @@ public class ProjetoApiController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bolsista nao encontrado.");
         }
         projetoService.vincularBolsista(bolsistaId, id);
+        auditoriaService.registrar(logado, "VINCULAR_BOLSISTA", "PROJETO", "Bolsista " + bolsistaId + " vinculado ao projeto '" + p.getNome() + "'.", null);
         return ResponseEntity.noContent().build();
     }
 
@@ -113,6 +120,7 @@ public class ProjetoApiController {
         Projeto p = exigirProjeto(id);
         exigirPermissaoNoLab(logado, p.getLaboratorioId());
         projetoService.desvincularBolsista(bolsistaId, id);
+        auditoriaService.registrar(logado, "DESVINCULAR_BOLSISTA", "PROJETO", "Bolsista " + bolsistaId + " desvinculado do projeto '" + p.getNome() + "'.", null);
         return ResponseEntity.noContent().build();
     }
 

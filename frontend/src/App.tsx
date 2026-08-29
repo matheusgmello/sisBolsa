@@ -15,6 +15,7 @@ import { ProjetoDetalhes } from './pages/ProjetoDetalhes';
 import { Usuarios } from './pages/Usuarios';
 import { FrequenciaPage } from './pages/Frequencia';
 import { Relatorios } from './pages/Relatorios';
+import { AuditoriaPage } from './pages/Auditoria';
 import { Perfil } from './pages/Perfil';
 import { NotFound } from './pages/NotFound';
 
@@ -41,6 +42,7 @@ export const App: React.FC = () => {
                   <Route element={<ProtectedRoute requireAdminOrProf />}>
                     <Route path="/usuarios" element={<Usuarios />} />
                     <Route path="/relatorios" element={<Relatorios />} />
+                    <Route path="/auditoria" element={<AuditoriaPage />} />
                   </Route>
 
                   <Route path="*" element={<NotFound />} />

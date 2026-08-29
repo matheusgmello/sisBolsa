@@ -36,13 +36,16 @@ public class FrequenciaApiController {
     private final BolsistaService bolsistaService;
     private final LaboratorioService laboratorioService;
     private final UsuarioLogado usuarioLogado;
+    private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
 
     public FrequenciaApiController(FrequenciaService frequenciaService, BolsistaService bolsistaService,
-                                   LaboratorioService laboratorioService, UsuarioLogado usuarioLogado) {
+                                   LaboratorioService laboratorioService, UsuarioLogado usuarioLogado,
+                                   dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService) {
         this.frequenciaService = frequenciaService;
         this.bolsistaService = bolsistaService;
         this.laboratorioService = laboratorioService;
         this.usuarioLogado = usuarioLogado;
+        this.auditoriaService = auditoriaService;
     }
 
     @Operation(summary = "Lista frequencias paginadas com filtro opcional por data. Bolsista comum ve apenas as proprias.")
@@ -161,6 +164,7 @@ public class FrequenciaApiController {
         f.setDescricao(StringUtil.limpar(body.descricao()));
         f.setLinkComprovante(StringUtil.limpar(body.linkComprovante()));
         frequenciaService.registrar(f);
+        auditoriaService.registrar(logado, "REGISTRAR_FREQUENCIA", "FREQUENCIA", "Apontamento de " + f.getHorasTrabalhadas() + "h para o dia " + f.getData() + ".", null);
         return ResponseEntity.status(HttpStatus.CREATED).body(FrequenciaResponse.de(f));
     }
 
@@ -176,6 +180,7 @@ public class FrequenciaApiController {
         f.setDescricao(StringUtil.limpar(body.descricao()));
         f.setLinkComprovante(StringUtil.limpar(body.linkComprovante()));
         frequenciaService.atualizar(f);
+        auditoriaService.registrar(logado, "ATUALIZAR_FREQUENCIA", "FREQUENCIA", "Apontamento de frequência atualizado (" + f.getHorasTrabalhadas() + "h em " + f.getData() + ").", null);
         return FrequenciaResponse.de(f);
     }
 
@@ -185,6 +190,7 @@ public class FrequenciaApiController {
         Frequencia f = exigirFrequencia(id);
         exigirPermissao(logado, f.getBolsistaId());
         frequenciaService.excluir(id);
+        auditoriaService.registrar(logado, "EXCLUIR_FREQUENCIA", "FREQUENCIA", "Registro de frequência de " + f.getHorasTrabalhadas() + "h do dia " + f.getData() + " desativado.", null);
         return ResponseEntity.noContent().build();
     }
 

@@ -43,16 +43,19 @@ public class UsuarioApiController {
     private final ProjetoService projetoService;
     private final PasswordEncoder passwordEncoder;
     private final UsuarioLogado usuarioLogado;
+    private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
 
     public UsuarioApiController(BolsistaService bolsistaService, ProfessorService professorService,
                                 LaboratorioService laboratorioService, ProjetoService projetoService,
-                                PasswordEncoder passwordEncoder, UsuarioLogado usuarioLogado) {
+                                PasswordEncoder passwordEncoder, UsuarioLogado usuarioLogado,
+                                dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService) {
         this.bolsistaService = bolsistaService;
         this.professorService = professorService;
         this.laboratorioService = laboratorioService;
         this.projetoService = projetoService;
         this.passwordEncoder = passwordEncoder;
         this.usuarioLogado = usuarioLogado;
+        this.auditoriaService = auditoriaService;
     }
 
     @Operation(summary = "Lista usuarios ja recortados pelo escopo de quem chama: admin ve todos, professor ve os bolsistas dos labs que coordena, bolsista ve os colegas do proprio lab.")
@@ -194,6 +197,7 @@ public class UsuarioApiController {
             p.setSenha(passwordEncoder.encode(body.senha()));
             p.setAtivo(true);
             professorService.inserir(p);
+            auditoriaService.registrar(logado, "CRIAR_PROFESSOR", "USUARIO", "Professor '" + p.getNome() + "' (" + p.getEmail() + ") cadastrado.", null);
             return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.de(p));
         }
 
@@ -209,6 +213,7 @@ public class UsuarioApiController {
         aplicarCamposDeBolsista(b, body, logado);
         b.setSenha(passwordEncoder.encode(body.senha()));
         bolsistaService.inserir(b);
+        auditoriaService.registrar(logado, "CRIAR_USUARIO", "USUARIO", "Usuário '" + b.getNome() + "' (" + b.getTipoUsuario() + ") cadastrado.", null);
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.de(b));
     }
 
@@ -231,6 +236,7 @@ public class UsuarioApiController {
                 p.setSenha(passwordEncoder.encode(body.senha()));
             }
             professorService.atualizar(p);
+            auditoriaService.registrar(logado, "ATUALIZAR_PROFESSOR", "USUARIO", "Professor '" + p.getNome() + "' atualizado.", null);
             return UsuarioResponse.de(p);
         }
 
@@ -246,6 +252,7 @@ public class UsuarioApiController {
         aplicarCamposDeBolsista(b, body, logado);
         b.setSenha(StringUtil.estaVazio(body.senha()) ? senhaAtual : passwordEncoder.encode(body.senha()));
         bolsistaService.atualizar(b);
+        auditoriaService.registrar(logado, "ATUALIZAR_USUARIO", "USUARIO", "Usuário '" + b.getNome() + "' atualizado.", null);
         return UsuarioResponse.de(b);
     }
 
@@ -258,10 +265,12 @@ public class UsuarioApiController {
 
         if ("PROFESSOR".equalsIgnoreCase(tipo)) {
             usuarioLogado.exigirAdmin(logado);
-            if (professorService.buscarPorId(id) == null) {
+            Professor p = professorService.buscarPorId(id);
+            if (p == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Professor nao encontrado.");
             }
             professorService.excluir(id);
+            auditoriaService.registrar(logado, "EXCLUIR_PROFESSOR", "USUARIO", "Professor '" + p.getNome() + "' desativado.", null);
             return ResponseEntity.noContent().build();
         }
 
@@ -271,6 +280,7 @@ public class UsuarioApiController {
         }
         usuarioLogado.exigir(bolsistaService.podeGerenciar(logado, b), "Sem permissao para excluir este usuario.");
         bolsistaService.excluir(id);
+        auditoriaService.registrar(logado, "EXCLUIR_USUARIO", "USUARIO", "Usuário '" + b.getNome() + "' desativado.", null);
         return ResponseEntity.noContent().build();
     }
 

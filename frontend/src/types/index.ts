@@ -1,62 +1,17 @@
 export type TipoUsuario = 'ADMIN' | 'PROFESSOR' | 'BOLSISTA';
+export type UserRole = TipoUsuario;
 
-export type LaboratorioStatus = 'Ativo' | 'Em Pausa' | 'Concluido';
+export type CargoBolsista =
+  | 'DESENVOLVEDOR'
+  | 'PESQUISADOR'
+  | 'LIDER_TECNICO'
+  | 'DESIGNER'
+  | 'AUXILIAR';
 
-export interface UsuarioAuth {
-  id: string;
-  nome: string;
-  email: string;
-  tipoUsuario: TipoUsuario;
-  laboratorioId: string | null;
-  fotoUrl: string | null;
-  ativo: boolean;
-}
-
-export interface Usuario {
-  id: string;
-  nome: string;
-  email: string;
-  tipoUsuario: TipoUsuario;
-  fotoUrl?: string | null;
-  curso?: string | null;
-  matricula?: string | null;
-  cpf?: string | null;
-  telefone?: string | null;
-  dataNascimento?: string | null;
-  laboratorioId?: string | null;
-  nomeLaboratorio?: string | null;
-  cargo?: string | null;
-  modalidadeBolsa?: string | null;
-  modalidadeBolsaDescricao?: string | null;
-  valorBolsa?: number | null;
-  dataInicioBolsa?: string | null;
-  dataFimBolsa?: string | null;
-  bolsaVencida?: boolean;
-  bolsaPrestesAVencer?: boolean;
-  ativo: boolean;
-}
-
-export interface UsuarioRequest {
-  nome: string;
-  email: string;
-  senha?: string | null;
-  tipoUsuario: TipoUsuario;
-  fotoUrl?: string | null;
-  dataNascimento?: string | null;
-  curso?: string | null;
-  matricula?: string | null;
-  cpf?: string | null;
-  telefone?: string | null;
-  laboratorioId?: string | null;
-  cargo?: string | null;
-  modalidadeBolsa?: string | null;
-  valorBolsa?: number | null;
-  dataInicioBolsa?: string | null;
-  dataFimBolsa?: string | null;
-}
+export type LaboratorioStatus = 'Ativo' | 'Em Pausa' | 'Concluído';
 
 export interface CargoOption {
-  valor: string;
+  valor: CargoBolsista;
   descricao: string;
 }
 
@@ -65,11 +20,58 @@ export interface ModalidadeOption {
   descricao: string;
 }
 
-export interface Paginacao<T> {
-  itens: T[];
-  totalItens: number;
-  pagina: number;
-  totalPaginas: number;
+export interface UsuarioAuth {
+  id: string;
+  nome: string;
+  email: string;
+  tipoUsuario: TipoUsuario;
+  fotoUrl?: string | null;
+  laboratorioId?: string | null;
+}
+
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  tipoUsuario: TipoUsuario;
+  fotoUrl: string | null;
+  bio: string | null;
+  ativo: boolean;
+  curso?: string | null;
+  matricula?: string | null;
+  cpf?: string | null;
+  telefone?: string | null;
+  dataNascimento?: string | null;
+  laboratorioId?: string | null;
+  nomeLaboratorio?: string | null;
+  cargo?: CargoBolsista | null;
+  modalidadeBolsa?: string | null;
+  modalidadeBolsaDescricao?: string | null;
+  valorBolsa?: number | null;
+  dataInicioBolsa?: string | null;
+  dataFimBolsa?: string | null;
+  bolsaVencida?: boolean;
+  bolsaPrestesAVencer?: boolean;
+}
+
+export interface UsuarioRequest {
+  nome: string;
+  email: string;
+  senha?: string | null;
+  tipoUsuario: TipoUsuario;
+  curso?: string | null;
+  matricula?: string | null;
+  cpf?: string | null;
+  telefone?: string | null;
+  dataNascimento?: string | null;
+  laboratorioId?: string | null;
+  cargo?: CargoBolsista | string | null;
+  modalidadeBolsa?: string | null;
+  valorBolsa?: number | null;
+  dataInicioBolsa?: string | null;
+  dataFimBolsa?: string | null;
+  fotoUrl?: string | null;
+  bio?: string | null;
 }
 
 export interface Laboratorio {
@@ -160,4 +162,22 @@ export interface RelatorioItem {
   capacidade: number;
   ocupacao: number;
   percentual: number;
+}
+
+export interface Auditoria {
+  id: string;
+  usuarioId?: string | null;
+  usuarioNome: string;
+  acao: string;
+  entidade: string;
+  detalhes?: string | null;
+  ipOrigem?: string | null;
+  dataHora: string;
+}
+
+export interface Paginacao<T> {
+  itens: T[];
+  pagina: number;
+  totalPaginas: number;
+  totalItens: number;
 }

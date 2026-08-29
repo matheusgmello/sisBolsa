@@ -38,16 +38,19 @@ public class AuthApiController {
     private final BolsistaService bolsistaService;
     private final ProfessorService professorService;
     private final PasswordEncoder passwordEncoder;
+    private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
 
     public AuthApiController(LoginService loginService, JwtService jwtService, UsuarioLogado usuarioLogado,
                              BolsistaService bolsistaService, ProfessorService professorService,
-                             PasswordEncoder passwordEncoder) {
+                             PasswordEncoder passwordEncoder,
+                             dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService) {
         this.loginService = loginService;
         this.jwtService = jwtService;
         this.usuarioLogado = usuarioLogado;
         this.bolsistaService = bolsistaService;
         this.professorService = professorService;
         this.passwordEncoder = passwordEncoder;
+        this.auditoriaService = auditoriaService;
     }
 
     @Operation(summary = "Autentica e grava o token jwt num cookie httpOnly. As chamadas seguintes nao precisam mandar nada a mais.")
@@ -60,17 +63,23 @@ public class AuthApiController {
                 body.senha() != null ? body.senha().trim() : null);
 
         if (usuario == null) {
+            auditoriaService.registrar(null, "Anônimo", "LOGIN_FALHA", "AUTH", "Tentativa de login inválida com e-mail: " + body.email(), null);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos.");
         }
 
         String token = jwtService.gerarToken(usuario.getEmail(), usuario.getTipoUsuario());
         CookieJwt.gravar(response, token, jwtService.getExpiracaoMinutos());
         session.setAttribute("usuario", usuario);
+        auditoriaService.registrar(usuario, "LOGIN", "AUTH", "Login efetuado com sucesso (" + usuario.getTipoUsuario() + ")", null);
         return UsuarioResponse.de(usuario);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpSession session, HttpServletResponse response) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario != null) {
+            auditoriaService.registrar(usuario, "LOGOUT", "AUTH", "Sessão encerrada pelo usuário", null);
+        }
         CookieJwt.limpar(response);
         session.invalidate();
         return ResponseEntity.noContent().build();

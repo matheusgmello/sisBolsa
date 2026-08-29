@@ -26,13 +26,16 @@ public class LaboratorioApiController {
     private final BolsistaService bolsistaService;
     private final ProjetoService projetoService;
     private final UsuarioLogado usuarioLogado;
+    private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
 
     public LaboratorioApiController(LaboratorioService laboratorioService, BolsistaService bolsistaService,
-                                    ProjetoService projetoService, UsuarioLogado usuarioLogado) {
+                                    ProjetoService projetoService, UsuarioLogado usuarioLogado,
+                                    dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService) {
         this.laboratorioService = laboratorioService;
         this.bolsistaService = bolsistaService;
         this.projetoService = projetoService;
         this.usuarioLogado = usuarioLogado;
+        this.auditoriaService = auditoriaService;
     }
 
     @GetMapping
@@ -76,6 +79,7 @@ public class LaboratorioApiController {
         Laboratorio lab = new Laboratorio();
         aplicar(lab, body);
         laboratorioService.cadastrar(lab);
+        auditoriaService.registrar(logado, "CRIAR_LABORATORIO", "LABORATORIO", "Laboratório '" + lab.getNome() + "' criado com sucesso.", null);
         return ResponseEntity.status(HttpStatus.CREATED).body(comOcupacao(lab));
     }
 
@@ -89,15 +93,17 @@ public class LaboratorioApiController {
         aplicar(lab, body);
         lab.setAtivo(true);
         laboratorioService.atualizar(lab);
+        auditoriaService.registrar(logado, "ATUALIZAR_LABORATORIO", "LABORATORIO", "Laboratório '" + lab.getNome() + "' atualizado.", null);
         return comOcupacao(lab);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable UUID id, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
-        exigirLab(id);
+        Laboratorio lab = exigirLab(id);
         usuarioLogado.exigir(laboratorioService.podeGerenciar(logado, id), "Sem permissao para excluir este laboratorio.");
         laboratorioService.excluir(id);
+        auditoriaService.registrar(logado, "EXCLUIR_LABORATORIO", "LABORATORIO", "Laboratório '" + lab.getNome() + "' desativado.", null);
         return ResponseEntity.noContent().build();
     }
 

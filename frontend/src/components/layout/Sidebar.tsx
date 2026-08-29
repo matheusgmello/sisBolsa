@@ -11,6 +11,7 @@ import {
   LogOut,
   Sun,
   Moon,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -111,6 +112,16 @@ export const Sidebar: React.FC = () => {
           >
             <BarChart3 size={18} />
             <span>Relatórios</span>
+          </NavLink>
+        )}
+
+        {!isBolsista && (
+          <NavLink
+            to="/auditoria"
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+          >
+            <ShieldCheck size={18} />
+            <span>Auditoria</span>
           </NavLink>
         )}
 
