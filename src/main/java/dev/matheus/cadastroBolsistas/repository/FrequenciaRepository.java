@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,18 +30,37 @@ public interface FrequenciaRepository extends JpaRepository<Frequencia, UUID> {
 
     @Query("SELECT f FROM Frequencia f WHERE f.ativo = true "
             + "AND (:bolsistaId IS NULL OR f.bolsistaId = :bolsistaId) "
+            + "AND (cast(:dataInicio AS date) IS NULL OR f.data >= :dataInicio) "
+            + "AND (cast(:dataFim AS date) IS NULL OR f.data <= :dataFim) "
             + "ORDER BY f.data DESC")
-    List<Frequencia> buscarFrequencias(@Param("bolsistaId") UUID bolsistaId, Pageable pageable);
+    List<Frequencia> buscarFrequencias(@Param("bolsistaId") UUID bolsistaId,
+                                       @Param("dataInicio") LocalDate dataInicio,
+                                       @Param("dataFim") LocalDate dataFim,
+                                       Pageable pageable);
 
     @Query("SELECT COUNT(f) FROM Frequencia f WHERE f.ativo = true "
-            + "AND (:bolsistaId IS NULL OR f.bolsistaId = :bolsistaId)")
-    int contarFrequencias(@Param("bolsistaId") UUID bolsistaId);
+            + "AND (:bolsistaId IS NULL OR f.bolsistaId = :bolsistaId) "
+            + "AND (cast(:dataInicio AS date) IS NULL OR f.data >= :dataInicio) "
+            + "AND (cast(:dataFim AS date) IS NULL OR f.data <= :dataFim)")
+    int contarFrequencias(@Param("bolsistaId") UUID bolsistaId,
+                          @Param("dataInicio") LocalDate dataInicio,
+                          @Param("dataFim") LocalDate dataFim);
 
-    @Query("SELECT f FROM Frequencia f WHERE f.ativo = true AND f.bolsistaId IN :ids ORDER BY f.data DESC")
-    List<Frequencia> buscarPorBolsistas(@Param("ids") List<UUID> ids, Pageable pageable);
+    @Query("SELECT f FROM Frequencia f WHERE f.ativo = true AND f.bolsistaId IN :ids "
+            + "AND (cast(:dataInicio AS date) IS NULL OR f.data >= :dataInicio) "
+            + "AND (cast(:dataFim AS date) IS NULL OR f.data <= :dataFim) "
+            + "ORDER BY f.data DESC")
+    List<Frequencia> buscarPorBolsistas(@Param("ids") List<UUID> ids,
+                                        @Param("dataInicio") LocalDate dataInicio,
+                                        @Param("dataFim") LocalDate dataFim,
+                                        Pageable pageable);
 
-    @Query("SELECT COUNT(f) FROM Frequencia f WHERE f.ativo = true AND f.bolsistaId IN :ids")
-    int contarPorBolsistas(@Param("ids") List<UUID> ids);
+    @Query("SELECT COUNT(f) FROM Frequencia f WHERE f.ativo = true AND f.bolsistaId IN :ids "
+            + "AND (cast(:dataInicio AS date) IS NULL OR f.data >= :dataInicio) "
+            + "AND (cast(:dataFim AS date) IS NULL OR f.data <= :dataFim)")
+    int contarPorBolsistas(@Param("ids") List<UUID> ids,
+                           @Param("dataInicio") LocalDate dataInicio,
+                           @Param("dataFim") LocalDate dataFim);
 
     @Modifying
     @Query("UPDATE Frequencia f SET f.ativo = false WHERE f.id = :id")

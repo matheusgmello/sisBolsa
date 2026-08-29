@@ -45,10 +45,12 @@ public class FrequenciaApiController {
         this.usuarioLogado = usuarioLogado;
     }
 
-    @Operation(summary = "Lista frequencias paginadas. Bolsista comum ve apenas as proprias, e o filtro bolsistaId e ignorado para ele.")
+    @Operation(summary = "Lista frequencias paginadas com filtro opcional por data. Bolsista comum ve apenas as proprias.")
     @GetMapping
     public PaginaResponse<FrequenciaResponse> listar(@RequestParam(defaultValue = "1") int pagina,
                                                      @RequestParam(required = false) UUID bolsistaId,
+                                                     @RequestParam(required = false) LocalDate dataInicio,
+                                                     @RequestParam(required = false) LocalDate dataFim,
                                                      HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         UUID filtro = logado.isBolsista() ? logado.getId() : bolsistaId;
@@ -63,13 +65,13 @@ public class FrequenciaApiController {
 
         if (filtro == null && logado.isProfessor()) {
             List<UUID> ids = idsDosMeusBolsistas(logado);
-            total = frequenciaService.contarPorBolsistas(ids);
+            total = frequenciaService.contarPorBolsistas(ids, dataInicio, dataFim);
             atual = paginaValida(pagina, total);
-            pagina1 = frequenciaService.buscarPorBolsistas(ids, TAMANHO_PAGINA, (atual - 1) * TAMANHO_PAGINA);
+            pagina1 = frequenciaService.buscarPorBolsistas(ids, dataInicio, dataFim, TAMANHO_PAGINA, (atual - 1) * TAMANHO_PAGINA);
         } else {
-            total = frequenciaService.contarFrequencias(filtro);
+            total = frequenciaService.contarFrequencias(filtro, dataInicio, dataFim);
             atual = paginaValida(pagina, total);
-            pagina1 = frequenciaService.buscarFrequencias(filtro, TAMANHO_PAGINA, (atual - 1) * TAMANHO_PAGINA);
+            pagina1 = frequenciaService.buscarFrequencias(filtro, dataInicio, dataFim, TAMANHO_PAGINA, (atual - 1) * TAMANHO_PAGINA);
         }
 
         int totalPaginas = Math.max(1, (int) Math.ceil(total / (double) TAMANHO_PAGINA));
@@ -95,9 +97,11 @@ public class FrequenciaApiController {
         return Map.of("horasMes", mes, "horasTotal", total);
     }
 
-    @Operation(summary = "Exporta em CSV as frequencias visiveis para quem chama.")
+    @Operation(summary = "Exporta em CSV as frequencias filtradas.")
     @GetMapping("/exportar")
     public void exportar(@RequestParam(required = false) UUID bolsistaId,
+                         @RequestParam(required = false) LocalDate dataInicio,
+                         @RequestParam(required = false) LocalDate dataFim,
                          HttpSession session,
                          HttpServletResponse response) throws java.io.IOException {
         Usuario logado = usuarioLogado.obrigatorio(session);
@@ -107,8 +111,8 @@ public class FrequenciaApiController {
         }
 
         List<Frequencia> lista = (filtro == null && logado.isProfessor())
-                ? frequenciaService.buscarPorBolsistas(idsDosMeusBolsistas(logado), null, null)
-                : frequenciaService.buscarFrequencias(filtro, null, null);
+                ? frequenciaService.buscarPorBolsistas(idsDosMeusBolsistas(logado), dataInicio, dataFim, null, null)
+                : frequenciaService.buscarFrequencias(filtro, dataInicio, dataFim, null, null);
 
         response.setContentType("text/csv; charset=UTF-8");
         response.setHeader("Content-Disposition", "attachment; filename=frequencias.csv");

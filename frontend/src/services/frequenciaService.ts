@@ -2,8 +2,13 @@ import { api } from './api';
 import type { Frequencia, FrequenciaRequest, FrequenciaResumo, Paginacao } from '../types';
 
 export const frequenciaService = {
-  listar: (params?: { bolsistaId?: string; pagina?: number; tamanho?: number }) =>
-    api.get<Paginacao<Frequencia>>('/frequencias', params),
+  listar: (params?: {
+    bolsistaId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+    pagina?: number;
+    tamanho?: number;
+  }) => api.get<Paginacao<Frequencia>>('/frequencias', params),
 
   buscarPorId: (id: string) =>
     api.get<Frequencia>(`/frequencias/${id}`),

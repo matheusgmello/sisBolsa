@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -48,15 +49,19 @@ public class FrequenciaService {
         return new ArrayList<>(repository.findByAtivoTrueOrderByDataDesc());
     }
 
-    public ArrayList<Frequencia> buscarFrequencias(UUID bolsistaId, Integer limit, Integer offset) {
+    public ArrayList<Frequencia> buscarFrequencias(UUID bolsistaId, LocalDate dataInicio, LocalDate dataFim, Integer limit, Integer offset) {
         Pageable pageable = Pageable.unpaged();
         if (limit != null && limit > 0 && offset != null && offset >= 0) {
             pageable = PageRequest.of(offset / limit, limit);
         }
-        return new ArrayList<>(repository.buscarFrequencias(bolsistaId, pageable));
+        return new ArrayList<>(repository.buscarFrequencias(bolsistaId, dataInicio, dataFim, pageable));
     }
 
-    public ArrayList<Frequencia> buscarPorBolsistas(List<UUID> ids, Integer limit, Integer offset) {
+    public ArrayList<Frequencia> buscarFrequencias(UUID bolsistaId, Integer limit, Integer offset) {
+        return buscarFrequencias(bolsistaId, null, null, limit, offset);
+    }
+
+    public ArrayList<Frequencia> buscarPorBolsistas(List<UUID> ids, LocalDate dataInicio, LocalDate dataFim, Integer limit, Integer offset) {
         if (ids == null || ids.isEmpty()) {
             return new ArrayList<>();
         }
@@ -64,15 +69,27 @@ public class FrequenciaService {
         if (limit != null && limit > 0 && offset != null && offset >= 0) {
             pageable = PageRequest.of(offset / limit, limit);
         }
-        return new ArrayList<>(repository.buscarPorBolsistas(ids, pageable));
+        return new ArrayList<>(repository.buscarPorBolsistas(ids, dataInicio, dataFim, pageable));
+    }
+
+    public ArrayList<Frequencia> buscarPorBolsistas(List<UUID> ids, Integer limit, Integer offset) {
+        return buscarPorBolsistas(ids, null, null, limit, offset);
+    }
+
+    public int contarPorBolsistas(List<UUID> ids, LocalDate dataInicio, LocalDate dataFim) {
+        return (ids == null || ids.isEmpty()) ? 0 : repository.contarPorBolsistas(ids, dataInicio, dataFim);
     }
 
     public int contarPorBolsistas(List<UUID> ids) {
-        return (ids == null || ids.isEmpty()) ? 0 : repository.contarPorBolsistas(ids);
+        return contarPorBolsistas(ids, null, null);
+    }
+
+    public int contarFrequencias(UUID bolsistaId, LocalDate dataInicio, LocalDate dataFim) {
+        return repository.contarFrequencias(bolsistaId, dataInicio, dataFim);
     }
 
     public int contarFrequencias(UUID bolsistaId) {
-        return repository.contarFrequencias(bolsistaId);
+        return contarFrequencias(bolsistaId, null, null);
     }
 
     /* soft delete */

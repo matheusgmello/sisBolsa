@@ -7,6 +7,8 @@ import {
   Calendar,
   Loader2,
   CheckCircle2,
+  Download,
+  Filter,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -30,6 +32,8 @@ export const FrequenciaPage: React.FC = () => {
   const [resumo, setResumo] = useState<FrequenciaResumo>({ horasMes: 0, horasTotal: 0 });
   const [bolsistas, setBolsistas] = useState<Usuario[]>([]);
   const [filtroBolsista, setFiltroBolsista] = useState<string>('');
+  const [dataInicio, setDataInicio] = useState<string>('');
+  const [dataFim, setDataFim] = useState<string>('');
   const [pagina, setPagina] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -47,12 +51,15 @@ export const FrequenciaPage: React.FC = () => {
   const carregarFrequencias = async (pag = pagina) => {
     setLoading(true);
     try {
+      const bolsistaParam = filtroBolsista || (isBolsista ? user?.id : undefined);
       const [dados, resumoData] = await Promise.all([
         frequenciaService.listar({
-          bolsistaId: filtroBolsista || (isBolsista ? user?.id : undefined),
+          bolsistaId: bolsistaParam,
+          dataInicio: dataInicio || undefined,
+          dataFim: dataFim || undefined,
           pagina: pag,
         }),
-        frequenciaService.obterResumo(),
+        frequenciaService.obterResumo(bolsistaParam),
       ]);
       setPaginacao(dados);
       setResumo(resumoData);
@@ -152,6 +159,16 @@ export const FrequenciaPage: React.FC = () => {
     }
   };
 
+  const getExportUrl = () => {
+    const params = new URLSearchParams();
+    const bolsistaParam = filtroBolsista || (isBolsista ? user?.id : undefined);
+    if (bolsistaParam) params.append('bolsistaId', bolsistaParam);
+    if (dataInicio) params.append('dataInicio', dataInicio);
+    if (dataFim) params.append('dataFim', dataFim);
+    const qs = params.toString();
+    return `/api/frequencias/exportar${qs ? `?${qs}` : ''}`;
+  };
+
   return (
     <div>
       <div className="header-actions">
@@ -164,6 +181,16 @@ export const FrequenciaPage: React.FC = () => {
           </p>
         </div>
         <div className="header-buttons">
+          <a
+            href={getExportUrl()}
+            className="btn-new btn-export"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Download size={16} />
+            <span>Exportar CSV</span>
+          </a>
+
           <button type="button" className="btn-new btn-create" onClick={handleOpenCreate}>
             <Plus size={16} />
             <span>Registrar Horas</span>
@@ -193,14 +220,22 @@ export const FrequenciaPage: React.FC = () => {
       </div>
 
       <div className="container">
-        {/* Filtros para Coordenadores */}
-        {canManage && bolsistas.length > 0 && (
-          <div className="search-section">
-            <div className="search-toolbar">
-              <div className="search-field" style={{ maxWidth: '300px' }}>
+        {/* Barra de Filtros: Bolsista e Período de Datas */}
+        <div style={{ marginBottom: '20px' }}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setPagina(1);
+              carregarFrequencias(1);
+            }}
+            style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}
+          >
+            {canManage && bolsistas.length > 0 && (
+              <div style={{ flex: '1 1 200px' }}>
                 <select
                   value={filtroBolsista}
                   onChange={(e) => setFiltroBolsista(e.target.value)}
+                  style={{ width: '100%', margin: 0 }}
                 >
                   <option value="">Todos os Bolsistas</option>
                   {bolsistas.map((b) => (
@@ -210,19 +245,60 @@ export const FrequenciaPage: React.FC = () => {
                   ))}
                 </select>
               </div>
+            )}
 
-              {filtroBolsista && (
-                <button
-                  type="button"
-                  className="reset-button"
-                  onClick={() => setFiltroBolsista('')}
-                >
-                  Limpar Filtro
-                </button>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 180px' }}>
+              <label htmlFor="freq-filtro-inicio" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', margin: 0 }}>
+                De:
+              </label>
+              <input
+                id="freq-filtro-inicio"
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                style={{ width: '100%', margin: 0 }}
+              />
             </div>
-          </div>
-        )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 180px' }}>
+              <label htmlFor="freq-filtro-fim" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', margin: 0 }}>
+                Até:
+              </label>
+              <input
+                id="freq-filtro-fim"
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                style={{ width: '100%', margin: 0 }}
+              />
+            </div>
+
+            <button type="submit" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Filter size={14} />
+              <span>Filtrar</span>
+            </button>
+
+            {(dataInicio || dataFim || filtroBolsista) && (
+              <button
+                type="button"
+                className="btn btn-cancel"
+                onClick={() => {
+                  setDataInicio('');
+                  setDataFim('');
+                  setFiltroBolsista('');
+                  setPagina(1);
+                  // carregar limpo
+                  frequenciaService.listar({
+                    bolsistaId: isBolsista ? user?.id : undefined,
+                    pagina: 1,
+                  }).then((d) => setPaginacao(d));
+                }}
+              >
+                Limpar
+              </button>
+            )}
+          </form>
+        </div>
 
         {/* Tabela de Frequência */}
         <div className="table-container">
@@ -246,7 +322,7 @@ export const FrequenciaPage: React.FC = () => {
               ) : paginacao.itens.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="empty-state-cell">
-                    Nenhum registro de frequência encontrado.
+                    Nenhum registro de frequência encontrado para o período selecionado.
                   </td>
                 </tr>
               ) : (
