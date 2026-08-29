@@ -1,8 +1,9 @@
 # SisBolsa — Gestão de Bolsistas e Laboratórios
+![Preview](./docs/images/preview.png)
 
 Sistema web para gestão integrada de bolsistas de pesquisa, professores orientadores, laboratórios, projetos acadêmicos, controle de frequência e trilha de auditoria.
 
-API RESTful construída em **Spring Boot 4 / Java 21** com frontend Single Page Application (SPA) moderno em **React + Vite + TypeScript**.
+API RESTful construída em **Spring Boot 4 / Java 21** com frontend Single Page Application (SPA) em **React + Vite + TypeScript**.
 
 ---
 
@@ -57,7 +58,7 @@ API RESTful construída em **Spring Boot 4 / Java 21** com frontend Single Page 
 
 ---
 
-## 🔒 Perfis de Acesso
+## Perfis de Acesso
 
 - **`ADMIN`:** Acesso irrestrito a todos os laboratórios, bolsistas, projetos, relatórios globais, trilha de auditoria e configurações.
 - **`PROFESSOR`:** Gerenciamento dos laboratórios que coordena, seus projetos associados e bolsistas vinculados.
@@ -65,7 +66,7 @@ API RESTful construída em **Spring Boot 4 / Java 21** com frontend Single Page 
 
 ---
 
-## 🏃 Como Rodar
+## Como Rodar
 
 ### Com Docker (Recomendado)
 
@@ -97,7 +98,7 @@ Senha:  12345678
 
 ---
 
-## 📚 Documentação da API (Swagger)
+##  Documentação da API (Swagger)
 
 Com a aplicação rodando, acesse a documentação interativa:
 - **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
@@ -105,7 +106,7 @@ Com a aplicação rodando, acesse a documentação interativa:
 
 ---
 
-## 🧪 Testes Automatizados
+##  Testes Automatizados
 
 A suíte conta com 83 testes automatizados (unitários e de contexto com mockMvc) que não dependem de banco de dados externo:
 

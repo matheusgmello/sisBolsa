@@ -1,21 +1,21 @@
-# Guia de Instalação e Execução — SisBolsa
+# Guia de Instalacao e Execucao — SisBolsa
 
-## 📋 Pré-requisitos
+## Pre-requisitos
 
-| Ferramenta | Versão Recomendada | Finalidade |
+| Ferramenta | Versao Recomendada | Finalidade |
 |---|---|---|
-| **Docker & Docker Compose** | Qualquer versão recente | Execução completa em containers (banco + aplicação) |
-| **Java JDK** | 21 | Execução local do backend (opcional caso use Docker) |
+| **Docker & Docker Compose** | Qualquer versao recente | Execucao completa em containers (banco + aplicacao) |
+| **Java JDK** | 21 | Execucao local do backend (opcional caso use Docker) |
 | **Maven** | 3.9+ | Build local do backend |
 | **Node.js** | 20+ | Desenvolvimento e build do frontend React (opcional caso use Docker) |
 
 ---
 
-## 🚀 1. Execução Rápida via Docker (Recomendado)
+## 1. Execucao Rapida via Docker (Recomendado)
 
-O Docker Compose sobe automaticamente o banco PostgreSQL e a aplicação com o frontend compilado.
+O Docker Compose sobe automaticamente o banco PostgreSQL e a aplicacao com o frontend compilado.
 
-1. Clone o repositório e acerte o diretório:
+1. Clone o repositorio e acerte o diretorio:
    ```bash
    git clone <url-do-repositorio>
    cd trabalho-finalp-poow1
@@ -26,18 +26,18 @@ O Docker Compose sobe automaticamente o banco PostgreSQL e a aplicação com o f
    docker compose up -d --build
    ```
 
-3. Acesse a aplicação no navegador:
-   👉 **[http://localhost:8080](http://localhost:8080)**
+3. Acesse a aplicacao no navegador:
+   - URL: **http://localhost:8080**
 
-4. Swagger UI / Documentação da API:
-   👉 **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**
+4. Swagger UI / Documentacao da API:
+   - URL: **http://localhost:8080/swagger-ui.html**
 
-### Comandos Úteis do Docker
+### Comandos Uteis do Docker
 ```bash
 # Ver logs em tempo real
 docker compose logs -f
 
-# Parar a aplicação mantendo os dados
+# Parar a aplicacao mantendo os dados
 docker compose down
 
 # Parar e resetar o banco de dados do zero
@@ -46,7 +46,7 @@ docker compose down -v
 
 ---
 
-## 🛠️ 2. Execução em Modo de Desenvolvimento
+## 2. Execucao em Modo de Desenvolvimento
 
 Caso deseje desenvolver com o backend ou frontend rodando localmente:
 
@@ -55,7 +55,7 @@ Caso deseje desenvolver com o backend ou frontend rodando localmente:
 docker compose up -d db
 ```
 
-### Passo 2: Subir a aplicação Spring Boot
+### Passo 2: Subir a aplicacao Spring Boot
 ```bash
 mvn spring-boot:run
 ```
@@ -70,9 +70,9 @@ npm run dev
 
 ---
 
-## 🔑 3. Credenciais Iniciais de Acesso
+## 3. Credenciais Iniciais de Acesso
 
-O banco é populado automaticamente via Flyway com as seguintes contas:
+O banco e populado automaticamente via Flyway com as seguintes contas:
 
 ### Administrador
 - **E-mail:** `admin@sisbolsa.com`
@@ -80,8 +80,8 @@ O banco é populado automaticamente via Flyway com as seguintes contas:
 
 ### Professores Coordenadores
 - `roberto.mendes@sisbolsa.com` / `12345678` (Lab. Desenvolvimento de Software)
-- `carla.souza@sisbolsa.com` / `12345678` (Lab. Ciências Biológicas)
-- `felipe.andrade@sisbolsa.com` / `12345678` (Lab. Engenharia Mecatrônica)
+- `carla.souza@sisbolsa.com` / `12345678` (Lab. Ciencias Biologicas)
+- `felipe.andrade@sisbolsa.com` / `12345678` (Lab. Engenharia Mecatronica)
 
 ### Bolsistas (Exemplos)
 - `thiago.rocha@aluno.sisbolsa.com` / `12345678`
@@ -91,9 +91,9 @@ O banco é populado automaticamente via Flyway com as seguintes contas:
 
 ---
 
-## 🧪 4. Executando os Testes Automatizados
+## 4. Executando os Testes Automatizados
 
-A aplicação possui 83 testes automatizados (unitários, segurança, services e controllers mockados) que rodam sem necessidade de banco ativo:
+A aplicacao possui 83 testes automatizados (unitarios, seguranca, services e controllers mockados) que rodam sem necessidade de banco ativo:
 
 ```bash
 mvn test
