@@ -181,6 +181,13 @@ public class AuthApiController {
 
         /* a sessao guarda o usuario para as telas: precisa refletir o que mudou */
         session.setAttribute("usuario", atualizado);
+
+        if (senhaNova != null) {
+            auditoriaService.registrar(atualizado, "ALTERAR_SENHA", "USUARIO", "Senha de acesso alterada pelo próprio usuário com sucesso.", null);
+        } else {
+            auditoriaService.registrar(atualizado, "ATUALIZAR_PERFIL", "USUARIO", "Dados cadastrais do perfil atualizados.", null);
+        }
+
         return UsuarioResponse.de(atualizado);
     }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { User, Lock, Save, Loader2, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Save, Loader2, Eye, EyeOff, Check, X, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { authService } from '../services/authService';
@@ -18,6 +18,7 @@ export const Perfil: React.FC = () => {
 
   const [showSenhaAtual, setShowSenhaAtual] = useState(false);
   const [showNovaSenha, setShowNovaSenha] = useState(false);
+  const [showConfirmaSenha, setShowConfirmaSenha] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -27,6 +28,24 @@ export const Perfil: React.FC = () => {
       setFotoUrl(user.fotoUrl || '');
     }
   }, [user]);
+
+  // Cálculo de Força de Senha
+  const calcularForcaSenha = (s: string): { nivel: number; texto: string; cor: string } => {
+    if (!s) return { nivel: 0, texto: '', cor: '' };
+    let score = 0;
+    if (s.length >= 6) score++;
+    if (s.length >= 8) score++;
+    if (/[A-Z]/.test(s) && /[a-z]/.test(s)) score++;
+    if (/[0-9]/.test(s)) score++;
+    if (/[^A-Za-z0-9]/.test(s)) score++;
+
+    if (score <= 2) return { nivel: 1, texto: 'Fraca', cor: '#ef4444' };
+    if (score <= 3) return { nivel: 2, texto: 'Média', cor: '#f59e0b' };
+    return { nivel: 3, texto: 'Forte', cor: '#10b981' };
+  };
+
+  const forca = calcularForcaSenha(senha);
+  const senhasConferem = senha && confirmaSenha ? senha === confirmaSenha : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +62,7 @@ export const Perfil: React.FC = () => {
 
     if (senha || confirmaSenha || senhaAtual) {
       if (!senhaAtual) {
-        showToast('Informe a senha atual para autorizar a alteração.', 'erro');
+        showToast('Informe sua senha atual para autorizar a alteração de credenciais.', 'erro');
         return;
       }
       if (senha.length < 6) {
@@ -71,7 +90,7 @@ export const Perfil: React.FC = () => {
       setSenhaAtual('');
       setSenha('');
       setConfirmaSenha('');
-      showToast('Perfil atualizado com sucesso!', 'sucesso');
+      showToast('Perfil e credenciais atualizados com sucesso!', 'sucesso');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erro ao atualizar perfil';
       showToast(msg, 'erro');
@@ -86,7 +105,7 @@ export const Perfil: React.FC = () => {
         <div>
           <h1>Meu Perfil</h1>
           <p className="header-subtitle">
-            Gerenciamento de credenciais, informações cadastrais e foto de identificação
+            Gerenciamento de credenciais de acesso, dados cadastrais e foto de identificação
           </p>
         </div>
       </div>
@@ -222,17 +241,57 @@ export const Perfil: React.FC = () => {
                     {showNovaSenha ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+
+                {senha && (
+                  <div style={{ marginTop: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)' }}>
+                        <Shield size={12} /> Força:
+                      </span>
+                      <strong style={{ color: forca.cor }}>{forca.texto}</strong>
+                    </div>
+                    <div style={{ display: 'flex', gap: '4px', height: '4px' }}>
+                      <div style={{ flex: 1, borderRadius: '2px', backgroundColor: forca.nivel >= 1 ? forca.cor : 'var(--border-grid)' }} />
+                      <div style={{ flex: 1, borderRadius: '2px', backgroundColor: forca.nivel >= 2 ? forca.cor : 'var(--border-grid)' }} />
+                      <div style={{ flex: 1, borderRadius: '2px', backgroundColor: forca.nivel >= 3 ? forca.cor : 'var(--border-grid)' }} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
                 <label htmlFor="perfil-confirma-senha">Confirmar Nova Senha</label>
-                <input
-                  id="perfil-confirma-senha"
-                  type="password"
-                  placeholder="Repita a nova senha"
-                  value={confirmaSenha}
-                  onChange={(e) => setConfirmaSenha(e.target.value)}
-                />
+                <div className="password-field-wrapper">
+                  <input
+                    id="perfil-confirma-senha"
+                    type={showConfirmaSenha ? 'text' : 'password'}
+                    placeholder="Repita a nova senha"
+                    value={confirmaSenha}
+                    onChange={(e) => setConfirmaSenha(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowConfirmaSenha(!showConfirmaSenha)}
+                    aria-label={showConfirmaSenha ? 'Ocultar senha' : 'Exibir senha'}
+                  >
+                    {showConfirmaSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+
+                {confirmaSenha && (
+                  <div style={{ marginTop: '6px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {senhasConferem ? (
+                      <span style={{ color: 'var(--success-color)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Check size={12} /> Senhas coincidem
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--danger-color)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <X size={12} /> Senhas não conferem
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
