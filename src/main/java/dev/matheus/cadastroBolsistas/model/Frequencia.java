@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /*
- * registro de horas trabalhadas por um bolsista com id UUID.
+ * registro de horas trabalhadas por um bolsista com id UUID e link de comprovante/entregavel.
  */
 @Entity
 @Table(name = "frequencia")
@@ -36,6 +36,10 @@ public class Frequencia {
     private double horasTrabalhadas;
 
     private String descricao;
+
+    @Column(name = "link_comprovante")
+    private String linkComprovante;
+
     private boolean ativo;
 
     public Frequencia() {}
@@ -67,6 +71,9 @@ public class Frequencia {
 
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
+
+    public String getLinkComprovante() { return linkComprovante; }
+    public void setLinkComprovante(String linkComprovante) { this.linkComprovante = linkComprovante; }
 
     public boolean isAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }

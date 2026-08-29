@@ -117,14 +117,15 @@ public class FrequenciaApiController {
         response.setContentType("text/csv; charset=UTF-8");
         response.setHeader("Content-Disposition", "attachment; filename=frequencias.csv");
         try (java.io.PrintWriter writer = response.getWriter()) {
-            writer.println("ID,Bolsista,Data,Horas Trabalhadas,Descricao");
+            writer.println("ID,Bolsista,Data,Horas Trabalhadas,Descricao,LinkComprovante");
             for (Frequencia f : lista) {
                 writer.println(String.join(",",
                         String.valueOf(f.getId()),
                         csv(f.getNomeBolsista()),
                         f.getData() != null ? f.getData().toString() : "",
                         String.valueOf(f.getHorasTrabalhadas()),
-                        csv(f.getDescricao())));
+                        csv(f.getDescricao()),
+                        csv(f.getLinkComprovante())));
             }
         }
     }
@@ -158,6 +159,7 @@ public class FrequenciaApiController {
         f.setData(body.data());
         f.setHorasTrabalhadas(body.horasTrabalhadas());
         f.setDescricao(StringUtil.limpar(body.descricao()));
+        f.setLinkComprovante(StringUtil.limpar(body.linkComprovante()));
         frequenciaService.registrar(f);
         return ResponseEntity.status(HttpStatus.CREATED).body(FrequenciaResponse.de(f));
     }
@@ -172,6 +174,7 @@ public class FrequenciaApiController {
         f.setData(body.data());
         f.setHorasTrabalhadas(body.horasTrabalhadas());
         f.setDescricao(StringUtil.limpar(body.descricao()));
+        f.setLinkComprovante(StringUtil.limpar(body.linkComprovante()));
         frequenciaService.atualizar(f);
         return FrequenciaResponse.de(f);
     }

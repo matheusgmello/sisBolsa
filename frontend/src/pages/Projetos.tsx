@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FolderKanban, Plus, Edit2, Trash2, Building2, Loader2 } from 'lucide-react';
+import {
+  FolderKanban,
+  Plus,
+  Edit2,
+  Trash2,
+  Building2,
+  Loader2,
+  GitBranch,
+  ExternalLink,
+  FileText,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { projetoService } from '../services/projetoService';
@@ -25,6 +35,8 @@ export const Projetos: React.FC = () => {
     nome: '',
     descricao: '',
     laboratorioId: '',
+    linkRepositorio: '',
+    linkDocumentacao: '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -58,6 +70,8 @@ export const Projetos: React.FC = () => {
       nome: '',
       descricao: '',
       laboratorioId: laboratorios[0]?.id || '',
+      linkRepositorio: '',
+      linkDocumentacao: '',
     });
     setIsModalOpen(true);
   };
@@ -68,6 +82,8 @@ export const Projetos: React.FC = () => {
       nome: proj.nome,
       descricao: proj.descricao || '',
       laboratorioId: proj.laboratorioId,
+      linkRepositorio: proj.linkRepositorio || '',
+      linkDocumentacao: proj.linkDocumentacao || '',
     });
     setIsModalOpen(true);
   };
@@ -120,7 +136,7 @@ export const Projetos: React.FC = () => {
         <div>
           <h1>Projetos de Pesquisa</h1>
           <p className="header-subtitle">
-            Acompanhamento de planos de trabalho, bolsistas alocados e entregas
+            Acompanhamento de planos de trabalho, bolsistas alocados e entregáveis
           </p>
         </div>
         {canManage && (
@@ -142,29 +158,34 @@ export const Projetos: React.FC = () => {
               carregarDados();
             }}
           >
-            <div className="search-field">
+            <div className="search-field" style={{ flex: '1 1 240px' }}>
               <input
                 type="text"
-                className="search-input"
-                placeholder="Pesquisar por título ou palavra-chave..."
+                placeholder="Buscar por nome ou descrição do projeto..."
                 value={buscaNome}
                 onChange={(e) => setBuscaNome(e.target.value)}
               />
             </div>
 
-            <div className="search-field" style={{ maxWidth: '240px' }}>
-              <select
-                value={filtroLab}
-                onChange={(e) => setFiltroLab(e.target.value)}
-              >
-                <option value="">Todos os Laboratórios</option>
-                {laboratorios.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {laboratorios.length > 0 && (
+              <div className="search-field" style={{ maxWidth: '280px' }}>
+                <select
+                  value={filtroLab}
+                  onChange={(e) => setFiltroLab(e.target.value)}
+                >
+                  <option value="">Todos os Laboratórios</option>
+                  {laboratorios.map((lab) => (
+                    <option key={lab.id} value={lab.id}>
+                      {lab.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <button type="submit" className="search-button">
+              Buscar
+            </button>
 
             {(buscaNome || filtroLab) && (
               <button
@@ -175,20 +196,22 @@ export const Projetos: React.FC = () => {
                   setFiltroLab('');
                 }}
               >
-                Limpar
+                Limpar Filtros
               </button>
             )}
           </form>
         </div>
 
+        {/* Projects Grid */}
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            Carregando projetos...
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+            <Loader2 className="spin" size={28} style={{ margin: '0 auto 12px' }} />
+            <p>Carregando projetos de pesquisa...</p>
           </div>
         ) : projetos.length === 0 ? (
-          <div className="empty-state-cell">
-            <FolderKanban size={36} />
-            <p>Nenhum projeto encontrado.</p>
+          <div className="empty-state-cell" style={{ padding: '40px', textAlign: 'center' }}>
+            <FolderKanban size={48} style={{ margin: '0 auto 12px', color: 'var(--text-muted)' }} />
+            <p>Nenhum projeto encontrado com os filtros aplicados.</p>
           </div>
         ) : (
           <div className="projects-grid">
@@ -224,6 +247,54 @@ export const Projetos: React.FC = () => {
                   <p className="project-desc">
                     {proj.descricao || 'Sem descrição detalhada.'}
                   </p>
+
+                  {/* External Links */}
+                  {(proj.linkRepositorio || proj.linkDocumentacao) && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px', marginBottom: '8px' }}>
+                      {proj.linkRepositorio && (
+                        <a
+                          href={proj.linkRepositorio}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="count-badge count-badge-purple"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            textDecoration: 'none',
+                            fontSize: '0.75rem',
+                            padding: '4px 8px',
+                          }}
+                        >
+                          <GitBranch size={12} />
+                          <span>Repositório</span>
+                          <ExternalLink size={10} />
+                        </a>
+                      )}
+                      {proj.linkDocumentacao && (
+                        <a
+                          href={proj.linkDocumentacao}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="count-badge"
+                          style={{
+                            backgroundColor: '#f1f5f9',
+                            color: '#475569',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            textDecoration: 'none',
+                            fontSize: '0.75rem',
+                            padding: '4px 8px',
+                          }}
+                        >
+                          <FileText size={12} />
+                          <span>Artigo / Docs</span>
+                          <ExternalLink size={10} />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="project-card-footer">
@@ -308,15 +379,39 @@ export const Projetos: React.FC = () => {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="proj-descricao">Descrição / Resumo</label>
+            <div className="form-group" style={{ marginBottom: '14px' }}>
+              <label htmlFor="proj-descricao">Descrição / Resumo Científico</label>
               <textarea
                 id="proj-descricao"
-                rows={4}
+                rows={3}
                 placeholder="Descreva as metas e atividades científicas..."
                 value={formData.descricao || ''}
                 onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label htmlFor="proj-repo">Link do Repositório (GitHub / GitLab)</label>
+                <input
+                  id="proj-repo"
+                  type="url"
+                  placeholder="https://github.com/usuario/projeto"
+                  value={formData.linkRepositorio || ''}
+                  onChange={(e) => setFormData({ ...formData, linkRepositorio: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="proj-doc">Link do Artigo / Documentação (Overleaf/Docs)</label>
+                <input
+                  id="proj-doc"
+                  type="url"
+                  placeholder="https://overleaf.com/read/..."
+                  value={formData.linkDocumentacao || ''}
+                  onChange={(e) => setFormData({ ...formData, linkDocumentacao: e.target.value })}
+                />
+              </div>
             </div>
           </div>
 

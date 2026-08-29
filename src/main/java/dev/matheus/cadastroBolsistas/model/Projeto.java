@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 import java.util.UUID;
 
 /*
- * projeto vinculado a um laboratorio com id UUID.
+ * projeto vinculado a um laboratorio com id UUID e links de entregaveis.
  */
 @Entity
 @Table(name = "projeto")
@@ -24,6 +24,12 @@ public class Projeto {
 
     private String nome;
     private String descricao;
+
+    @Column(name = "link_repositorio")
+    private String linkRepositorio;
+
+    @Column(name = "link_documentacao")
+    private String linkDocumentacao;
 
     @Column(name = "laboratorio_id")
     private UUID laboratorioId;
@@ -52,6 +58,12 @@ public class Projeto {
 
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
+
+    public String getLinkRepositorio() { return linkRepositorio; }
+    public void setLinkRepositorio(String linkRepositorio) { this.linkRepositorio = linkRepositorio; }
+
+    public String getLinkDocumentacao() { return linkDocumentacao; }
+    public void setLinkDocumentacao(String linkDocumentacao) { this.linkDocumentacao = linkDocumentacao; }
 
     public UUID getLaboratorioId() { return laboratorioId; }
     public void setLaboratorioId(UUID laboratorioId) { this.laboratorioId = laboratorioId; }

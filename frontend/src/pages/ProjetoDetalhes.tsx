@@ -138,6 +138,34 @@ export const ProjetoDetalhes: React.FC = () => {
             <Building2 size={16} style={{ color: 'var(--primary-color)' }} />
             <span>Laboratório: <strong>{projeto.nomeLaboratorio}</strong></span>
           </p>
+          {(projeto.linkRepositorio || projeto.linkDocumentacao) && (
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+              {projeto.linkRepositorio && (
+                <a
+                  href={projeto.linkRepositorio}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <span>Repositório GitHub / GitLab</span>
+                  <ArrowLeft size={12} style={{ transform: 'rotate(135deg)' }} />
+                </a>
+              )}
+              {projeto.linkDocumentacao && (
+                <a
+                  href={projeto.linkDocumentacao}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <span>Artigo / Documentação Overleaf</span>
+                  <ArrowLeft size={12} style={{ transform: 'rotate(135deg)' }} />
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         {canManage && (

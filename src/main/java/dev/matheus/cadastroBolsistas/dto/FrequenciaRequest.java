@@ -11,5 +11,6 @@ public record FrequenciaRequest(
         UUID bolsistaId,
         LocalDate data,
         Double horasTrabalhadas,
-        String descricao) {
+        String descricao,
+        String linkComprovante) {
 }

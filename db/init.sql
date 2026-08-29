@@ -61,6 +61,8 @@ CREATE TABLE projeto (
     nome VARCHAR(255) NOT NULL,
     descricao TEXT,
     laboratorio_id UUID REFERENCES laboratorio(id),
+    link_repositorio VARCHAR(500),
+    link_documentacao VARCHAR(500),
     ativo BOOLEAN DEFAULT TRUE
 );
 
@@ -76,6 +78,7 @@ CREATE TABLE frequencia (
     data DATE NOT NULL,
     horas_trabalhadas DOUBLE PRECISION NOT NULL,
     descricao TEXT,
+    link_comprovante VARCHAR(500),
     ativo BOOLEAN DEFAULT TRUE
 );
 
@@ -96,18 +99,18 @@ INSERT INTO bolsista (id, nome, senha, data_nascimento, email, curso, matricula,
 ('d2222222-2222-2222-2222-222222222222', 'Mariana Santos',          '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '2001-11-20', 'mariana.santos@aluno.sisbolsa.com', 'Engenharia de Software', '20211002',   '222.333.444-55', '(31) 99222-3344', true, 'c1111111-1111-1111-1111-111111111111', 'BOLSISTA', 'https://i.pravatar.cc/150?img=47', 'PESQUISADOR',   'PIBITI',       700.00, CURRENT_DATE - INTERVAL '4 months', CURRENT_DATE + INTERVAL '8 months',  NULL),
 ('d3333333-3333-3333-3333-333333333333', 'Diego Almeida',           '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '2003-02-28', 'diego.almeida@aluno.sisbolsa.com',  'Sistemas de Informação', '20231003',   '333.444.555-66', '(31) 99333-4455', true, 'c2222222-2222-2222-2222-222222222222', 'BOLSISTA', 'https://i.pravatar.cc/150?img=33', 'DESIGNER',      'EXTENSAO',     500.00, CURRENT_DATE - INTERVAL '2 months', CURRENT_DATE + INTERVAL '10 months', NULL);
 
-INSERT INTO projeto (id, nome, descricao, laboratorio_id, ativo) VALUES
-('e1111111-1111-1111-1111-111111111111', 'Sistema Web de Gestão Acadêmica',          'Desenvolvimento de plataforma web para controle de bolsas de pesquisa e auditoria.', 'c1111111-1111-1111-1111-111111111111', true),
-('e2222222-2222-2222-2222-222222222222', 'Modelagem Preditiva com Machine Learning', 'Pesquisa e implementação de algoritmos de classificação em bases de dados abertas.', 'c2222222-2222-2222-2222-222222222222', true);
+INSERT INTO projeto (id, nome, descricao, laboratorio_id, link_repositorio, link_documentacao, ativo) VALUES
+('e1111111-1111-1111-1111-111111111111', 'Sistema Web de Gestão Acadêmica',          'Desenvolvimento de plataforma web para controle de bolsas de pesquisa e auditoria.', 'c1111111-1111-1111-1111-111111111111', 'https://github.com/exemplo/sistema-web-gestao', 'https://overleaf.com/read/exemplo-artigo-academico', true),
+('e2222222-2222-2222-2222-222222222222', 'Modelagem Preditiva com Machine Learning', 'Pesquisa e implementação de algoritmos de classificação em bases de dados abertas.', 'c2222222-2222-2222-2222-222222222222', 'https://github.com/exemplo/modelagem-ml-pesquisa', 'https://notion.so/exemplo-documentacao-dados', true);
 
 INSERT INTO bolsista_projeto (bolsista_id, projeto_id) VALUES
 ('d1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111111'),
 ('d2222222-2222-2222-2222-222222222222', 'e1111111-1111-1111-1111-111111111111'),
 ('d3333333-3333-3333-3333-333333333333', 'e2222222-2222-2222-2222-222222222222');
 
-INSERT INTO frequencia (id, bolsista_id, data, horas_trabalhadas, descricao, ativo) VALUES
-('f1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 4.0, 'Implementação de autenticação JWT e testes de endpoints.', true),
-('f2222222-2222-2222-2222-222222222222', 'd1111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day',  4.0, 'Criação dos componentes de tabela e modais no frontend React.', true),
-('f3333333-3333-3333-3333-333333333333', 'd2222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '2 days', 5.0, 'Revisão bibliográfica e elaboração do plano de testes da plataforma.', true),
-('f4444444-4444-4444-4444-444444444444', 'd2222222-2222-2222-2222-222222222222', CURRENT_DATE,                     4.0, 'Mapeamento de casos de uso e validação de requisitos com a equipe.', true),
-('f5555555-5555-5555-5555-555555555555', 'd3333333-3333-3333-3333-333333333333', CURRENT_DATE - INTERVAL '1 day',  6.0, 'Limpeza e pré-processamento do dataset para o modelo preditivo.', true);
+INSERT INTO frequencia (id, bolsista_id, data, horas_trabalhadas, descricao, link_comprovante, ativo) VALUES
+('f1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '2 days', 4.0, 'Implementação de autenticação JWT e testes de endpoints.', 'https://github.com/exemplo/sistema-web-gestao/pull/12', true),
+('f2222222-2222-2222-2222-222222222222', 'd1111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 day',  4.0, 'Criação dos componentes de tabela e modais no frontend React.', 'https://github.com/exemplo/sistema-web-gestao/commit/a1b2c3d', true),
+('f3333333-3333-3333-3333-333333333333', 'd2222222-2222-2222-2222-222222222222', CURRENT_DATE - INTERVAL '2 days', 5.0, 'Revisão bibliográfica e elaboração do plano de testes da plataforma.', NULL, true),
+('f4444444-4444-4444-4444-444444444444', 'd2222222-2222-2222-2222-222222222222', CURRENT_DATE,                     4.0, 'Mapeamento de casos de uso e validação de requisitos com a equipe.', NULL, true),
+('f5555555-5555-5555-5555-555555555555', 'd3333333-3333-3333-3333-333333333333', CURRENT_DATE - INTERVAL '1 day',  6.0, 'Limpeza e pré-processamento do dataset para o modelo preditivo.', NULL, true);

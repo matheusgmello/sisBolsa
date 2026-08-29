@@ -12,6 +12,7 @@ public record FrequenciaResponse(
         LocalDate data,
         double horasTrabalhadas,
         String descricao,
+        String linkComprovante,
         boolean ativo) {
 
     public static FrequenciaResponse de(Frequencia f) {
@@ -20,6 +21,7 @@ public record FrequenciaResponse(
         }
         return new FrequenciaResponse(
                 f.getId(), f.getBolsistaId(), f.getNomeBolsista(),
-                f.getData(), f.getHorasTrabalhadas(), f.getDescricao(), f.isAtivo());
+                f.getData(), f.getHorasTrabalhadas(), f.getDescricao(),
+                f.getLinkComprovante(), f.isAtivo());
     }
 }

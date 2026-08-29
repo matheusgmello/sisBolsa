@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Download,
   Filter,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -45,6 +46,7 @@ export const FrequenciaPage: React.FC = () => {
     data: new Date().toISOString().split('T')[0],
     horasTrabalhadas: 4,
     descricao: '',
+    linkComprovante: '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -97,6 +99,7 @@ export const FrequenciaPage: React.FC = () => {
       data: new Date().toISOString().split('T')[0],
       horasTrabalhadas: 4,
       descricao: '',
+      linkComprovante: '',
     });
     setIsModalOpen(true);
   };
@@ -108,6 +111,7 @@ export const FrequenciaPage: React.FC = () => {
       data: f.data,
       horasTrabalhadas: f.horasTrabalhadas,
       descricao: f.descricao,
+      linkComprovante: f.linkComprovante || '',
     });
     setIsModalOpen(true);
   };
@@ -287,7 +291,6 @@ export const FrequenciaPage: React.FC = () => {
                   setDataFim('');
                   setFiltroBolsista('');
                   setPagina(1);
-                  // carregar limpo
                   frequenciaService.listar({
                     bolsistaId: isBolsista ? user?.id : undefined,
                     pagina: 1,
@@ -308,7 +311,7 @@ export const FrequenciaPage: React.FC = () => {
                 <th>Data</th>
                 {!isBolsista && <th>Bolsista</th>}
                 <th>Horas</th>
-                <th>Descrição das Atividades</th>
+                <th>Descrição & Entregáveis</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -340,7 +343,30 @@ export const FrequenciaPage: React.FC = () => {
                         {f.horasTrabalhadas}h
                       </span>
                     </td>
-                    <td>{f.descricao}</td>
+                    <td>
+                      <div>{f.descricao}</div>
+                      {f.linkComprovante && (
+                        <div style={{ marginTop: '6px' }}>
+                          <a
+                            href={f.linkComprovante}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.78rem',
+                              color: 'var(--primary-color)',
+                              textDecoration: 'none',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <ExternalLink size={12} />
+                            <span>Ver Entregável / PR / Commit</span>
+                          </a>
+                        </div>
+                      )}
+                    </td>
                     <td>
                       <div className="actions-cell">
                         <button
@@ -448,17 +474,30 @@ export const FrequenciaPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: '14px' }}>
               <label htmlFor="freq-desc">
                 Descrição das Atividades Realizadas <span className="asterisco">*</span>
               </label>
               <textarea
                 id="freq-desc"
-                rows={4}
+                rows={3}
                 required
                 placeholder="Descreva detalhadamente as tarefas, experimentos ou códigos desenvolvidos..."
                 value={formData.descricao}
                 onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="freq-link">
+                Link do Entregável / PR / Commit (opcional)
+              </label>
+              <input
+                id="freq-link"
+                type="url"
+                placeholder="https://github.com/usuario/repo/pull/123"
+                value={formData.linkComprovante || ''}
+                onChange={(e) => setFormData({ ...formData, linkComprovante: e.target.value })}
               />
             </div>
           </div>

@@ -142,6 +142,8 @@ public class ProjetoApiController {
         p.setNome(StringUtil.limpar(body.nome()));
         p.setDescricao(body.descricao());
         p.setLaboratorioId(body.laboratorioId());
+        p.setLinkRepositorio(StringUtil.limpar(body.linkRepositorio()));
+        p.setLinkDocumentacao(StringUtil.limpar(body.linkDocumentacao()));
     }
 
     private ProjetoResponse comMembros(Projeto p) {

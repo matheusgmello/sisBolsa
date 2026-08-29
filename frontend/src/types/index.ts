@@ -101,6 +101,8 @@ export interface Projeto {
   nomeLaboratorio: string;
   ativo: boolean;
   totalMembros?: number;
+  linkRepositorio?: string | null;
+  linkDocumentacao?: string | null;
   membros?: MembroProjeto[];
 }
 
@@ -108,6 +110,8 @@ export interface ProjetoRequest {
   nome: string;
   descricao?: string | null;
   laboratorioId: string;
+  linkRepositorio?: string | null;
+  linkDocumentacao?: string | null;
 }
 
 export interface MembroProjeto {
@@ -126,6 +130,7 @@ export interface Frequencia {
   data: string;
   horasTrabalhadas: number;
   descricao: string;
+  linkComprovante?: string | null;
   ativo: boolean;
 }
 
@@ -134,6 +139,7 @@ export interface FrequenciaRequest {
   data: string;
   horasTrabalhadas: number;
   descricao: string;
+  linkComprovante?: string | null;
 }
 
 export interface FrequenciaResumo {

@@ -11,7 +11,9 @@ public record ProjetoResponse(
         UUID laboratorioId,
         String nomeLaboratorio,
         boolean ativo,
-        int totalMembros) {
+        int totalMembros,
+        String linkRepositorio,
+        String linkDocumentacao) {
 
     public static ProjetoResponse de(Projeto p) {
         return de(p, 0);
@@ -24,6 +26,7 @@ public record ProjetoResponse(
         return new ProjetoResponse(
                 p.getId(), p.getNome(), p.getDescricao(),
                 p.getLaboratorioId(),
-                p.getNomeLaboratorio(), p.isAtivo(), totalMembros);
+                p.getNomeLaboratorio(), p.isAtivo(), totalMembros,
+                p.getLinkRepositorio(), p.getLinkDocumentacao());
     }
 }
