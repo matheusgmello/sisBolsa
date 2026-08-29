@@ -216,7 +216,7 @@ export const LaboratorioDetalhes: React.FC = () => {
                     className="btn btn-secondary"
                     style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                   >
-                    <span>Ver Detalhes / Equipe</span>
+                    <span>Ver Equipe ({proj.totalMembros ?? proj.membros?.length ?? 0})</span>
                   </Link>
 
                   {canManage && (

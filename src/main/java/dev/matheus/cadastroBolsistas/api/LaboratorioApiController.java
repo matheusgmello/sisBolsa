@@ -62,7 +62,9 @@ public class LaboratorioApiController {
     public List<ProjetoResponse> projetos(@PathVariable UUID id, HttpSession session) {
         usuarioLogado.obrigatorio(session);
         exigirLab(id);
-        return projetoService.listarPorLaboratorio(id).stream().map(ProjetoResponse::de).toList();
+        return projetoService.listarPorLaboratorio(id).stream()
+                .map(p -> ProjetoResponse.de(p, projetoService.contarMembros(p.getId())))
+                .toList();
     }
 
     @PostMapping

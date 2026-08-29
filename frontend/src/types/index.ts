@@ -84,6 +84,7 @@ export interface Projeto {
   laboratorioId: string;
   nomeLaboratorio: string;
   ativo: boolean;
+  totalMembros?: number;
   membros?: MembroProjeto[];
 }
 

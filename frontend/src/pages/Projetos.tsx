@@ -232,7 +232,7 @@ export const Projetos: React.FC = () => {
                     className="btn btn-secondary"
                     style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                   >
-                    <span>Ver Equipe ({proj.membros?.length || 0})</span>
+                    <span>Ver Equipe ({proj.totalMembros ?? proj.membros?.length ?? 0})</span>
                   </Link>
 
                   {canManage && (

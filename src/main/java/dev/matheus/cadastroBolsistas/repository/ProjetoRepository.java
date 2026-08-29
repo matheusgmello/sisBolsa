@@ -36,6 +36,12 @@ public interface ProjetoRepository extends JpaRepository<Projeto, UUID> {
             nativeQuery = true)
     List<Object[]> buscarVinculosDoLaboratorio(@Param("labId") UUID labId);
 
+    @Query(value = "SELECT COUNT(*) FROM bolsista_projeto bp "
+            + "INNER JOIN bolsista b ON bp.bolsista_id = b.id "
+            + "WHERE bp.projeto_id = :projetoId AND b.ativo = true",
+            nativeQuery = true)
+    int contarMembros(@Param("projetoId") UUID projetoId);
+
     @Modifying
     @Query(value = "INSERT INTO bolsista_projeto (bolsista_id, projeto_id) VALUES (:bolsistaId, :projetoId) "
             + "ON CONFLICT DO NOTHING", nativeQuery = true)

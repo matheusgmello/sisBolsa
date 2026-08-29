@@ -46,6 +46,11 @@ public class ProjetoService {
         return repository.findById(id).orElse(null);
     }
 
+    public int contarMembros(UUID projetoId) {
+        if (projetoId == null) return 0;
+        return repository.contarMembros(projetoId);
+    }
+
     public boolean atualizar(Projeto p) {
         repository.save(p);
         return true;

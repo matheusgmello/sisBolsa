@@ -10,15 +10,20 @@ public record ProjetoResponse(
         String descricao,
         UUID laboratorioId,
         String nomeLaboratorio,
-        boolean ativo) {
+        boolean ativo,
+        int totalMembros) {
 
     public static ProjetoResponse de(Projeto p) {
+        return de(p, 0);
+    }
+
+    public static ProjetoResponse de(Projeto p, int totalMembros) {
         if (p == null) {
             return null;
         }
         return new ProjetoResponse(
                 p.getId(), p.getNome(), p.getDescricao(),
                 p.getLaboratorioId(),
-                p.getNomeLaboratorio(), p.isAtivo());
+                p.getNomeLaboratorio(), p.isAtivo(), totalMembros);
     }
 }

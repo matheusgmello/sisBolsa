@@ -42,13 +42,13 @@ public class ProjetoApiController {
                                         @RequestParam(required = false) UUID labId,
                                         HttpSession session) {
         usuarioLogado.obrigatorio(session);
-        return projetoService.buscarProjetos(buscaNome, labId).stream().map(ProjetoResponse::de).toList();
+        return projetoService.buscarProjetos(buscaNome, labId).stream().map(this::comMembros).toList();
     }
 
     @GetMapping("/{id}")
     public ProjetoResponse buscar(@PathVariable UUID id, HttpSession session) {
         usuarioLogado.obrigatorio(session);
-        return ProjetoResponse.de(exigirProjeto(id));
+        return comMembros(exigirProjeto(id));
     }
 
     @GetMapping("/{id}/membros")
@@ -142,5 +142,9 @@ public class ProjetoApiController {
         p.setNome(StringUtil.limpar(body.nome()));
         p.setDescricao(body.descricao());
         p.setLaboratorioId(body.laboratorioId());
+    }
+
+    private ProjetoResponse comMembros(Projeto p) {
+        return ProjetoResponse.de(p, projetoService.contarMembros(p.getId()));
     }
 }
