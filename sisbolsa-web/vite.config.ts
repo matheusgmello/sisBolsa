@@ -21,7 +21,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: '../src/main/resources/static',
+    outDir: '../sisbolsa-api/src/main/resources/static',
     emptyOutDir: true,
   },
 })

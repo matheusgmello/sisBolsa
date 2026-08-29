@@ -55,15 +55,16 @@ Caso deseje desenvolver com o backend ou frontend rodando localmente:
 docker compose up -d db
 ```
 
-### Passo 2: Subir a aplicacao Spring Boot
+### Passo 2: Subir a aplicacao Spring Boot (Backend)
 ```bash
+cd sisbolsa-api
 mvn spring-boot:run
 ```
 
 ### Passo 3 (Opcional): Desenvolver no Frontend com Hot-Reload
 Caso deseje editar componentes React com Vite:
 ```bash
-cd frontend
+cd sisbolsa-web
 npm install
 npm run dev
 ```
@@ -96,5 +97,6 @@ O banco e populado automaticamente via Flyway com as seguintes contas:
 A aplicacao possui 83 testes automatizados (unitarios, seguranca, services e controllers mockados) que rodam sem necessidade de banco ativo:
 
 ```bash
+cd sisbolsa-api
 mvn test
 ```

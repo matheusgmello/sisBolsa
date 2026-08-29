@@ -82,11 +82,11 @@ Acesse a aplicação em: **[http://localhost:8080](http://localhost:8080)**
 # 1. Subir apenas o banco de dados
 docker compose up -d db
 
-# 2. Rodar a aplicação Spring Boot
-mvn spring-boot:run
+# 2. Rodar a aplicação Spring Boot (Backend)
+cd sisbolsa-api && mvn spring-boot:run
 
 # (Opcional) Para rodar o frontend com hot-reload no Vite:
-cd frontend && npm run dev
+cd sisbolsa-web && npm run dev
 ```
 
 ### Acesso Inicial
@@ -111,5 +111,5 @@ Com a aplicação rodando, acesse a documentação interativa:
 A suíte conta com 83 testes automatizados (unitários e de contexto com mockMvc) que não dependem de banco de dados externo:
 
 ```bash
-mvn test
+cd sisbolsa-api && mvn test
 ```
