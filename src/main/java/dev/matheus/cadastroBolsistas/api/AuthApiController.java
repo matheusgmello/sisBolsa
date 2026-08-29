@@ -1,31 +1,42 @@
 package dev.matheus.cadastroBolsistas.api;
 
 import dev.matheus.cadastroBolsistas.dto.CadastroAdminRequest;
+import dev.matheus.cadastroBolsistas.dto.ErroResponse;
+import dev.matheus.cadastroBolsistas.dto.EsqueciSenhaRequest;
 import dev.matheus.cadastroBolsistas.dto.LoginRequest;
 import dev.matheus.cadastroBolsistas.dto.PerfilRequest;
+import dev.matheus.cadastroBolsistas.dto.RedefinirSenhaRequest;
 import dev.matheus.cadastroBolsistas.dto.UsuarioResponse;
 import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.model.Professor;
 import dev.matheus.cadastroBolsistas.model.Usuario;
-import dev.matheus.cadastroBolsistas.service.BolsistaService;
-import dev.matheus.cadastroBolsistas.service.ProfessorService;
-import dev.matheus.cadastroBolsistas.util.StringUtil;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import dev.matheus.cadastroBolsistas.security.CookieJwt;
 import dev.matheus.cadastroBolsistas.security.JwtService;
+import dev.matheus.cadastroBolsistas.security.LoginAttemptService;
+import dev.matheus.cadastroBolsistas.security.PasswordResetService;
+import dev.matheus.cadastroBolsistas.service.AuditoriaService;
+import dev.matheus.cadastroBolsistas.service.BolsistaService;
 import dev.matheus.cadastroBolsistas.service.LoginService;
+import dev.matheus.cadastroBolsistas.service.ProfessorService;
+import dev.matheus.cadastroBolsistas.util.StringUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
-@Tag(name = "Autenticacao", description = "Login, logout e dados do usuario da sessao atual.")
+@Tag(name = "Autenticação", description = "Endpoints para autenticação, controle de sessão via JWT HttpOnly, perfil e recuperação de senha.")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthApiController {
@@ -38,16 +49,16 @@ public class AuthApiController {
     private final BolsistaService bolsistaService;
     private final ProfessorService professorService;
     private final PasswordEncoder passwordEncoder;
-    private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
-    private final dev.matheus.cadastroBolsistas.security.LoginAttemptService loginAttemptService;
-    private final dev.matheus.cadastroBolsistas.security.PasswordResetService passwordResetService;
+    private final AuditoriaService auditoriaService;
+    private final LoginAttemptService loginAttemptService;
+    private final PasswordResetService passwordResetService;
 
     public AuthApiController(LoginService loginService, JwtService jwtService, UsuarioLogado usuarioLogado,
                              BolsistaService bolsistaService, ProfessorService professorService,
                              PasswordEncoder passwordEncoder,
-                             dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService,
-                             dev.matheus.cadastroBolsistas.security.LoginAttemptService loginAttemptService,
-                             dev.matheus.cadastroBolsistas.security.PasswordResetService passwordResetService) {
+                             AuditoriaService auditoriaService,
+                             LoginAttemptService loginAttemptService,
+                             PasswordResetService passwordResetService) {
         this.loginService = loginService;
         this.jwtService = jwtService;
         this.usuarioLogado = usuarioLogado;
@@ -59,11 +70,17 @@ public class AuthApiController {
         this.passwordResetService = passwordResetService;
     }
 
-    @Operation(summary = "Autentica e grava o token jwt num cookie httpOnly. As chamadas seguintes nao precisam mandar nada a mais.")
+    @Operation(summary = "Autenticar usuário", description = "Valida as credenciais e grava o token JWT em um cookie HttpOnly com proteção SameSite. Possui proteção por Rate Limiting contra força bruta.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Autenticado com sucesso", content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Credenciais inválidas", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Conta bloqueada temporariamente por excesso de tentativas incorretas", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @PostMapping("/login")
-    public UsuarioResponse login(@RequestBody LoginRequest body,
+    public UsuarioResponse login(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Credenciais de e-mail e senha", required = true)
+                                 @RequestBody LoginRequest body,
                                  HttpSession session,
-                                 jakarta.servlet.http.HttpServletRequest request,
+                                 HttpServletRequest request,
                                  HttpServletResponse response) {
         String email = body.email() != null ? body.email().trim() : "";
         String ip = extrairIp(request);
@@ -102,7 +119,7 @@ public class AuthApiController {
         return UsuarioResponse.de(usuario);
     }
 
-    private static String extrairIp(jakarta.servlet.http.HttpServletRequest request) {
+    private static String extrairIp(HttpServletRequest request) {
         if (request == null) return null;
         String xfHeader = request.getHeader("X-Forwarded-For");
         if (xfHeader != null && !xfHeader.isBlank()) {
@@ -111,6 +128,10 @@ public class AuthApiController {
         return request.getRemoteAddr();
     }
 
+    @Operation(summary = "Encerrar sessão (Logout)", description = "Limpa o cookie HttpOnly contendo o token JWT e invalida a sessão no servidor.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Sessão encerrada com sucesso")
+    })
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpSession session, HttpServletResponse response) {
         Usuario usuario = (Usuario) session.getAttribute("usuario");
@@ -122,14 +143,26 @@ public class AuthApiController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Obter dados do usuário autenticado (/me)", description = "Retorna as informações do usuário atualmente logado na sessão.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dados do usuário logado", content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping("/me")
     public UsuarioResponse eu(HttpSession session) {
         return UsuarioResponse.de(usuarioLogado.obrigatorio(session));
     }
 
-    @Operation(summary = "Atualiza o proprio perfil. A troca de senha exige a senha atual.")
+    @Operation(summary = "Atualizar perfil próprio", description = "Permite a alteração do nome, e-mail, foto e senha do usuário logado. A alteração de senha exige a validação prévia da senha atual.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Perfil atualizado com sucesso", content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou senha atual incorreta", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @PutMapping("/perfil")
-    public UsuarioResponse atualizarPerfil(@RequestBody PerfilRequest body, HttpSession session) {
+    public UsuarioResponse atualizarPerfil(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados para atualização de perfil e senha", required = true)
+                                           @RequestBody PerfilRequest body,
+                                           HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
 
         String nome = StringUtil.limpar(body.nome());
@@ -150,7 +183,6 @@ public class AuthApiController {
                     || StringUtil.estaVazio(body.confirmaSenha())) {
                 throw new IllegalArgumentException("Para alterar a senha, preencha a senha atual, a nova e a confirmacao.");
             }
-            /* bcrypt tem salt, entao comparar strings de hash nao funciona */
             if (!passwordEncoder.matches(body.senhaAtual(), logado.getSenha())) {
                 throw new IllegalArgumentException("A senha atual informada esta incorreta.");
             }
@@ -182,7 +214,6 @@ public class AuthApiController {
             atualizado = b;
         }
 
-        /* a sessao guarda o usuario para as telas: precisa refletir o que mudou */
         session.setAttribute("usuario", atualizado);
 
         if (senhaNova != null) {
@@ -204,15 +235,24 @@ public class AuthApiController {
         }
     }
 
-    @Operation(summary = "Quantas vagas de administrador ainda existem (limite de 3).")
+    @Operation(summary = "Vagas de administrador restantes", description = "Informa quantas contas com perfil ADMIN ainda podem ser cadastradas (limite máximo de 3).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Quantidade de vagas restantes")
+    })
     @GetMapping("/admins-restantes")
     public Map<String, Integer> adminsRestantes() {
         return Map.of("restantes", Math.max(0, LIMITE_ADMINS - bolsistaService.contarAdmins()));
     }
 
-    @Operation(summary = "Cadastro publico de administrador, limitado a 3 no sistema.")
+    @Operation(summary = "Cadastro inicial de Administrador", description = "Permite a criação pública de uma conta de Administrador caso o limite de 3 vagas não tenha sido atingido.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Administrador cadastrado com sucesso", content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Limite de administradores atingido", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @PostMapping("/cadastro-admin")
-    public ResponseEntity<UsuarioResponse> cadastrarAdmin(@RequestBody CadastroAdminRequest body) {
+    public ResponseEntity<UsuarioResponse> cadastrarAdmin(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados para cadastro de administrador", required = true)
+                                                         @RequestBody CadastroAdminRequest body) {
         String nome = StringUtil.limpar(body.nome());
         String email = StringUtil.limpar(body.email());
         String senha = StringUtil.limpar(body.senha());
@@ -249,10 +289,16 @@ public class AuthApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.de(admin));
     }
 
-    @Operation(summary = "Solicita codigo de recuperacao/redefinicao de senha para o email informado.")
+    @Operation(summary = "Solicitar código de recuperação de senha", description = "Gera um código temporário de 6 dígitos válido por 15 minutos para o e-mail cadastrado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Código de recuperação gerado"),
+            @ApiResponse(responseCode = "400", description = "E-mail inválido", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "404", description = "E-mail não encontrado no sistema", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @PostMapping("/esqueci-senha")
-    public Map<String, String> esqueciSenha(@RequestBody dev.matheus.cadastroBolsistas.dto.EsqueciSenhaRequest body,
-                                           jakarta.servlet.http.HttpServletRequest request) {
+    public Map<String, String> esqueciSenha(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "E-mail do usuário", required = true)
+                                           @RequestBody EsqueciSenhaRequest body,
+                                           HttpServletRequest request) {
         String email = StringUtil.limpar(body.email());
         if (StringUtil.estaVazio(email) || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             throw new IllegalArgumentException("Informe um e-mail válido.");
@@ -273,10 +319,16 @@ public class AuthApiController {
         );
     }
 
-    @Operation(summary = "Redefine a senha utilizando o codigo de 6 digitos verificado.")
+    @Operation(summary = "Redefinir senha com código verificado", description = "Aplica uma nova senha à conta após a validação do código de 6 dígitos.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Senha redefinida com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Código inválido, expirado ou senhas divergentes", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @PostMapping("/redefinir-senha")
-    public Map<String, String> redefinirSenha(@RequestBody dev.matheus.cadastroBolsistas.dto.RedefinirSenhaRequest body,
-                                              jakarta.servlet.http.HttpServletRequest request) {
+    public Map<String, String> redefinirSenha(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados para redefinição de senha", required = true)
+                                              @RequestBody RedefinirSenhaRequest body,
+                                              HttpServletRequest request) {
         String email = StringUtil.limpar(body.email());
         String codigo = StringUtil.limpar(body.codigo());
         String novaSenha = StringUtil.limpar(body.novaSenha());

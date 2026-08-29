@@ -1,12 +1,18 @@
 package dev.matheus.cadastroBolsistas.api;
 
 import dev.matheus.cadastroBolsistas.dto.AuditoriaResponse;
+import dev.matheus.cadastroBolsistas.dto.ErroResponse;
 import dev.matheus.cadastroBolsistas.dto.PaginaResponse;
 import dev.matheus.cadastroBolsistas.model.Auditoria;
 import dev.matheus.cadastroBolsistas.model.Usuario;
 import dev.matheus.cadastroBolsistas.service.AuditoriaService;
 import dev.matheus.cadastroBolsistas.util.StringUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -22,7 +28,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
-@Tag(name = "Auditoria", description = "Trilha de auditoria e registro de atividades no sistema.")
+@Tag(name = "Auditoria", description = "Trilha de auditoria para rastreamento de acessos, alterações de cadastros, logins e emissões de comprovantes.")
 @RestController
 @RequestMapping("/api/auditoria")
 public class AuditoriaApiController {
@@ -37,14 +43,19 @@ public class AuditoriaApiController {
         this.usuarioLogado = usuarioLogado;
     }
 
-    @Operation(summary = "Lista logs de auditoria com paginação e filtros opcionais.")
+    @Operation(summary = "Listar logs de auditoria paginados", description = "Retorna o histórico de atividades e logs de segurança filtrados por entidade, tipo de ação ou intervalo de datas (restrito a Administradores e Professores).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista paginada de logs"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado para bolsistas", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping
-    public PaginaResponse<AuditoriaResponse> listar(@RequestParam(defaultValue = "1") int pagina,
-                                                   @RequestParam(required = false) String entidade,
-                                                   @RequestParam(required = false) String acao,
-                                                   @RequestParam(required = false) LocalDate dataInicio,
-                                                   @RequestParam(required = false) LocalDate dataFim,
-                                                   HttpSession session) {
+    public PaginaResponse<AuditoriaResponse> listar(
+            @Parameter(description = "Número da página", example = "1") @RequestParam(defaultValue = "1") int pagina,
+            @Parameter(description = "Filtro por entidade afetada", example = "AUTH") @RequestParam(required = false) String entidade,
+            @Parameter(description = "Filtro por ação realizada", example = "LOGIN") @RequestParam(required = false) String acao,
+            @Parameter(description = "Data de início", example = "2026-08-01") @RequestParam(required = false) LocalDate dataInicio,
+            @Parameter(description = "Data de término", example = "2026-08-31") @RequestParam(required = false) LocalDate dataFim,
+            HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         usuarioLogado.exigir(logado.isAdmin() || logado.isProfessor(), "Acesso restrito a administradores e professores.");
 
@@ -61,14 +72,19 @@ public class AuditoriaApiController {
         return new PaginaResponse<>(itens.stream().map(AuditoriaResponse::de).toList(), atual, totalPaginas, total);
     }
 
-    @Operation(summary = "Exporta logs de auditoria em CSV.")
+    @Operation(summary = "Exportar logs de auditoria em CSV", description = "Gera um relatório em arquivo CSV contendo os logs de auditoria filtrados.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Arquivo CSV gerado"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado para bolsistas", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping("/exportar")
-    public void exportar(@RequestParam(required = false) String entidade,
-                         @RequestParam(required = false) String acao,
-                         @RequestParam(required = false) LocalDate dataInicio,
-                         @RequestParam(required = false) LocalDate dataFim,
-                         HttpSession session,
-                         HttpServletResponse response) throws IOException {
+    public void exportar(
+            @Parameter(description = "Filtro por entidade afetada") @RequestParam(required = false) String entidade,
+            @Parameter(description = "Filtro por ação") @RequestParam(required = false) String acao,
+            @Parameter(description = "Data inicial") @RequestParam(required = false) LocalDate dataInicio,
+            @Parameter(description = "Data final") @RequestParam(required = false) LocalDate dataFim,
+            HttpSession session,
+            HttpServletResponse response) throws IOException {
         Usuario logado = usuarioLogado.obrigatorio(session);
         usuarioLogado.exigir(logado.isAdmin() || logado.isProfessor(), "Acesso restrito a administradores e professores.");
 

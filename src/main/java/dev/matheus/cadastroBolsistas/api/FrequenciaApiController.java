@@ -1,5 +1,6 @@
 package dev.matheus.cadastroBolsistas.api;
 
+import dev.matheus.cadastroBolsistas.dto.ErroResponse;
 import dev.matheus.cadastroBolsistas.dto.FrequenciaRequest;
 import dev.matheus.cadastroBolsistas.dto.FrequenciaResponse;
 import dev.matheus.cadastroBolsistas.dto.PaginaResponse;
@@ -8,16 +9,24 @@ import dev.matheus.cadastroBolsistas.model.Frequencia;
 import dev.matheus.cadastroBolsistas.model.Laboratorio;
 import dev.matheus.cadastroBolsistas.model.Professor;
 import dev.matheus.cadastroBolsistas.model.Usuario;
+import dev.matheus.cadastroBolsistas.service.AuditoriaService;
 import dev.matheus.cadastroBolsistas.service.BolsistaService;
+import dev.matheus.cadastroBolsistas.service.ComprovanteFrequenciaPdfService;
 import dev.matheus.cadastroBolsistas.service.FrequenciaService;
 import dev.matheus.cadastroBolsistas.service.LaboratorioService;
+import dev.matheus.cadastroBolsistas.service.ProfessorService;
 import dev.matheus.cadastroBolsistas.util.StringUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -27,7 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-@Tag(name = "Frequencias", description = "Registro de horas trabalhadas pelos bolsistas.")
+@Tag(name = "Frequência & Horas", description = "Controle de apontamento de horas, relatórios de produtividade, exportação CSV e emissão de comprovantes em PDF.")
 @RestController
 @RequestMapping("/api/frequencias")
 public class FrequenciaApiController {
@@ -38,15 +47,15 @@ public class FrequenciaApiController {
     private final BolsistaService bolsistaService;
     private final LaboratorioService laboratorioService;
     private final UsuarioLogado usuarioLogado;
-    private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
-    private final dev.matheus.cadastroBolsistas.service.ComprovanteFrequenciaPdfService comprovantePdfService;
-    private final dev.matheus.cadastroBolsistas.service.ProfessorService professorService;
+    private final AuditoriaService auditoriaService;
+    private final ComprovanteFrequenciaPdfService comprovantePdfService;
+    private final ProfessorService professorService;
 
     public FrequenciaApiController(FrequenciaService frequenciaService, BolsistaService bolsistaService,
                                    LaboratorioService laboratorioService, UsuarioLogado usuarioLogado,
-                                   dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService,
-                                   dev.matheus.cadastroBolsistas.service.ComprovanteFrequenciaPdfService comprovantePdfService,
-                                   dev.matheus.cadastroBolsistas.service.ProfessorService professorService) {
+                                   AuditoriaService auditoriaService,
+                                   ComprovanteFrequenciaPdfService comprovantePdfService,
+                                   ProfessorService professorService) {
         this.frequenciaService = frequenciaService;
         this.bolsistaService = bolsistaService;
         this.laboratorioService = laboratorioService;
@@ -56,13 +65,18 @@ public class FrequenciaApiController {
         this.professorService = professorService;
     }
 
-    @Operation(summary = "Lista frequencias paginadas com filtro opcional por data. Bolsista comum ve apenas as proprias.")
+    @Operation(summary = "Listar frequências paginadas", description = "Retorna apontamentos de frequência com suporte a filtros de data e bolsista. Bolsistas visualizam somente seus próprios registros.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista paginada de frequências"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping
-    public PaginaResponse<FrequenciaResponse> listar(@RequestParam(defaultValue = "1") int pagina,
-                                                     @RequestParam(required = false) UUID bolsistaId,
-                                                     @RequestParam(required = false) LocalDate dataInicio,
-                                                     @RequestParam(required = false) LocalDate dataFim,
-                                                     HttpSession session) {
+    public PaginaResponse<FrequenciaResponse> listar(
+            @Parameter(description = "Número da página", example = "1") @RequestParam(defaultValue = "1") int pagina,
+            @Parameter(description = "ID do bolsista (UUID)") @RequestParam(required = false) UUID bolsistaId,
+            @Parameter(description = "Data de início do intervalo", example = "2026-08-01") @RequestParam(required = false) LocalDate dataInicio,
+            @Parameter(description = "Data de término do intervalo", example = "2026-08-31") @RequestParam(required = false) LocalDate dataFim,
+            HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         UUID filtro = logado.isBolsista() ? logado.getId() : bolsistaId;
 
@@ -89,9 +103,12 @@ public class FrequenciaApiController {
         return new PaginaResponse<>(pagina1.stream().map(FrequenciaResponse::de).toList(), atual, totalPaginas, total);
     }
 
-    @Operation(summary = "Horas do mes corrente e total acumulado do bolsista.")
+    @Operation(summary = "Resumo mensal de horas", description = "Calcula o total de horas trabalhadas no mês vigente e o histórico total acumulado do bolsista.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resumo de horas calculado")
+    })
     @GetMapping("/resumo")
-    public Map<String, Double> resumo(@RequestParam(required = false) UUID bolsistaId, HttpSession session) {
+    public Map<String, Double> resumo(@Parameter(description = "ID do bolsista (UUID)") @RequestParam(required = false) UUID bolsistaId, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         UUID alvo = logado.isBolsista() ? logado.getId()
                  : (bolsistaId != null ? bolsistaId : logado.getId());
@@ -108,13 +125,17 @@ public class FrequenciaApiController {
         return Map.of("horasMes", mes, "horasTotal", total);
     }
 
-    @Operation(summary = "Exporta em CSV as frequencias filtradas.")
+    @Operation(summary = "Exportar frequências em CSV", description = "Gera um arquivo CSV contendo os apontamentos de frequência filtrados por intervalo de datas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Arquivo CSV gerado")
+    })
     @GetMapping("/exportar")
-    public void exportar(@RequestParam(required = false) UUID bolsistaId,
-                         @RequestParam(required = false) LocalDate dataInicio,
-                         @RequestParam(required = false) LocalDate dataFim,
-                         HttpSession session,
-                         HttpServletResponse response) throws java.io.IOException {
+    public void exportar(
+            @Parameter(description = "ID do bolsista") @RequestParam(required = false) UUID bolsistaId,
+            @Parameter(description = "Data inicial") @RequestParam(required = false) LocalDate dataInicio,
+            @Parameter(description = "Data final") @RequestParam(required = false) LocalDate dataFim,
+            HttpSession session,
+            HttpServletResponse response) throws java.io.IOException {
         Usuario logado = usuarioLogado.obrigatorio(session);
         UUID filtro = logado.isBolsista() ? logado.getId() : bolsistaId;
         if (filtro != null) {
@@ -148,13 +169,18 @@ public class FrequenciaApiController {
         return "\"" + valor.replace("\"", "\"\"") + "\"";
     }
 
-    @Operation(summary = "Gera comprovante oficial de frequencia e atividades em formato PDF.")
+    @Operation(summary = "Emitir comprovante de frequência em PDF", description = "Gera documento PDF formatado com dados cadastrais do bolsista, laboratório, orientador, tabela zebrada de horas e campos para assinatura.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comprovante oficial em PDF"),
+            @ApiResponse(responseCode = "404", description = "Bolsista não encontrado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping("/comprovante-pdf")
-    public void comprovantePdf(@RequestParam(required = false) UUID bolsistaId,
-                               @RequestParam(required = false) LocalDate dataInicio,
-                               @RequestParam(required = false) LocalDate dataFim,
-                               HttpSession session,
-                               HttpServletResponse response) throws java.io.IOException {
+    public void comprovantePdf(
+            @Parameter(description = "ID do bolsista") @RequestParam(required = false) UUID bolsistaId,
+            @Parameter(description = "Data inicial de referência") @RequestParam(required = false) LocalDate dataInicio,
+            @Parameter(description = "Data final de referência") @RequestParam(required = false) LocalDate dataFim,
+            HttpSession session,
+            HttpServletResponse response) throws java.io.IOException {
         Usuario logado = usuarioLogado.obrigatorio(session);
         UUID alvo = resolverBolsistaAlvo(logado, bolsistaId);
         exigirPermissao(logado, alvo);
@@ -186,17 +212,29 @@ public class FrequenciaApiController {
         }
     }
 
+    @Operation(summary = "Buscar frequência por ID", description = "Retorna um apontamento de frequência individual pelo identificador UUID.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dados da frequência", content = @Content(schema = @Schema(implementation = FrequenciaResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Frequência não encontrada", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping("/{id}")
-    public FrequenciaResponse buscar(@PathVariable UUID id, HttpSession session) {
+    public FrequenciaResponse buscar(@Parameter(description = "ID da frequência (UUID)", required = true) @PathVariable UUID id, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Frequencia f = exigirFrequencia(id);
         exigirPermissao(logado, f.getBolsistaId());
         return FrequenciaResponse.de(f);
     }
 
-    @Operation(summary = "Registra frequencia. Bolsista comum sempre registra para si mesmo, independente do bolsistaId enviado.")
+    @Operation(summary = "Registrar novo apontamento de frequência", description = "Aponta horas trabalhadas e descrição das atividades realizadas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Frequência registrada com sucesso", content = @Content(schema = @Schema(implementation = FrequenciaResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @PostMapping
-    public ResponseEntity<FrequenciaResponse> registrar(@RequestBody FrequenciaRequest body, HttpSession session) {
+    public ResponseEntity<FrequenciaResponse> registrar(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do apontamento de horas", required = true)
+            @RequestBody FrequenciaRequest body,
+            HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         validar(body);
 
@@ -214,8 +252,18 @@ public class FrequenciaApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(FrequenciaResponse.de(f));
     }
 
+    @Operation(summary = "Atualizar apontamento de frequência", description = "Altera as horas, data, descrição ou link de entregável de um registro de frequência.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Frequência atualizada com sucesso", content = @Content(schema = @Schema(implementation = FrequenciaResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Frequência não encontrada", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @PutMapping("/{id}")
-    public FrequenciaResponse atualizar(@PathVariable UUID id, @RequestBody FrequenciaRequest body, HttpSession session) {
+    public FrequenciaResponse atualizar(
+            @Parameter(description = "ID da frequência (UUID)", required = true) @PathVariable UUID id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Novos dados da frequência", required = true)
+            @RequestBody FrequenciaRequest body,
+            HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Frequencia f = exigirFrequencia(id);
         exigirPermissao(logado, f.getBolsistaId());
@@ -230,8 +278,13 @@ public class FrequenciaApiController {
         return FrequenciaResponse.de(f);
     }
 
+    @Operation(summary = "Desativar frequência (Soft Delete)", description = "Desativa um registro de apontamento de horas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Frequência desativada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Frequência não encontrada", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(@PathVariable UUID id, HttpSession session) {
+    public ResponseEntity<Void> excluir(@Parameter(description = "ID da frequência (UUID)", required = true) @PathVariable UUID id, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Frequencia f = exigirFrequencia(id);
         exigirPermissao(logado, f.getBolsistaId());
@@ -248,50 +301,54 @@ public class FrequenciaApiController {
     private List<UUID> idsDosMeusBolsistas(Usuario professor) {
         return laboratorioService.listarPorCoordenador(professor.getId()).stream()
                 .flatMap(lab -> bolsistaService.buscarPorLaboratorio(lab.getId()).stream())
-                .map(Bolsista::getId)
-                .distinct()
+                .map(Usuario::getId)
                 .toList();
+    }
+
+    private UUID resolverBolsistaAlvo(Usuario logado, UUID bolsistaId) {
+        if (logado.isBolsista()) {
+            return logado.getId();
+        }
+        if (bolsistaId == null) {
+            throw new IllegalArgumentException("Informe o bolsista para o qual o registro esta sendo feito.");
+        }
+        return bolsistaId;
+    }
+
+    private void exigirPermissao(Usuario logado, UUID bolsistaId) {
+        if (logado.isAdmin()) {
+            return;
+        }
+        if (Objects.equals(logado.getId(), bolsistaId)) {
+            return;
+        }
+        if (logado.isProfessor()) {
+            Bolsista b = bolsistaService.buscarPorId(bolsistaId);
+            if (b != null && b.getLaboratorioId() != null
+                    && laboratorioService.podeGerenciar(logado, b.getLaboratorioId())) {
+                return;
+            }
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissao para acessar as frequencias deste usuario.");
     }
 
     private Frequencia exigirFrequencia(UUID id) {
         Frequencia f = frequenciaService.buscarPorId(id);
-        if (f == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Frequencia nao encontrada.");
+        if (f == null || !f.isAtivo()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro de frequencia nao encontrado.");
         }
         return f;
     }
 
-    private UUID resolverBolsistaAlvo(Usuario logado, UUID pedido) {
-        if (logado.isBolsista()) {
-            return logado.getId();
-        }
-        if (pedido == null) {
-            throw new IllegalArgumentException("Informe o bolsista da frequencia.");
-        }
-        return pedido;
-    }
-
-    private void exigirPermissao(Usuario logado, UUID bolsistaId) {
-        if (logado.isAdmin() || Objects.equals(logado.getId(), bolsistaId)) {
-            return;
-        }
-        Bolsista alvo = bolsistaService.buscarPorId(bolsistaId);
-        if (alvo == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bolsista nao encontrado.");
-        }
-        usuarioLogado.exigir(bolsistaService.podeGerenciar(logado, alvo),
-                "Sem permissao sobre a frequencia deste bolsista.");
-    }
-
     private void validar(FrequenciaRequest body) {
         if (body.data() == null) {
-            throw new IllegalArgumentException("Data e obrigatoria.");
+            throw new IllegalArgumentException("Data da frequencia e obrigatoria.");
         }
-        if (body.horasTrabalhadas() == null || body.horasTrabalhadas() <= 0 || body.horasTrabalhadas() > 24) {
-            throw new IllegalArgumentException("Horas trabalhadas precisa estar entre 0 e 24.");
+        if (body.horasTrabalhadas() == null || body.horasTrabalhadas() < 0.5 || body.horasTrabalhadas() > 24) {
+            throw new IllegalArgumentException("Horas trabalhadas precisam ser entre 0.5 e 24.");
         }
         if (StringUtil.estaVazio(body.descricao())) {
-            throw new IllegalArgumentException("Descricao e obrigatoria.");
+            throw new IllegalArgumentException("Descricao da atividade e obrigatoria.");
         }
     }
 }

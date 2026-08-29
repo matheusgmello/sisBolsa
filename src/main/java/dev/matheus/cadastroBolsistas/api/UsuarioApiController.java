@@ -1,22 +1,34 @@
 package dev.matheus.cadastroBolsistas.api;
 
 import dev.matheus.cadastroBolsistas.dto.BolsistaRequest;
-import dev.matheus.cadastroBolsistas.dto.ProjetoResponse;
+import dev.matheus.cadastroBolsistas.dto.ErroResponse;
 import dev.matheus.cadastroBolsistas.dto.PaginaResponse;
+import dev.matheus.cadastroBolsistas.dto.ProjetoResponse;
 import dev.matheus.cadastroBolsistas.dto.UsuarioResponse;
-import dev.matheus.cadastroBolsistas.model.*;
+import dev.matheus.cadastroBolsistas.model.Bolsista;
+import dev.matheus.cadastroBolsistas.model.Cargo;
+import dev.matheus.cadastroBolsistas.model.Laboratorio;
+import dev.matheus.cadastroBolsistas.model.ModalidadeBolsa;
+import dev.matheus.cadastroBolsistas.model.Professor;
+import dev.matheus.cadastroBolsistas.model.Usuario;
+import dev.matheus.cadastroBolsistas.service.AuditoriaService;
 import dev.matheus.cadastroBolsistas.service.BolsistaService;
 import dev.matheus.cadastroBolsistas.service.LaboratorioService;
 import dev.matheus.cadastroBolsistas.service.ProfessorService;
 import dev.matheus.cadastroBolsistas.service.ProjetoService;
 import dev.matheus.cadastroBolsistas.util.StringUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,10 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-/*
- * bolsistas, admins e professores saem pela mesma rota com IDs em UUID.
- */
-@Tag(name = "Usuarios", description = "Bolsistas, administradores e professores. O que muda entre eles e o campo tipoUsuario.")
+@Tag(name = "Bolsistas & Usuários", description = "Gestão de bolsistas, professores e administradores, incluindo vigência, modalidades e cargos.")
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioApiController {
@@ -43,12 +52,12 @@ public class UsuarioApiController {
     private final ProjetoService projetoService;
     private final PasswordEncoder passwordEncoder;
     private final UsuarioLogado usuarioLogado;
-    private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
+    private final AuditoriaService auditoriaService;
 
     public UsuarioApiController(BolsistaService bolsistaService, ProfessorService professorService,
                                 LaboratorioService laboratorioService, ProjetoService projetoService,
                                 PasswordEncoder passwordEncoder, UsuarioLogado usuarioLogado,
-                                dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService) {
+                                AuditoriaService auditoriaService) {
         this.bolsistaService = bolsistaService;
         this.professorService = professorService;
         this.laboratorioService = laboratorioService;
@@ -58,14 +67,19 @@ public class UsuarioApiController {
         this.auditoriaService = auditoriaService;
     }
 
-    @Operation(summary = "Lista usuarios ja recortados pelo escopo de quem chama: admin ve todos, professor ve os bolsistas dos labs que coordena, bolsista ve os colegas do proprio lab.")
+    @Operation(summary = "Listar usuários paginados", description = "Retorna a listagem de usuários de acordo com o escopo do usuário autenticado: ADMIN visualiza todos, PROFESSOR visualiza bolsistas dos laboratórios que coordena, e BOLSISTA visualiza seus colegas de laboratório.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista paginada de usuários"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping
-    public PaginaResponse<UsuarioResponse> listar(@RequestParam(defaultValue = "1") int pagina,
-                                                  @RequestParam(required = false) Integer tamanho,
-                                                  @RequestParam(required = false) String tipo,
-                                                  @RequestParam(required = false) String buscaNome,
-                                                  @RequestParam(required = false) String buscaCurso,
-                                                  HttpSession session) {
+    public PaginaResponse<UsuarioResponse> listar(
+            @Parameter(description = "Número da página", example = "1") @RequestParam(defaultValue = "1") int pagina,
+            @Parameter(description = "Quantidade de itens por página", example = "10") @RequestParam(required = false) Integer tamanho,
+            @Parameter(description = "Filtro por perfil (ADMIN, PROFESSOR, BOLSISTA)", example = "BOLSISTA") @RequestParam(required = false) String tipo,
+            @Parameter(description = "Filtro de busca textual por nome", example = "Lucas") @RequestParam(required = false) String buscaNome,
+            @Parameter(description = "Filtro de busca textual por curso", example = "Engenharia") @RequestParam(required = false) String buscaCurso,
+            HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
 
         ArrayList<Usuario> lista = new ArrayList<>();
@@ -94,10 +108,17 @@ public class UsuarioApiController {
         return paginar(lista, pagina, tamanho);
     }
 
+    @Operation(summary = "Buscar usuário por ID", description = "Recupera as informações detalhadas de um bolsista ou professor pelo seu identificador UUID.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dados do usuário", content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso não autorizado para o perfil do usuário", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping("/{id}")
-    public UsuarioResponse buscar(@PathVariable UUID id,
-                                  @RequestParam(defaultValue = "BOLSISTA") String tipo,
-                                  HttpSession session) {
+    public UsuarioResponse buscar(
+            @Parameter(description = "ID do usuário (UUID)", required = true) @PathVariable UUID id,
+            @Parameter(description = "Tipo de perfil", example = "BOLSISTA") @RequestParam(defaultValue = "BOLSISTA") String tipo,
+            HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
 
         if ("PROFESSOR".equalsIgnoreCase(tipo)) {
@@ -118,7 +139,10 @@ public class UsuarioApiController {
         return UsuarioResponse.de(b);
     }
 
-    @Operation(summary = "Cargos possiveis de um bolsista dentro do laboratorio.")
+    @Operation(summary = "Listar cargos disponíveis", description = "Retorna todos os cargos cadastrados para bolsistas nos laboratórios.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de cargos")
+    })
     @GetMapping("/cargos")
     public List<Map<String, String>> cargos() {
         return java.util.Arrays.stream(Cargo.values())
@@ -126,7 +150,10 @@ public class UsuarioApiController {
                 .toList();
     }
 
-    @Operation(summary = "Modalidades possiveis de bolsa.")
+    @Operation(summary = "Listar modalidades de bolsa", description = "Retorna todas as modalidades de bolsa suportadas pelo sistema (PIBIC, PIBITI, Extensão, Monitoria, etc.).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de modalidades")
+    })
     @GetMapping("/modalidades")
     public List<Map<String, String>> modalidades() {
         return java.util.Arrays.stream(ModalidadeBolsa.values())
@@ -134,7 +161,11 @@ public class UsuarioApiController {
                 .toList();
     }
 
-    @Operation(summary = "Exporta em CSV os usuarios visiveis para quem chama.")
+    @Operation(summary = "Exportar usuários em CSV", description = "Exporta em arquivo CSV a lista de bolsistas e professores visíveis para o usuário autenticado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Arquivo CSV para download"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado para bolsistas", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping("/exportar")
     public void exportar(HttpSession session, HttpServletResponse response) throws java.io.IOException {
         Usuario logado = usuarioLogado.obrigatorio(session);
@@ -171,9 +202,13 @@ public class UsuarioApiController {
         return "\"" + valor.replace("\"", "\"\"") + "\"";
     }
 
-    @Operation(summary = "Projetos em que o usuario esta vinculado.")
+    @Operation(summary = "Listar projetos vinculados a um usuário", description = "Retorna todos os projetos de pesquisa dos quais o bolsista é membro ativo.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de projetos vinculados"),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @GetMapping("/{id}/projetos")
-    public List<ProjetoResponse> projetos(@PathVariable UUID id, HttpSession session) {
+    public List<ProjetoResponse> projetos(@Parameter(description = "ID do bolsista", required = true) @PathVariable UUID id, HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         Bolsista b = bolsistaService.buscarPorId(id);
         if (b == null) {
@@ -184,8 +219,16 @@ public class UsuarioApiController {
         return projetoService.listarPorBolsista(id).stream().map(ProjetoResponse::de).toList();
     }
 
+    @Operation(summary = "Cadastrar novo bolsista ou professor", description = "Cria um novo usuário no sistema. Administradores podem criar qualquer tipo; Professores podem criar bolsistas para os laboratórios que coordenam.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Usuário cadastrado com sucesso", content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Dados cadastrais inválidos", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Sem permissão para cadastrar usuários", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @PostMapping
-    public ResponseEntity<UsuarioResponse> criar(@RequestBody BolsistaRequest body, HttpSession session) {
+    public ResponseEntity<UsuarioResponse> criar(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do usuário a ser cadastrado", required = true)
+                                                 @RequestBody BolsistaRequest body,
+                                                 HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
         usuarioLogado.exigir(!logado.isBolsista(), "Bolsista nao cadastra usuario.");
         validarObrigatorios(body, true);
@@ -217,9 +260,16 @@ public class UsuarioApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioResponse.de(b));
     }
 
-    @Operation(summary = "Atualiza um usuario. Senha em branco mantem a que ja esta gravada.")
+    @Operation(summary = "Atualizar bolsista ou professor", description = "Atualiza os dados de um usuário existente. Se o campo de senha for enviado em branco, a senha atual é preservada.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuário atualizado com sucesso", content = @Content(schema = @Schema(implementation = UsuarioResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Sem permissão para editar este usuário", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @PutMapping("/{id}")
-    public UsuarioResponse atualizar(@PathVariable UUID id,
+    public UsuarioResponse atualizar(@Parameter(description = "ID do usuário a atualizar", required = true) @PathVariable UUID id,
+                                     @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Novos dados do usuário", required = true)
                                      @RequestBody BolsistaRequest body,
                                      HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
@@ -256,10 +306,15 @@ public class UsuarioApiController {
         return UsuarioResponse.de(b);
     }
 
-    @Operation(summary = "Desativa o usuario (soft delete). A linha e o historico de frequencia permanecem no banco.")
+    @Operation(summary = "Desativar usuário (Soft Delete)", description = "Desativa um usuário (bolsista ou professor), mantendo o histórico de frequência e projetos íntegros no banco de dados.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Usuário desativado com sucesso"),
+            @ApiResponse(responseCode = "403", description = "Sem permissão para desativar este usuário", content = @Content(schema = @Schema(implementation = ErroResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(@PathVariable UUID id,
-                                        @RequestParam(defaultValue = "BOLSISTA") String tipo,
+    public ResponseEntity<Void> excluir(@Parameter(description = "ID do usuário a desativar", required = true) @PathVariable UUID id,
+                                        @Parameter(description = "Tipo de usuário", example = "BOLSISTA") @RequestParam(defaultValue = "BOLSISTA") String tipo,
                                         HttpSession session) {
         Usuario logado = usuarioLogado.obrigatorio(session);
 

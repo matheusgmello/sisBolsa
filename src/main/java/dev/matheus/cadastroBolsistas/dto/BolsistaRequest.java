@@ -1,5 +1,7 @@
 package dev.matheus.cadastroBolsistas.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -7,22 +9,56 @@ import java.util.UUID;
  * o que a api aceita para criar ou editar um usuario.
  * senha opcional na edicao: vazia significa "mantem a que ja esta la".
  */
+@Schema(description = "Dados para cadastro ou atualização de bolsista / professor.")
 public record BolsistaRequest(
+        @Schema(description = "Nome completo", example = "Lucas Oliveira", requiredMode = Schema.RequiredMode.REQUIRED)
         String nome,
+
+        @Schema(description = "E-mail de acesso institucional", example = "lucas.oliveira@aluno.sisbolsa.com", requiredMode = Schema.RequiredMode.REQUIRED)
         String email,
+
+        @Schema(description = "Senha de acesso (obrigatória na criação, opcional na edição)", example = "12345678", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String senha,
+
+        @Schema(description = "Data de nascimento", example = "2002-05-15", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         LocalDate dataNascimento,
+
+        @Schema(description = "Curso de graduação do bolsista", example = "Engenharia de Software", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String curso,
+
+        @Schema(description = "Matrícula acadêmica única", example = "20240101", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String matricula,
+
+        @Schema(description = "CPF do bolsista", example = "123.456.789-00", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String cpf,
+
+        @Schema(description = "Telefone de contato", example = "(48) 99999-1234", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String telefone,
+
+        @Schema(description = "ID do laboratório de lotação", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         UUID laboratorioId,
+
+        @Schema(description = "Tipo de perfil de acesso", example = "BOLSISTA", allowableValues = {"ADMIN", "PROFESSOR", "BOLSISTA"}, requiredMode = Schema.RequiredMode.REQUIRED)
         String tipoUsuario,
+
+        @Schema(description = "URL pública da foto de perfil", example = "https://images.unsplash.com/photo-1534528741775-53994a69daeb", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String fotoUrl,
+
+        @Schema(description = "Cargo no laboratório", example = "DESENVOLVEDOR_JUNIOR", allowableValues = {"PESQUISADOR_CHEFE", "PESQUISADOR_SENIOR", "DESENVOLVEDOR_FULLSTACK", "DESENVOLVEDOR_JUNIOR", "CIENTISTA_DADOS", "DESIGNER_UX", "ASSISTENTE_PESQUISA"}, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String cargo,
+
+        @Schema(description = "Modalidade da bolsa", example = "PIBIC", allowableValues = {"PIBIC", "PIBITI", "EXTENSAO", "MONITORIA", "INSTITUCIONAL", "OUTRO"}, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String modalidadeBolsa,
+
+        @Schema(description = "Valor mensal da bolsa em Reais (R$)", example = "700.00", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         Double valorBolsa,
+
+        @Schema(description = "Data de início da vigência", example = "2026-03-01", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         LocalDate dataInicioBolsa,
+
+        @Schema(description = "Data de término da vigência", example = "2026-12-31", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         LocalDate dataFimBolsa,
+
+        @Schema(description = "Biografia / Apresentação acadêmica", example = "Pesquisador com foco em sistemas distribuídos.", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String bio) {
 }
