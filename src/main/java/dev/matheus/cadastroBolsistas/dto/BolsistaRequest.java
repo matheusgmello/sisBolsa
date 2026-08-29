@@ -20,5 +20,9 @@ public record BolsistaRequest(
         String tipoUsuario,
         String fotoUrl,
         String cargo,
+        String modalidadeBolsa,
+        Double valorBolsa,
+        LocalDate dataInicioBolsa,
+        LocalDate dataFimBolsa,
         String bio) {
 }

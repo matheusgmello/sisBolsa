@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { Usuario, UsuarioRequest, Paginacao, CargoOption } from '../types';
+import type { Usuario, UsuarioRequest, Paginacao, CargoOption, ModalidadeOption } from '../types';
 
 export const usuarioService = {
   listar: (params?: {
@@ -24,4 +24,7 @@ export const usuarioService = {
 
   listarCargos: () =>
     api.get<CargoOption[]>('/usuarios/cargos'),
+
+  listarModalidades: () =>
+    api.get<ModalidadeOption[]>('/usuarios/modalidades'),
 };

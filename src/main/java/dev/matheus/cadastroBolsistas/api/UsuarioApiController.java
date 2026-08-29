@@ -123,6 +123,14 @@ public class UsuarioApiController {
                 .toList();
     }
 
+    @Operation(summary = "Modalidades possiveis de bolsa.")
+    @GetMapping("/modalidades")
+    public List<Map<String, String>> modalidades() {
+        return java.util.Arrays.stream(ModalidadeBolsa.values())
+                .map(m -> Map.of("valor", m.name(), "descricao", m.getDescricao()))
+                .toList();
+    }
+
     @Operation(summary = "Exporta em CSV os usuarios visiveis para quem chama.")
     @GetMapping("/exportar")
     public void exportar(HttpSession session, HttpServletResponse response) throws java.io.IOException {
@@ -139,12 +147,16 @@ public class UsuarioApiController {
         response.setContentType("text/csv; charset=UTF-8");
         response.setHeader("Content-Disposition", "attachment; filename=usuarios.csv");
         try (java.io.PrintWriter writer = response.getWriter()) {
-            writer.println("ID,Nome,Email,Tipo,Curso,Matricula,Cargo,Laboratorio");
+            writer.println("ID,Nome,Email,Tipo,Curso,Matricula,Cargo,Modalidade,Valor,DataInicio,DataFim,Laboratorio");
             for (Usuario u : lista) {
                 UsuarioResponse r = UsuarioResponse.de(u);
                 writer.println(String.join(",",
                         String.valueOf(r.id()), csv(r.nome()), csv(r.email()), csv(r.tipoUsuario()),
-                        csv(r.curso()), csv(r.matricula()), csv(r.cargo()), csv(r.nomeLaboratorio())));
+                        csv(r.curso()), csv(r.matricula()), csv(r.cargo()),
+                        csv(r.modalidadeBolsaDescricao()), csv(r.valorBolsa() != null ? String.format("%.2f", r.valorBolsa()) : ""),
+                        csv(r.dataInicioBolsa() != null ? r.dataInicioBolsa().toString() : ""),
+                        csv(r.dataFimBolsa() != null ? r.dataFimBolsa().toString() : ""),
+                        csv(r.nomeLaboratorio())));
             }
         }
     }
@@ -292,6 +304,10 @@ public class UsuarioApiController {
         b.setCpf(body.cpf());
         b.setTelefone(body.telefone());
         b.setCargo(Cargo.deString(body.cargo()));
+        b.setModalidadeBolsa(ModalidadeBolsa.deString(body.modalidadeBolsa()));
+        b.setValorBolsa(body.valorBolsa());
+        b.setDataInicioBolsa(body.dataInicioBolsa());
+        b.setDataFimBolsa(body.dataFimBolsa());
         b.setTipoUsuario("ADMIN".equalsIgnoreCase(body.tipoUsuario()) ? "ADMIN" : "BOLSISTA");
 
         UUID labId = body.laboratorioId();

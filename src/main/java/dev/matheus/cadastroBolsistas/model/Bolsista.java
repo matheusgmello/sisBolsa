@@ -9,10 +9,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 /*
- * bolsista e admin do sistema com id UUID.
+ * bolsista e admin do sistema com id UUID, dados de vigencia e modalidade de bolsa.
  */
 @Entity
 @Table(name = "bolsista")
@@ -35,6 +36,19 @@ public class Bolsista extends Usuario {
 
     @Enumerated(EnumType.STRING)
     private Cargo cargo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "modalidade_bolsa")
+    private ModalidadeBolsa modalidadeBolsa;
+
+    @Column(name = "valor_bolsa")
+    private Double valorBolsa;
+
+    @Column(name = "data_inicio_bolsa")
+    private LocalDate dataInicioBolsa;
+
+    @Column(name = "data_fim_bolsa")
+    private LocalDate dataFimBolsa;
 
     public Bolsista() {
         super();
@@ -81,4 +95,27 @@ public class Bolsista extends Usuario {
 
     public Cargo getCargo() { return cargo; }
     public void setCargo(Cargo cargo) { this.cargo = cargo; }
+
+    public ModalidadeBolsa getModalidadeBolsa() { return modalidadeBolsa; }
+    public void setModalidadeBolsa(ModalidadeBolsa modalidadeBolsa) { this.modalidadeBolsa = modalidadeBolsa; }
+
+    public Double getValorBolsa() { return valorBolsa; }
+    public void setValorBolsa(Double valorBolsa) { this.valorBolsa = valorBolsa; }
+
+    public LocalDate getDataInicioBolsa() { return dataInicioBolsa; }
+    public void setDataInicioBolsa(LocalDate dataInicioBolsa) { this.dataInicioBolsa = dataInicioBolsa; }
+
+    public LocalDate getDataFimBolsa() { return dataFimBolsa; }
+    public void setDataFimBolsa(LocalDate dataFimBolsa) { this.dataFimBolsa = dataFimBolsa; }
+
+    public boolean isBolsaVencida() {
+        return dataFimBolsa != null && dataFimBolsa.isBefore(LocalDate.now());
+    }
+
+    public boolean isBolsaPrestesAVencer() {
+        if (dataFimBolsa == null) return false;
+        LocalDate hoje = LocalDate.now();
+        long dias = ChronoUnit.DAYS.between(hoje, dataFimBolsa);
+        return dias >= 0 && dias <= 30;
+    }
 }

@@ -26,6 +26,13 @@ export interface Usuario {
   laboratorioId?: string | null;
   nomeLaboratorio?: string | null;
   cargo?: string | null;
+  modalidadeBolsa?: string | null;
+  modalidadeBolsaDescricao?: string | null;
+  valorBolsa?: number | null;
+  dataInicioBolsa?: string | null;
+  dataFimBolsa?: string | null;
+  bolsaVencida?: boolean;
+  bolsaPrestesAVencer?: boolean;
   ativo: boolean;
 }
 
@@ -42,9 +49,18 @@ export interface UsuarioRequest {
   telefone?: string | null;
   laboratorioId?: string | null;
   cargo?: string | null;
+  modalidadeBolsa?: string | null;
+  valorBolsa?: number | null;
+  dataInicioBolsa?: string | null;
+  dataFimBolsa?: string | null;
 }
 
 export interface CargoOption {
+  valor: string;
+  descricao: string;
+}
+
+export interface ModalidadeOption {
   valor: string;
   descricao: string;
 }

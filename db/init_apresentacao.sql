@@ -1,8 +1,10 @@
 -- ============================================================
--- SisBolsa - Script de Inicialização (Modo Apresentação - UUID)
--- Cenário Enxuto: 1 Admin, 2 Professores, 2 Laboratórios, 3 Bolsistas
--- Senha padrão para todos os usuários: 12345678 (hash BCrypt)
+-- SisBolsa - Script de Inicialização (Cenário Apresentação)
+-- Banco de Dados: PostgreSQL
+-- Chaves Primárias: UUID nativo com gen_random_uuid()
 -- ============================================================
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 DROP TABLE IF EXISTS frequencia CASCADE;
 DROP TABLE IF EXISTS bolsista_projeto CASCADE;
@@ -16,7 +18,7 @@ CREATE TABLE professor (
     nome VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
-    tipo_usuario VARCHAR(20) NOT NULL DEFAULT 'PROFESSOR',
+    tipo_usuario VARCHAR(20) DEFAULT 'PROFESSOR',
     ativo BOOLEAN DEFAULT TRUE,
     foto_url VARCHAR(255),
     bio TEXT
@@ -47,6 +49,10 @@ CREATE TABLE bolsista (
     tipo_usuario VARCHAR(20) DEFAULT 'BOLSISTA',
     foto_url VARCHAR(255),
     cargo VARCHAR(50),
+    modalidade_bolsa VARCHAR(50),
+    valor_bolsa NUMERIC(10,2),
+    data_inicio_bolsa DATE,
+    data_fim_bolsa DATE,
     bio TEXT
 );
 
@@ -84,11 +90,11 @@ INSERT INTO laboratorio (id, nome, area_pesquisa, status, capacidade, coordenado
 ('c1111111-1111-1111-1111-111111111111', 'Lab de Desenvolvimento de Software',      'Ciência da Computação', 'Ativo', 8, 'b1111111-1111-1111-1111-111111111111', true),
 ('c2222222-2222-2222-2222-222222222222', 'Lab de Inteligência Artificial e Dados', 'Ciência de Dados',      'Ativo', 6, 'b2222222-2222-2222-2222-222222222222', true);
 
-INSERT INTO bolsista (id, nome, senha, data_nascimento, email, curso, matricula, cpf, telefone, ativo, laboratorio_id, tipo_usuario, foto_url, cargo, bio) VALUES
-('a1111111-1111-1111-1111-111111111111', 'Carlos Henrique Alencar', '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '1988-04-10', 'admin@sisbolsa.com',            'Sistemas de Informação', 'ADM2024001', '012.345.678-90', '(31) 98800-0001', true, NULL,                                   'ADMIN',    'https://i.pravatar.cc/150?img=60', NULL,            NULL),
-('d1111111-1111-1111-1111-111111111111', 'Lucas Oliveira',          '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '2002-05-15', 'lucas.oliveira@aluno.sisbolsa.com', 'Ciência da Computação', '20221001',   '111.222.333-44', '(31) 99111-2233', true, 'c1111111-1111-1111-1111-111111111111', 'BOLSISTA', 'https://i.pravatar.cc/150?img=12', 'DESENVOLVEDOR', NULL),
-('d2222222-2222-2222-2222-222222222222', 'Mariana Santos',          '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '2001-11-20', 'mariana.santos@aluno.sisbolsa.com', 'Engenharia de Software', '20211002',   '222.333.444-55', '(31) 99222-3344', true, 'c1111111-1111-1111-1111-111111111111', 'BOLSISTA', 'https://i.pravatar.cc/150?img=47', 'PESQUISADOR',   NULL),
-('d3333333-3333-3333-3333-333333333333', 'Diego Almeida',           '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '2003-02-28', 'diego.almeida@aluno.sisbolsa.com',  'Sistemas de Informação', '20231003',   '333.444.555-66', '(31) 99333-4455', true, 'c2222222-2222-2222-2222-222222222222', 'BOLSISTA', 'https://i.pravatar.cc/150?img=33', 'DESIGNER',      NULL);
+INSERT INTO bolsista (id, nome, senha, data_nascimento, email, curso, matricula, cpf, telefone, ativo, laboratorio_id, tipo_usuario, foto_url, cargo, modalidade_bolsa, valor_bolsa, data_inicio_bolsa, data_fim_bolsa, bio) VALUES
+('a1111111-1111-1111-1111-111111111111', 'Carlos Henrique Alencar', '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '1988-04-10', 'admin@sisbolsa.com',            'Sistemas de Informação', 'ADM2024001', '012.345.678-90', '(31) 98800-0001', true, NULL,                                   'ADMIN',    'https://i.pravatar.cc/150?img=60', NULL,            NULL,          NULL,   NULL,                                 NULL,                               NULL),
+('d1111111-1111-1111-1111-111111111111', 'Lucas Oliveira',          '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '2002-05-15', 'lucas.oliveira@aluno.sisbolsa.com', 'Ciência da Computação', '20221001',   '111.222.333-44', '(31) 99111-2233', true, 'c1111111-1111-1111-1111-111111111111', 'BOLSISTA', 'https://i.pravatar.cc/150?img=12', 'DESENVOLVEDOR', 'PIBIC',        700.00, CURRENT_DATE - INTERVAL '6 months', CURRENT_DATE + INTERVAL '6 months',  NULL),
+('d2222222-2222-2222-2222-222222222222', 'Mariana Santos',          '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '2001-11-20', 'mariana.santos@aluno.sisbolsa.com', 'Engenharia de Software', '20211002',   '222.333.444-55', '(31) 99222-3344', true, 'c1111111-1111-1111-1111-111111111111', 'BOLSISTA', 'https://i.pravatar.cc/150?img=47', 'PESQUISADOR',   'PIBITI',       700.00, CURRENT_DATE - INTERVAL '4 months', CURRENT_DATE + INTERVAL '8 months',  NULL),
+('d3333333-3333-3333-3333-333333333333', 'Diego Almeida',           '$2a$10$bTT.MiXD1zXSLvIxrMQqV.YR2nTjqkSpwD6P3Cjn3XyZCamHk2BO2', '2003-02-28', 'diego.almeida@aluno.sisbolsa.com',  'Sistemas de Informação', '20231003',   '333.444.555-66', '(31) 99333-4455', true, 'c2222222-2222-2222-2222-222222222222', 'BOLSISTA', 'https://i.pravatar.cc/150?img=33', 'DESIGNER',      'EXTENSAO',     500.00, CURRENT_DATE - INTERVAL '2 months', CURRENT_DATE + INTERVAL '10 months', NULL);
 
 INSERT INTO projeto (id, nome, descricao, laboratorio_id, ativo) VALUES
 ('e1111111-1111-1111-1111-111111111111', 'Sistema Web de Gestão Acadêmica',          'Desenvolvimento de plataforma web para controle de bolsas de pesquisa e auditoria.', 'c1111111-1111-1111-1111-111111111111', true),

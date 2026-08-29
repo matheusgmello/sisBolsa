@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /*
- * representacao publica de um usuario com IDs em UUID.
+ * representacao publica de um usuario com IDs em UUID e vigencia da bolsa.
  */
 public record UsuarioResponse(
         UUID id,
@@ -24,23 +24,40 @@ public record UsuarioResponse(
         LocalDate dataNascimento,
         UUID laboratorioId,
         String nomeLaboratorio,
-        String cargo) {
+        String cargo,
+        String modalidadeBolsa,
+        String modalidadeBolsaDescricao,
+        Double valorBolsa,
+        LocalDate dataInicioBolsa,
+        LocalDate dataFimBolsa,
+        boolean bolsaVencida,
+        boolean bolsaPrestesAVencer) {
 
     public static UsuarioResponse de(Usuario u) {
         if (u == null) {
             return null;
         }
         if (u instanceof Bolsista b) {
+            String modalidade = b.getModalidadeBolsa() != null ? b.getModalidadeBolsa().name() : null;
+            String modalidadeDesc = b.getModalidadeBolsa() != null ? b.getModalidadeBolsa().getDescricao() : null;
             return new UsuarioResponse(
                     b.getId(), b.getNome(), b.getEmail(), b.getTipoUsuario(), b.getFotoUrl(), b.getBio(),
                     b.isAtivo(), b.getCurso(), b.getMatricula(), b.getCpf(), b.getTelefone(),
                     b.getDataNascimento(),
                     b.getLaboratorioId(),
                     b.getNomeLaboratorio(),
-                    b.getCargo() != null ? b.getCargo().name() : null);
+                    b.getCargo() != null ? b.getCargo().name() : null,
+                    modalidade,
+                    modalidadeDesc,
+                    b.getValorBolsa(),
+                    b.getDataInicioBolsa(),
+                    b.getDataFimBolsa(),
+                    b.isBolsaVencida(),
+                    b.isBolsaPrestesAVencer());
         }
         return new UsuarioResponse(
                 u.getId(), u.getNome(), u.getEmail(), u.getTipoUsuario(), u.getFotoUrl(), u.getBio(),
-                u.isAtivo(), null, null, null, null, null, null, u.getNomeLaboratorio(), null);
+                u.isAtivo(), null, null, null, null, null, null, u.getNomeLaboratorio(), null,
+                null, null, null, null, null, false, false);
     }
 }

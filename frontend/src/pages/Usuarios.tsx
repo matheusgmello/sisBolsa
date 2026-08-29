@@ -8,6 +8,7 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -19,6 +20,7 @@ import type {
   TipoUsuario,
   Laboratorio,
   CargoOption,
+  ModalidadeOption,
   Paginacao,
 } from '../types';
 import { Badge } from '../components/ui/Badge';
@@ -45,6 +47,7 @@ export const Usuarios: React.FC = () => {
   // Aux lists for modal
   const [laboratorios, setLaboratorios] = useState<Laboratorio[]>([]);
   const [cargos, setCargos] = useState<CargoOption[]>([]);
+  const [modalidades, setModalidades] = useState<ModalidadeOption[]>([]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,6 +66,10 @@ export const Usuarios: React.FC = () => {
     telefone: '',
     laboratorioId: null,
     cargo: '',
+    modalidadeBolsa: '',
+    valorBolsa: null,
+    dataInicioBolsa: '',
+    dataFimBolsa: '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -87,12 +94,14 @@ export const Usuarios: React.FC = () => {
   useEffect(() => {
     async function loadAux() {
       try {
-        const [labs, cargs] = await Promise.all([
+        const [labs, cargs, mods] = await Promise.all([
           laboratorioService.listar().catch(() => []),
           usuarioService.listarCargos().catch(() => []),
+          usuarioService.listarModalidades().catch(() => []),
         ]);
         setLaboratorios(labs);
         setCargos(cargs);
+        setModalidades(mods);
       } catch {
         // ignore
       }
@@ -121,6 +130,10 @@ export const Usuarios: React.FC = () => {
       telefone: '',
       laboratorioId: laboratorios[0]?.id || null,
       cargo: cargos[0]?.valor || '',
+      modalidadeBolsa: 'PIBIC',
+      valorBolsa: 700.0,
+      dataInicioBolsa: new Date().toISOString().split('T')[0],
+      dataFimBolsa: '',
     });
     setIsModalOpen(true);
   };
@@ -143,6 +156,10 @@ export const Usuarios: React.FC = () => {
         telefone: detalhes.telefone || '',
         laboratorioId: detalhes.laboratorioId || null,
         cargo: detalhes.cargo || '',
+        modalidadeBolsa: detalhes.modalidadeBolsa || '',
+        valorBolsa: detalhes.valorBolsa !== undefined && detalhes.valorBolsa !== null ? detalhes.valorBolsa : null,
+        dataInicioBolsa: detalhes.dataInicioBolsa || '',
+        dataFimBolsa: detalhes.dataFimBolsa || '',
       });
       setIsModalOpen(true);
     } catch (err: unknown) {
@@ -195,6 +212,10 @@ export const Usuarios: React.FC = () => {
       telefone: ehProf || ehAdm ? null : formData.telefone || null,
       laboratorioId: ehProf || ehAdm || !formData.laboratorioId ? null : formData.laboratorioId,
       cargo: ehProf || ehAdm ? null : formData.cargo || null,
+      modalidadeBolsa: ehProf || ehAdm ? null : formData.modalidadeBolsa || null,
+      valorBolsa: ehProf || ehAdm ? null : formData.valorBolsa ? Number(formData.valorBolsa) : null,
+      dataInicioBolsa: ehProf || ehAdm ? null : formData.dataInicioBolsa || null,
+      dataFimBolsa: ehProf || ehAdm ? null : formData.dataFimBolsa || null,
     };
 
     setSaving(true);
@@ -220,11 +241,14 @@ export const Usuarios: React.FC = () => {
 
   return (
     <div>
+      {/* Header Actions */}
       <div className="header-actions">
         <div>
-          <h1>Gerenciar {rotulo}s</h1>
+          <h1>Gestão de {isAdmin ? 'Usuários' : 'Bolsistas'}</h1>
           <p className="header-subtitle">
-            Cadastro e controle de acesso de bolsistas, professores e administradores
+            {isAdmin
+              ? 'Pesquise, edite perfis e controle acessos de bolsistas, professores e coordenadores'
+              : 'Gerencie os integrantes e pesquisadores vinculados ao seu laboratório'}
           </p>
         </div>
         <div className="header-buttons">
@@ -237,56 +261,57 @@ export const Usuarios: React.FC = () => {
             <Download size={16} />
             <span>Exportar CSV</span>
           </a>
-          <button
-            type="button"
-            className="btn-new btn-create"
-            onClick={handleOpenCreate}
-          >
-            <Plus size={16} />
-            <span>Novo {rotulo}</span>
-          </button>
+
+          {canManage && (
+            <button
+              type="button"
+              className="btn-new"
+              onClick={handleOpenCreate}
+            >
+              <Plus size={16} />
+              <span>Novo {rotulo}</span>
+            </button>
+          )}
         </div>
       </div>
 
+      {/* Main Container */}
       <div className="container">
-        {/* Search Toolbar */}
-        <div className="search-section">
+        {/* Search and Filters Bar */}
+        <div style={{ marginBottom: '20px' }}>
           <form
-            className="search-toolbar"
             onSubmit={(e) => {
               e.preventDefault();
               setPagina(1);
               carregarUsuarios(1);
             }}
+            style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}
           >
-            <div className="search-field">
+            <div style={{ flex: '1 1 240px' }}>
               <input
                 type="text"
-                className="search-input"
-                placeholder="Pesquisar por nome..."
+                placeholder="Buscar por nome ou e-mail..."
                 value={buscaNome}
                 onChange={(e) => setBuscaNome(e.target.value)}
+                style={{ width: '100%', margin: 0 }}
               />
             </div>
-
-            <div className="search-field">
+            <div style={{ flex: '1 1 200px' }}>
               <input
                 type="text"
-                className="search-input"
                 placeholder="Filtrar por curso..."
                 value={buscaCurso}
                 onChange={(e) => setBuscaCurso(e.target.value)}
+                style={{ width: '100%', margin: 0 }}
               />
             </div>
-
-            <button type="submit" className="search-button">
+            <button type="submit" className="btn btn-secondary">
               Buscar
             </button>
-
             {(buscaNome || buscaCurso) && (
               <button
                 type="button"
-                className="reset-button"
+                className="btn btn-cancel"
                 onClick={() => {
                   setBuscaNome('');
                   setBuscaCurso('');
@@ -342,9 +367,10 @@ export const Usuarios: React.FC = () => {
           <table>
             <thead>
               <tr>
-                <th>Nome</th>
-                <th>Curso</th>
-                <th>Cargo</th>
+                <th>Nome / E-mail</th>
+                <th>Curso & Matrícula</th>
+                <th>Modalidade & Cargo</th>
+                <th>Vigência & Bolsa</th>
                 <th>Laboratório</th>
                 <th>Tipo</th>
                 <th>Ações</th>
@@ -353,13 +379,13 @@ export const Usuarios: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
                     Carregando usuários...
                   </td>
                 </tr>
               ) : paginacao.itens.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="empty-state-cell">
+                  <td colSpan={7} className="empty-state-cell">
                     Nenhum usuário encontrado com os filtros aplicados.
                   </td>
                 </tr>
@@ -372,11 +398,64 @@ export const Usuarios: React.FC = () => {
                     <tr key={u.id}>
                       <td>
                         <strong>{u.nome}</strong>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{u.email}</div>
                       </td>
-                      <td>{u.curso || '---'}</td>
                       <td>
-                        {u.cargo ? (
-                          <span className="count-badge count-badge-purple">{u.cargo}</span>
+                        {u.curso ? (
+                          <>
+                            <div>{u.curso}</div>
+                            {u.matricula && (
+                              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                Matrícula: {u.matricula}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          '---'
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {u.modalidadeBolsa ? (
+                            <span className="count-badge count-badge-purple" style={{ alignSelf: 'flex-start' }}>
+                              {u.modalidadeBolsa}
+                            </span>
+                          ) : null}
+                          {u.cargo ? (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              {u.cargo}
+                            </span>
+                          ) : !u.modalidadeBolsa ? (
+                            '---'
+                          ) : null}
+                        </div>
+                      </td>
+                      <td>
+                        {u.tipoUsuario === 'BOLSISTA' ? (
+                          <div>
+                            {u.valorBolsa ? (
+                              <div style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
+                                R$ {Number(u.valorBolsa).toFixed(2).replace('.', ',')}
+                              </div>
+                            ) : null}
+                            {u.dataFimBolsa ? (
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                até {new Date(u.dataFimBolsa + 'T00:00:00').toLocaleDateString('pt-BR')}
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sem término</div>
+                            )}
+                            {u.bolsaVencida && (
+                              <span style={{ fontSize: '0.7rem', color: '#dc2626', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                <AlertCircle size={10} /> Vencida
+                              </span>
+                            )}
+                            {u.bolsaPrestesAVencer && !u.bolsaVencida && (
+                              <span style={{ fontSize: '0.7rem', color: '#d97706', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                <AlertCircle size={10} /> Expira em breve
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           '---'
                         )}
@@ -436,7 +515,7 @@ export const Usuarios: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         title={editingId ? `Editar Usuário — ${formData.nome}` : `Cadastrar Novo ${rotulo}`}
         icon={<Users size={20} />}
-        maxWidth="640px"
+        maxWidth="680px"
       >
         <form onSubmit={handleSubmit}>
           <div className="modal-body" style={{ maxHeight: 'calc(85vh - 140px)', overflowY: 'auto' }}>
@@ -558,19 +637,79 @@ export const Usuarios: React.FC = () => {
                   )}
 
                   <div className="form-group">
-                    <label htmlFor="user-cargo">Cargo no Laboratório</label>
+                    <label htmlFor="user-cargo">Função / Atuação no Laboratório</label>
                     <select
                       id="user-cargo"
                       value={formData.cargo || ''}
                       onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
                     >
-                      <option value="">Selecione um cargo...</option>
+                      <option value="">Selecione uma função...</option>
                       {cargos.map((c) => (
                         <option key={c.valor} value={c.valor}>
                           {c.descricao}
                         </option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                {/* Modalidade e Valor da Bolsa */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                  <div className="form-group">
+                    <label htmlFor="user-modalidade">Modalidade da Bolsa</label>
+                    <select
+                      id="user-modalidade"
+                      value={formData.modalidadeBolsa || ''}
+                      onChange={(e) => setFormData({ ...formData, modalidadeBolsa: e.target.value })}
+                    >
+                      <option value="">Selecione a modalidade...</option>
+                      {modalidades.map((m) => (
+                        <option key={m.valor} value={m.valor}>
+                          {m.descricao}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="user-valor">Valor Mensal da Bolsa (R$)</label>
+                    <input
+                      id="user-valor"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="Ex: 700.00"
+                      value={formData.valorBolsa ?? ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          valorBolsa: e.target.value ? parseFloat(e.target.value) : null,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Vigência: Início e Término */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                  <div className="form-group">
+                    <label htmlFor="user-inicio-bolsa">Data de Início da Bolsa</label>
+                    <input
+                      id="user-inicio-bolsa"
+                      type="date"
+                      value={formData.dataInicioBolsa || ''}
+                      onChange={(e) => setFormData({ ...formData, dataInicioBolsa: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="user-fim-bolsa">Data de Término da Vigência</label>
+                    <input
+                      id="user-fim-bolsa"
+                      type="date"
+                      value={formData.dataFimBolsa || ''}
+                      onChange={(e) => setFormData({ ...formData, dataFimBolsa: e.target.value })}
+                    />
                   </div>
                 </div>
 

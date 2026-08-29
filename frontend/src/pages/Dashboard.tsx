@@ -721,6 +721,7 @@ const DashboardProfessor: React.FC = () => {
  * ------------------------------------------------------------------------- */
 const DashboardBolsista: React.FC = () => {
   const { user } = useAuth();
+  const [perfil, setPerfil] = useState<Usuario | null>(null);
   const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [lab, setLab] = useState<Laboratorio | null>(null);
   const [equipe, setEquipe] = useState<Usuario[]>([]);
@@ -730,7 +731,11 @@ const DashboardBolsista: React.FC = () => {
     async function carregar() {
       if (!user) return;
       try {
-        const projs = await api.get<Projeto[]>(`/usuarios/${user.id}/projetos`).catch(() => []);
+        const [dadosPerfil, projs] = await Promise.all([
+          api.get<Usuario>(`/usuarios/${user.id}`).catch(() => null),
+          api.get<Projeto[]>(`/usuarios/${user.id}/projetos`).catch(() => []),
+        ]);
+        setPerfil(dadosPerfil);
         setProjetos(projs);
 
         if (user.laboratorioId) {
@@ -758,6 +763,63 @@ const DashboardBolsista: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Card Informativo da Bolsa */}
+      {perfil?.modalidadeBolsa && (
+        <div
+          className="container"
+          style={{
+            marginBottom: '24px',
+            backgroundColor: 'var(--primary-subtle)',
+            border: '1px solid var(--border-color)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div
+              style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--primary-color)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Briefcase size={22} />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                {perfil.modalidadeBolsaDescricao || perfil.modalidadeBolsa}
+              </h2>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                {perfil.valorBolsa ? `Valor: R$ ${Number(perfil.valorBolsa).toFixed(2).replace('.', ',')} / mês` : 'Pesquisador vinculado'}
+                {perfil.dataFimBolsa ? ` • Vigência até ${new Date(perfil.dataFimBolsa + 'T00:00:00').toLocaleDateString('pt-BR')}` : ''}
+              </p>
+            </div>
+          </div>
+          {perfil.bolsaVencida ? (
+            <span style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.8rem' }}>
+              Vigência Encerrada
+            </span>
+          ) : perfil.bolsaPrestesAVencer ? (
+            <span style={{ backgroundColor: '#fef3c7', color: '#d97706', padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.8rem' }}>
+              Bolsa a Vencer
+            </span>
+          ) : (
+            <span style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.8rem' }}>
+              Bolsa Ativa
+            </span>
+          )}
+        </div>
+      )}
 
       <h2 className="section-title">
         <Layers size={20} />
