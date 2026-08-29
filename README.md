@@ -1,68 +1,84 @@
-# SisBolsa — Gestão de Bolsistas e Laboratórios
+# SisBolsa — Gestao de Bolsistas e Laboratorios
 ![Preview](./docs/images/preview.png)
 
-Sistema web para gestão integrada de bolsistas de pesquisa, professores orientadores, laboratórios, projetos acadêmicos, controle de frequência e trilha de auditoria.
+Sistema web para gestao integrada de bolsistas de pesquisa, professores orientadores, laboratorios, projetos academicos, controle de frequencia e trilha de auditoria.
 
-API RESTful construída em **Spring Boot 4 / Java 21** com frontend Single Page Application (SPA) em **React + Vite + TypeScript**.
+API RESTful construida em **Spring Boot 4 / Java 21** com frontend Single Page Application (SPA) em **React + Vite + TypeScript**.
 
 ---
 
-## 🚀 Tecnologias
+## Tecnologias
 
 | Camada | Tecnologias |
 |---|---|
-| **Frontend** | React 18, Vite, TypeScript, Lucide React, Recharts (gráficos interativos) |
+| **Frontend** | React 18, Vite, TypeScript, Lucide React, Recharts (graficos interativos) |
 | **Backend** | Spring Boot 4.0.6, Java 21, Spring Data JPA, Hibernate |
-| **Segurança** | Spring Security, JWT em Cookie `httpOnly`, BCrypt, Rate Limiting anti-bruteforce |
+| **Seguranca** | Spring Security, JWT em Cookie `httpOnly`, BCrypt, Rate Limiting anti-bruteforce |
 | **Banco de Dados** | PostgreSQL 15, Flyway Migration |
-| **Documentação** | OpenAPI 3 / Swagger UI (springdoc 3.1.0) |
-| **Relatórios** | LibrePDF / OpenPDF (geração nativa de comprovantes em PDF) |
+| **Documentacao** | OpenAPI 3 / Swagger UI (springdoc 3.1.0) |
+| **Relatorios** | LibrePDF / OpenPDF (geracao nativa de comprovantes em PDF) |
 | **Infraestrutura** | Docker, Docker Compose (Build multi-stage) |
 
 ---
 
-## 🌟 Principais Funcionalidades
+## Principais Funcionalidades
 
-1. **Gestão de Bolsistas e Vínculos:**
-   - Cadastro completo de bolsistas, vigência de bolsa (início/término), modalidades (`PIBIC`, `PIBITI`, `Extensão`, `Monitoria`, etc.) e valor mensal da bolsa (R$).
+1. **Gestao de Bolsistas e Vinculos:**
+   - Cadastro completo de bolsistas, vigencia de bolsa (inicio/termino), modalidades (`PIBIC`, `PIBITI`, `Extensao`, `Monitoria`, etc.) e valor mensal da bolsa (R$).
    - Controle de status de vencimento da bolsa com avisos visuais.
-   - Atribuição de cargos acadêmicos e lotação em laboratórios.
+   - Atribuicao de cargos academicos e lotacao em laboratorios.
 
-2. **Laboratórios & Controle de Capacidade:**
-   - Cadastro de laboratórios de pesquisa vinculados a professores coordenadores.
-   - Indicadores visuais de percentual de ocupação em tempo real (com avisos de lotação).
+2. **Laboratorios & Controle de Capacidade:**
+   - Cadastro de laboratorios de pesquisa vinculados a professores coordenadores.
+   - Indicadores visuais de percentual de ocupacao em tempo real (com avisos de lotacao).
 
-3. **Projetos de Pesquisa & Entregáveis:**
-   - Gestão de projetos por laboratório e vinculação de membros da equipe.
-   - Links diretos para entregáveis externos (repositórios GitHub/GitLab, artigos Overleaf e documentações).
+3. **Projetos de Pesquisa & Entregaveis:**
+   - Gestao de projetos por laboratorio e vinculacao de membros da equipe.
+   - Links diretos para entregaveis externos (repositorios GitHub/GitLab, artigos Overleaf e documentacoes).
 
-4. **Controle de Frequência & Horas:**
-   - Apontamento de horas trabalhadas com descrição de tarefas e link de entregáveis/PRs.
-   - Filtros por intervalo de datas e exportação de relatórios em formato CSV.
-   - **Emissão de Comprovante Oficial em PDF:** Geração de documento institucional A4 com resumo do bolsista, tabela zebrada de apontamentos e campos para assinatura do bolsista e coordenador.
+4. **Controle de Frequencia & Horas:**
+   - Apontamento de horas trabalhadas com descricao de tarefas e link de entregaveis/PRs.
+   - Filtros por intervalo de datas e exportacao de relatorios em formato CSV.
+   - **Emissao de Comprovante Oficial em PDF:** Geracao de documento institucional A4 com resumo do bolsista, tabela zebrada de apontamentos e campos para assinatura do bolsista e coordenador.
 
-5. **Relatórios & Estatísticas (Admin):**
-   - Gráficos interativos com Recharts (Ocupação dos labs, distribuição de cargos, horas trabalhadas no mês e projetos por laboratório).
-   - Alternância rápida entre visualização gráfica e tabular.
+5. **Relatorios & Estatisticas (Admin):**
+   - Graficos interativos com Recharts (Ocupacao dos labs, distribuicao de cargos, horas trabalhadas no mes e projetos por laboratorio).
+   - Alternancia rapida entre visualizacao grafica e tabular.
 
 6. **Trilha de Auditoria (Audit Log):**
-   - Rastreamento centralizado de ações críticas (logins, alterações cadastrais, cadastros, exclusões e emissão de comprovantes).
-   - Filtros por entidade, tipo de ação, datas e exportação em CSV.
+   - Rastreamento centralizado de acoes criticas (logins, alteracoes cadastrais, cadastros, exclusoes e emissao de comprovantes).
+   - Filtros por entidade, tipo de acao, datas e exportacao em CSV.
 
-7. **Segurança & Controle de Acesso (RBAC):**
-   - Três perfis bem definidos: `ADMIN`, `PROFESSOR` e `BOLSISTA`.
-   - **Rate Limiting no Login:** Bloqueio temporário de 5 minutos após 5 falhas consecutivas de autenticação.
-   - **Fluxo de "Esqueci a Senha":** Recuperação segura de senha através de código de verificação temporário.
-   - **Perfil & Segurança:** Medidor dinâmico de força de senha, validação em tempo real e alteração segura exigindo senha atual.
-   - **Modo Escuro (Dark Mode):** Alternador de tema Claro / Escuro com persistência no `localStorage`.
+7. **Seguranca & Controle de Acesso (RBAC):**
+   - Tres perfis bem definidos: `ADMIN`, `PROFESSOR` e `BOLSISTA`.
+   - **Rate Limiting no Login:** Bloqueio temporario de 5 minutos apos 5 falhas consecutivas de autenticacao.
+   - **Fluxo de "Esqueci a Senha":** Recuperacao segura de senha atraves de codigo de verificacao temporario.
+   - **Perfil & Seguranca:** Medidor dinamico de forca de senha, validacao em tempo real e alteracao segura exigindo senha atual.
+   - **Modo Escuro (Dark Mode):** Alternador de tema Claro / Escuro com persistencia no `localStorage`.
 
 ---
 
 ## Perfis de Acesso
 
-- **`ADMIN`:** Acesso irrestrito a todos os laboratórios, bolsistas, projetos, relatórios globais, trilha de auditoria e configurações.
-- **`PROFESSOR`:** Gerenciamento dos laboratórios que coordena, seus projetos associados e bolsistas vinculados.
-- **`BOLSISTA`:** Apontamento e edição de frequência própria, visualização de equipe/projetos do laboratório e emissão de comprovantes em PDF.
+- **`ADMIN`:** Acesso irrestrito a todos os laboratorios, bolsistas, projetos, relatorios globais, trilha de auditoria e configuracoes.
+- **`PROFESSOR`:** Gerenciamento dos laboratorios que coordena, seus projetos associados e bolsistas vinculados.
+- **`BOLSISTA`:** Apontamento e edicao de frequencia propria, visualizacao de equipe/projetos do laboratorio e emissao de comprovantes em PDF.
+
+---
+
+## Modelagem do Banco de Dados
+
+Modelagem relacional e conceitual projetada na ferramenta **brModelo**, refletindo as regras de negocio, entidades e integridade referencial do sistema.
+
+### Modelo Conceitual (MER)
+Representacao das entidades (`PROFESSOR`, `LABORATORIO`, `BOLSISTA`, `PROJETO`, `FREQUENCIA` e `AUDITORIA`), seus atributos e relacionamentos de cardinalidade (1:N e N:N).
+
+![Modelo Conceitual (MER)](./docs/images/diagrama-er.png)
+
+### Modelo Logico (DER)
+Esquema relacional normalizado contendo as definicoes de tabelas, tipos de dados, chaves primarias (PK), chaves estrangeiras (FK) e a tabela associativa `bolsista_projeto`.
+
+![Modelo Logico (DER)](./docs/images/modelo-logico.png)
 
 ---
 
@@ -74,7 +90,7 @@ API RESTful construída em **Spring Boot 4 / Java 21** com frontend Single Page 
 docker compose up -d --build
 ```
 
-Acesse a aplicação em: **[http://localhost:8080](http://localhost:8080)**
+Acesse a aplicacao em: **[http://localhost:8080](http://localhost:8080)**
 
 ### Desenvolvimento Local
 
@@ -82,7 +98,7 @@ Acesse a aplicação em: **[http://localhost:8080](http://localhost:8080)**
 # 1. Subir apenas o banco de dados
 docker compose up -d db
 
-# 2. Rodar a aplicação Spring Boot (Backend)
+# 2. Rodar a aplicacao Spring Boot (Backend)
 cd sisbolsa-api && mvn spring-boot:run
 
 # (Opcional) Para rodar o frontend com hot-reload no Vite:
@@ -98,17 +114,17 @@ Senha:  12345678
 
 ---
 
-##  Documentação da API (Swagger)
+## Documentacao da API (Swagger)
 
-Com a aplicação rodando, acesse a documentação interativa:
+Com a aplicacao rodando, acesse a documentacao interativa:
 - **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 - **OpenAPI JSON:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
 
 ---
 
-##  Testes Automatizados
+## Testes Automatizados
 
-A suíte conta com 83 testes automatizados (unitários e de contexto com mockMvc) que não dependem de banco de dados externo:
+A suite conta com 83 testes automatizados (unitarios e de contexto com mockMvc) que nao dependem de banco de dados externo:
 
 ```bash
 cd sisbolsa-api && mvn test
