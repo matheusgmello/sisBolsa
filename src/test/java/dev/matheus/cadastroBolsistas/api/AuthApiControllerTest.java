@@ -4,6 +4,7 @@ import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.model.Professor;
 import dev.matheus.cadastroBolsistas.security.JwtCookieFilter;
 import dev.matheus.cadastroBolsistas.security.JwtService;
+import dev.matheus.cadastroBolsistas.security.LoginAttemptService;
 import dev.matheus.cadastroBolsistas.security.SecurityConfig;
 import dev.matheus.cadastroBolsistas.service.AuditoriaService;
 import dev.matheus.cadastroBolsistas.service.BolsistaService;
@@ -79,6 +80,9 @@ class AuthApiControllerTest {
     @MockitoBean
     private AuditoriaService auditoriaService;
 
+    @MockitoBean
+    private LoginAttemptService loginAttemptService;
+
     private Bolsista bolsistaLogado;
 
     @BeforeEach
@@ -116,6 +120,17 @@ class AuthApiControllerTest {
                 .andExpect(cookie().value("token", "token-fake"))
                 .andExpect(cookie().httpOnly("token", true))
                 .andExpect(jsonPath("$.email").value("thiago@teste.com"));
+    }
+
+    @Test
+    void login_quandoContaBloqueadaPorRateLimiting_retorna429() throws Exception {
+        when(loginAttemptService.isBloqueado("bloqueado@teste.com")).thenReturn(true);
+        when(loginAttemptService.getSegundosRestantesBloqueio("bloqueado@teste.com")).thenReturn(300L);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json("email", "bloqueado@teste.com", "senha", "qualquer")))
+                .andExpect(status().isTooManyRequests());
     }
 
     @Test

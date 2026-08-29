@@ -39,11 +39,13 @@ public class AuthApiController {
     private final ProfessorService professorService;
     private final PasswordEncoder passwordEncoder;
     private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
+    private final dev.matheus.cadastroBolsistas.security.LoginAttemptService loginAttemptService;
 
     public AuthApiController(LoginService loginService, JwtService jwtService, UsuarioLogado usuarioLogado,
                              BolsistaService bolsistaService, ProfessorService professorService,
                              PasswordEncoder passwordEncoder,
-                             dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService) {
+                             dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService,
+                             dev.matheus.cadastroBolsistas.security.LoginAttemptService loginAttemptService) {
         this.loginService = loginService;
         this.jwtService = jwtService;
         this.usuarioLogado = usuarioLogado;
@@ -51,27 +53,59 @@ public class AuthApiController {
         this.professorService = professorService;
         this.passwordEncoder = passwordEncoder;
         this.auditoriaService = auditoriaService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @Operation(summary = "Autentica e grava o token jwt num cookie httpOnly. As chamadas seguintes nao precisam mandar nada a mais.")
     @PostMapping("/login")
     public UsuarioResponse login(@RequestBody LoginRequest body,
                                  HttpSession session,
+                                 jakarta.servlet.http.HttpServletRequest request,
                                  HttpServletResponse response) {
+        String email = body.email() != null ? body.email().trim() : "";
+        String ip = extrairIp(request);
+
+        if (loginAttemptService.isBloqueado(email)) {
+            long segundos = loginAttemptService.getSegundosRestantesBloqueio(email);
+            long minutos = Math.max(1, (segundos + 59) / 60);
+            auditoriaService.registrar(null, "Anônimo", "LOGIN_BLOQUEADO", "AUTH", "Tentativa de login com conta temporariamente bloqueada: " + email, ip);
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Muitas tentativas incorretas. Conta bloqueada temporariamente por " + minutos + " minuto(s).");
+        }
+
         Usuario usuario = loginService.autenticar(
                 body.email() != null ? body.email().trim() : null,
                 body.senha() != null ? body.senha().trim() : null);
 
         if (usuario == null) {
-            auditoriaService.registrar(null, "Anônimo", "LOGIN_FALHA", "AUTH", "Tentativa de login inválida com e-mail: " + body.email(), null);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos.");
+            loginAttemptService.registrarFalha(email);
+            int restantes = loginAttemptService.getTentativasRestantes(email);
+            auditoriaService.registrar(null, "Anônimo", "LOGIN_FALHA", "AUTH", "Tentativa de login inválida com e-mail: " + email + " (" + restantes + " restantes)", ip);
+
+            if (loginAttemptService.isBloqueado(email)) {
+                throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                        "Limite de 5 tentativas consecutivas excedido. Conta bloqueada temporariamente por 5 minutos.");
+            }
+
+            String aviso = (restantes <= 2 && restantes > 0) ? " Restam " + restantes + " tentativa(s) antes do bloqueio temporário." : "";
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos." + aviso);
         }
 
+        loginAttemptService.registrarSucesso(email);
         String token = jwtService.gerarToken(usuario.getEmail(), usuario.getTipoUsuario());
         CookieJwt.gravar(response, token, jwtService.getExpiracaoMinutos());
         session.setAttribute("usuario", usuario);
-        auditoriaService.registrar(usuario, "LOGIN", "AUTH", "Login efetuado com sucesso (" + usuario.getTipoUsuario() + ")", null);
+        auditoriaService.registrar(usuario, "LOGIN", "AUTH", "Login efetuado com sucesso (" + usuario.getTipoUsuario() + ")", ip);
         return UsuarioResponse.de(usuario);
+    }
+
+    private static String extrairIp(jakarta.servlet.http.HttpServletRequest request) {
+        if (request == null) return null;
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader != null && !xfHeader.isBlank()) {
+            return xfHeader.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @PostMapping("/logout")
