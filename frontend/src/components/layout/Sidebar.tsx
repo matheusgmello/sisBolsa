@@ -9,13 +9,17 @@ import {
   BarChart3,
   User,
   LogOut,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export const Sidebar: React.FC = () => {
   const { user, logout, isBolsista } = useAuth();
   const { showToast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -120,6 +124,17 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       <div className="sidebar-footer">
+        <button
+          type="button"
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'}
+          title={theme === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'}
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          <span>{theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}</span>
+        </button>
+
         <button
           type="button"
           className="logout-btn"

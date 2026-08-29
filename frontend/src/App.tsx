@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 
@@ -19,35 +20,37 @@ import { NotFound } from './pages/NotFound';
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <ToastProvider>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
+    <ThemeProvider>
+      <BrowserRouter>
+        <ToastProvider>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/laboratorios" element={<Laboratorios />} />
-                <Route path="/laboratorios/:id" element={<LaboratorioDetalhes />} />
-                <Route path="/projetos" element={<Projetos />} />
-                <Route path="/projetos/:id" element={<ProjetoDetalhes />} />
-                <Route path="/frequencia" element={<FrequenciaPage />} />
-                <Route path="/perfil" element={<Perfil />} />
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/laboratorios" element={<Laboratorios />} />
+                  <Route path="/laboratorios/:id" element={<LaboratorioDetalhes />} />
+                  <Route path="/projetos" element={<Projetos />} />
+                  <Route path="/projetos/:id" element={<ProjetoDetalhes />} />
+                  <Route path="/frequencia" element={<FrequenciaPage />} />
+                  <Route path="/perfil" element={<Perfil />} />
 
-                {/* Manager / Admin Routes */}
-                <Route element={<ProtectedRoute requireAdminOrProf />}>
-                  <Route path="/usuarios" element={<Usuarios />} />
-                  <Route path="/relatorios" element={<Relatorios />} />
+                  {/* Manager / Admin Routes */}
+                  <Route element={<ProtectedRoute requireAdminOrProf />}>
+                    <Route path="/usuarios" element={<Usuarios />} />
+                    <Route path="/relatorios" element={<Relatorios />} />
+                  </Route>
+
+                  <Route path="*" element={<NotFound />} />
                 </Route>
-
-                <Route path="*" element={<NotFound />} />
               </Route>
-            </Route>
-          </Routes>
-        </AuthProvider>
-      </ToastProvider>
-    </BrowserRouter>
+            </Routes>
+          </AuthProvider>
+        </ToastProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 };
 
