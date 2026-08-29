@@ -24,4 +24,13 @@ export const frequenciaService = {
 
   obterResumo: (bolsistaId?: string) =>
     api.get<FrequenciaResumo>('/frequencias/resumo', bolsistaId ? { bolsistaId } : undefined),
+
+  obterUrlPdf: (params?: { bolsistaId?: string; dataInicio?: string; dataFim?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.bolsistaId) qs.append('bolsistaId', params.bolsistaId);
+    if (params?.dataInicio) qs.append('dataInicio', params.dataInicio);
+    if (params?.dataFim) qs.append('dataFim', params.dataFim);
+    const str = qs.toString();
+    return `/api/frequencias/comprovante-pdf${str ? `?${str}` : ''}`;
+  },
 };

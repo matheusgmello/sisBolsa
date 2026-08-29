@@ -10,6 +10,7 @@ import {
   Download,
   Filter,
   ExternalLink,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -173,6 +174,15 @@ export const FrequenciaPage: React.FC = () => {
     return `/api/frequencias/exportar${qs ? `?${qs}` : ''}`;
   };
 
+  const getPdfUrl = () => {
+    const bolsistaParam = filtroBolsista || (isBolsista ? user?.id : undefined);
+    return frequenciaService.obterUrlPdf({
+      bolsistaId: bolsistaParam || undefined,
+      dataInicio: dataInicio || undefined,
+      dataFim: dataFim || undefined,
+    });
+  };
+
   return (
     <div>
       <div className="header-actions">
@@ -185,6 +195,17 @@ export const FrequenciaPage: React.FC = () => {
           </p>
         </div>
         <div className="header-buttons">
+          <a
+            href={getPdfUrl()}
+            className="btn-new btn-export"
+            target="_blank"
+            rel="noreferrer"
+            title="Emitir Comprovante Mensal em PDF"
+          >
+            <FileText size={16} />
+            <span>Comprovante PDF</span>
+          </a>
+
           <a
             href={getExportUrl()}
             className="btn-new btn-export"

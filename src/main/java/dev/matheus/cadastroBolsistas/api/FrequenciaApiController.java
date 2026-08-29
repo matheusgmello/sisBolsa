@@ -5,6 +5,8 @@ import dev.matheus.cadastroBolsistas.dto.FrequenciaResponse;
 import dev.matheus.cadastroBolsistas.dto.PaginaResponse;
 import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.model.Frequencia;
+import dev.matheus.cadastroBolsistas.model.Laboratorio;
+import dev.matheus.cadastroBolsistas.model.Professor;
 import dev.matheus.cadastroBolsistas.model.Usuario;
 import dev.matheus.cadastroBolsistas.service.BolsistaService;
 import dev.matheus.cadastroBolsistas.service.FrequenciaService;
@@ -37,15 +39,21 @@ public class FrequenciaApiController {
     private final LaboratorioService laboratorioService;
     private final UsuarioLogado usuarioLogado;
     private final dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService;
+    private final dev.matheus.cadastroBolsistas.service.ComprovanteFrequenciaPdfService comprovantePdfService;
+    private final dev.matheus.cadastroBolsistas.service.ProfessorService professorService;
 
     public FrequenciaApiController(FrequenciaService frequenciaService, BolsistaService bolsistaService,
                                    LaboratorioService laboratorioService, UsuarioLogado usuarioLogado,
-                                   dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService) {
+                                   dev.matheus.cadastroBolsistas.service.AuditoriaService auditoriaService,
+                                   dev.matheus.cadastroBolsistas.service.ComprovanteFrequenciaPdfService comprovantePdfService,
+                                   dev.matheus.cadastroBolsistas.service.ProfessorService professorService) {
         this.frequenciaService = frequenciaService;
         this.bolsistaService = bolsistaService;
         this.laboratorioService = laboratorioService;
         this.usuarioLogado = usuarioLogado;
         this.auditoriaService = auditoriaService;
+        this.comprovantePdfService = comprovantePdfService;
+        this.professorService = professorService;
     }
 
     @Operation(summary = "Lista frequencias paginadas com filtro opcional por data. Bolsista comum ve apenas as proprias.")
@@ -138,6 +146,44 @@ public class FrequenciaApiController {
             return "";
         }
         return "\"" + valor.replace("\"", "\"\"") + "\"";
+    }
+
+    @Operation(summary = "Gera comprovante oficial de frequencia e atividades em formato PDF.")
+    @GetMapping("/comprovante-pdf")
+    public void comprovantePdf(@RequestParam(required = false) UUID bolsistaId,
+                               @RequestParam(required = false) LocalDate dataInicio,
+                               @RequestParam(required = false) LocalDate dataFim,
+                               HttpSession session,
+                               HttpServletResponse response) throws java.io.IOException {
+        Usuario logado = usuarioLogado.obrigatorio(session);
+        UUID alvo = resolverBolsistaAlvo(logado, bolsistaId);
+        exigirPermissao(logado, alvo);
+
+        Bolsista b = bolsistaService.buscarPorId(alvo);
+        if (b == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bolsista nao encontrado.");
+        }
+
+        Laboratorio lab = b.getLaboratorioId() != null ? laboratorioService.buscarPorId(b.getLaboratorioId()) : null;
+        Professor coord = (lab != null && lab.getCoordenadorId() != null) ? professorService.buscarPorId(lab.getCoordenadorId()) : null;
+
+        LocalDate inicio = dataInicio != null ? dataInicio : LocalDate.now().withDayOfMonth(1);
+        LocalDate fim = dataFim != null ? dataFim : LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+
+        List<Frequencia> frequencias = frequenciaService.buscarFrequencias(alvo, inicio, fim, null, null);
+
+        try {
+            byte[] pdfBytes = comprovantePdfService.gerarComprovante(b, lab, coord, frequencias, inicio, fim);
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "inline; filename=comprovante_frequencia_" + b.getMatricula() + ".pdf");
+            response.setContentLength(pdfBytes.length);
+            response.getOutputStream().write(pdfBytes);
+            response.getOutputStream().flush();
+
+            auditoriaService.registrar(logado, "EMISSAO_COMPROVANTE_PDF", "FREQUENCIA", "Comprovante PDF emitido para bolsista " + b.getNome() + " referente ao período " + inicio + " a " + fim + ".", null);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao gerar PDF do comprovante: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
