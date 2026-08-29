@@ -36,7 +36,13 @@ public class SecurityConfig {
             /* a api nao depende de sessao para autenticar: quem manda e o token */
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login", "/api/auth/cadastro-admin", "/api/auth/admins-restantes").permitAll()
+                .requestMatchers(
+                    "/api/auth/login",
+                    "/api/auth/cadastro-admin",
+                    "/api/auth/admins-restantes",
+                    "/api/auth/esqueci-senha",
+                    "/api/auth/redefinir-senha"
+                ).permitAll()
                 .requestMatchers("/api/relatorios/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .formLogin(form -> form.disable())
