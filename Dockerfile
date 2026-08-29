@@ -1,23 +1,23 @@
 # estagio 1: build do frontend react com vite
 FROM node:20-alpine AS frontend-build
-WORKDIR /app/frontend
+WORKDIR /app/sisbolsa-web
 
-COPY frontend/package*.json ./
+COPY sisbolsa-web/package*.json ./
 RUN npm ci
 
-COPY frontend/ ./
+COPY sisbolsa-web/ ./
 RUN npm run build
 
 # estagio 2: build da aplicacao spring boot com maven
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
 
-COPY pom.xml .
+COPY sisbolsa-api/pom.xml .
 RUN mvn -B dependency:go-offline
 
-COPY src ./src
+COPY sisbolsa-api/src ./src
 # substitui os arquivos estaticos pelo bundle compilado do react
-COPY --from=frontend-build /app/src/main/resources/static ./src/main/resources/static
+COPY --from=frontend-build /app/sisbolsa-api/src/main/resources/static ./src/main/resources/static
 
 RUN mvn -B clean package -DskipTests
 
@@ -32,4 +32,3 @@ COPY --from=build --chown=sisbolsa:sisbolsa /build/target/*.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
-
