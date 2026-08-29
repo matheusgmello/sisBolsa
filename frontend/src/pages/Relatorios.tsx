@@ -17,6 +17,14 @@ import {
   type BolsistasPorCargo,
 } from '../services/relatorioService';
 
+const CARGO_MAP: Record<string, string> = {
+  DESENVOLVEDOR: 'Desenvolvedor',
+  PESQUISADOR: 'Pesquisador',
+  LIDER_TECNICO: 'Líder Técnico',
+  DESIGNER: 'Designer',
+  AUXILIAR: 'Auxiliar',
+};
+
 export const Relatorios: React.FC = () => {
   const { showToast } = useToast();
 
@@ -111,7 +119,7 @@ export const Relatorios: React.FC = () => {
         </div>
       </div>
 
-      {/* Grid 2 colunas */}
+      {/* Grid 2 colunas superior */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '24px' }}>
         {/* Ocupação dos Labs */}
         <div className="container" style={{ margin: 0 }}>
@@ -136,23 +144,26 @@ export const Relatorios: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  ocupacoes.map((item) => (
-                    <tr key={item.id}>
-                      <td><strong>{item.nome}</strong></td>
-                      <td>{item.ocupacao} / {item.capacidade}</td>
-                      <td style={{ minWidth: '140px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
-                          <span>{item.percentual}%</span>
-                        </div>
-                        <div className="progress-bar-container" style={{ margin: 0 }}>
-                          <div
-                            className={`progress-bar-fill ${item.percentual > 90 ? 'danger' : item.percentual > 70 ? 'warning' : 'success'}`}
-                            style={{ width: `${Math.min(100, item.percentual)}%` }}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  ocupacoes.map((item) => {
+                    const percentualArredondado = Math.round(item.percentualOcupacao || 0);
+                    return (
+                      <tr key={item.id}>
+                        <td><strong>{item.nome}</strong></td>
+                        <td>{item.totalBolsistas} / {item.capacidade}</td>
+                        <td style={{ minWidth: '140px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
+                            <span>{percentualArredondado}%</span>
+                          </div>
+                          <div className="progress-bar-container" style={{ margin: 0 }}>
+                            <div
+                              className={`progress-bar-fill ${percentualArredondado > 90 ? 'danger' : percentualArredondado > 70 ? 'warning' : 'success'}`}
+                              style={{ width: `${Math.min(100, percentualArredondado)}%` }}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -183,10 +194,10 @@ export const Relatorios: React.FC = () => {
                 ) : (
                   horasMes.map((h, i) => (
                     <tr key={i}>
-                      <td><strong>{h.bolsistaNome}</strong></td>
+                      <td><strong>{h.nome}</strong></td>
                       <td>
                         <span className="count-badge count-badge-purple">
-                          {h.totalHoras} horas
+                          {h.totalHoras} {h.totalHoras === 1 ? 'hora' : 'horas'}
                         </span>
                       </td>
                     </tr>
@@ -224,10 +235,10 @@ export const Relatorios: React.FC = () => {
                 ) : (
                   projetosPorLab.map((p, i) => (
                     <tr key={i}>
-                      <td><strong>{p.laboratorioNome}</strong></td>
+                      <td><strong>{p.nome}</strong></td>
                       <td>
                         <span className="count-badge count-badge-purple">
-                          {p.totalProjetos} projetos
+                          {p.totalProjetos} {p.totalProjetos === 1 ? 'projeto' : 'projetos'}
                         </span>
                       </td>
                     </tr>
@@ -262,10 +273,10 @@ export const Relatorios: React.FC = () => {
                 ) : (
                   bolsistasPorCargo.map((c, i) => (
                     <tr key={i}>
-                      <td><strong>{c.cargo}</strong></td>
+                      <td><strong>{CARGO_MAP[c.cargo] || c.cargo}</strong></td>
                       <td>
                         <span className="count-badge count-badge-purple">
-                          {c.total} integrantes
+                          {c.totalBolsistas} {c.totalBolsistas === 1 ? 'integrante' : 'integrantes'}
                         </span>
                       </td>
                     </tr>

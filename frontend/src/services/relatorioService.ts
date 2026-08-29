@@ -7,26 +7,26 @@ export interface ResumoAdmin {
 }
 
 export interface OcupacaoLab {
-  id: number;
+  id: string;
   nome: string;
   capacidade: number;
-  ocupacao: number;
-  percentual: number;
+  totalBolsistas: number;
+  percentualOcupacao: number;
 }
 
 export interface HorasBolsistaMes {
-  bolsistaNome: string;
+  nome: string;
   totalHoras: number;
 }
 
 export interface ProjetosPorLab {
-  laboratorioNome: string;
+  nome: string;
   totalProjetos: number;
 }
 
 export interface BolsistasPorCargo {
   cargo: string;
-  total: number;
+  totalBolsistas: number;
 }
 
 export const relatorioService = {
