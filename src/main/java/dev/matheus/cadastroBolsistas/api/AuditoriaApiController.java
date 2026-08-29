@@ -1,0 +1,118 @@
+package dev.matheus.cadastroBolsistas.api;
+
+import dev.matheus.cadastroBolsistas.dto.AuditoriaResponse;
+import dev.matheus.cadastroBolsistas.dto.ErroResponse;
+import dev.matheus.cadastroBolsistas.dto.PaginaResponse;
+import dev.matheus.cadastroBolsistas.model.Auditoria;
+import dev.matheus.cadastroBolsistas.model.Usuario;
+import dev.matheus.cadastroBolsistas.service.AuditoriaService;
+import dev.matheus.cadastroBolsistas.util.StringUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+
+@Tag(name = "Auditoria", description = "Trilha de auditoria para rastreamento de acessos, alterações de cadastros, logins e emissões de comprovantes.")
+@RestController
+@RequestMapping("/api/auditoria")
+public class AuditoriaApiController {
+
+    private static final int TAMANHO_PAGINA = 15;
+
+    private final AuditoriaService auditoriaService;
+    private final UsuarioLogado usuarioLogado;
+
+    public AuditoriaApiController(AuditoriaService auditoriaService, UsuarioLogado usuarioLogado) {
+        this.auditoriaService = auditoriaService;
+        this.usuarioLogado = usuarioLogado;
+    }
+
+    @Operation(summary = "Listar logs de auditoria paginados", description = "Retorna o histórico de atividades e logs de segurança filtrados por entidade, tipo de ação ou intervalo de datas (restrito a Administradores e Professores).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista paginada de logs"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado para bolsistas", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
+    @GetMapping
+    public PaginaResponse<AuditoriaResponse> listar(
+            @Parameter(description = "Número da página", example = "1") @RequestParam(defaultValue = "1") int pagina,
+            @Parameter(description = "Filtro por entidade afetada", example = "AUTH") @RequestParam(required = false) String entidade,
+            @Parameter(description = "Filtro por ação realizada", example = "LOGIN") @RequestParam(required = false) String acao,
+            @Parameter(description = "Data de início", example = "2026-08-01") @RequestParam(required = false) LocalDate dataInicio,
+            @Parameter(description = "Data de término", example = "2026-08-31") @RequestParam(required = false) LocalDate dataFim,
+            HttpSession session) {
+        Usuario logado = usuarioLogado.obrigatorio(session);
+        usuarioLogado.exigir(logado.isAdmin() || logado.isProfessor(), "Acesso restrito a administradores e professores.");
+
+        LocalDateTime inicio = dataInicio != null ? dataInicio.atStartOfDay() : null;
+        LocalDateTime fim = dataFim != null ? dataFim.atTime(LocalTime.MAX) : null;
+        String ent = StringUtil.estaVazio(entidade) ? null : entidade.trim();
+        String ac = StringUtil.estaVazio(acao) ? null : acao.trim();
+
+        int total = auditoriaService.contarLogs(ent, ac, inicio, fim);
+        int totalPaginas = Math.max(1, (int) Math.ceil(total / (double) TAMANHO_PAGINA));
+        int atual = Math.min(Math.max(pagina, 1), totalPaginas);
+
+        List<Auditoria> itens = auditoriaService.buscarLogs(ent, ac, inicio, fim, TAMANHO_PAGINA, (atual - 1) * TAMANHO_PAGINA);
+        return new PaginaResponse<>(itens.stream().map(AuditoriaResponse::de).toList(), atual, totalPaginas, total);
+    }
+
+    @Operation(summary = "Exportar logs de auditoria em CSV", description = "Gera um relatório em arquivo CSV contendo os logs de auditoria filtrados.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Arquivo CSV gerado"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado para bolsistas", content = @Content(schema = @Schema(implementation = ErroResponse.class)))
+    })
+    @GetMapping("/exportar")
+    public void exportar(
+            @Parameter(description = "Filtro por entidade afetada") @RequestParam(required = false) String entidade,
+            @Parameter(description = "Filtro por ação") @RequestParam(required = false) String acao,
+            @Parameter(description = "Data inicial") @RequestParam(required = false) LocalDate dataInicio,
+            @Parameter(description = "Data final") @RequestParam(required = false) LocalDate dataFim,
+            HttpSession session,
+            HttpServletResponse response) throws IOException {
+        Usuario logado = usuarioLogado.obrigatorio(session);
+        usuarioLogado.exigir(logado.isAdmin() || logado.isProfessor(), "Acesso restrito a administradores e professores.");
+
+        LocalDateTime inicio = dataInicio != null ? dataInicio.atStartOfDay() : null;
+        LocalDateTime fim = dataFim != null ? dataFim.atTime(LocalTime.MAX) : null;
+        String ent = StringUtil.estaVazio(entidade) ? null : entidade.trim();
+        String ac = StringUtil.estaVazio(acao) ? null : acao.trim();
+
+        List<Auditoria> lista = auditoriaService.buscarLogs(ent, ac, inicio, fim, null, null);
+
+        response.setContentType("text/csv; charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=auditoria.csv");
+        try (PrintWriter writer = response.getWriter()) {
+            writer.println("Data/Hora,Usuario,Acao,Entidade,Detalhes,IP");
+            for (Auditoria a : lista) {
+                writer.println(String.join(",",
+                        a.getDataHora() != null ? a.getDataHora().toString() : "",
+                        csv(a.getUsuarioNome()),
+                        csv(a.getAcao()),
+                        csv(a.getEntidade()),
+                        csv(a.getDetalhes()),
+                        csv(a.getIpOrigem())));
+            }
+        }
+    }
+
+    private static String csv(String valor) {
+        if (valor == null) return "";
+        return "\"" + valor.replace("\"", "\"\"") + "\"";
+    }
+}

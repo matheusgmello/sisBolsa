@@ -3,7 +3,6 @@ package dev.matheus.cadastroBolsistas.service;
 import dev.matheus.cadastroBolsistas.model.Bolsista;
 import dev.matheus.cadastroBolsistas.model.Laboratorio;
 import dev.matheus.cadastroBolsistas.model.Professor;
-import dev.matheus.cadastroBolsistas.model.Usuario;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,6 +14,7 @@ import dev.matheus.cadastroBolsistas.repository.ProjetoRepository;
 
 import java.sql.SQLException;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -33,110 +33,120 @@ class LaboratorioServiceTest {
 
     @Test
     void podeGerenciar_adminSempreRetornaTrue() throws SQLException {
-        // Usuario admin (isAdmin()=true)
         Professor admin = new Professor();
+        admin.setId(UUID.randomUUID());
         admin.setTipoUsuario("ADMIN");
 
-        assertTrue(laboratorioService.podeGerenciar(admin, 999));
-        // o repositorio NUNCA deve ser consultado para admin
+        assertTrue(laboratorioService.podeGerenciar(admin, UUID.randomUUID()));
         verifyNoInteractions(repository);
     }
 
     @Test
     void podeGerenciar_professorCoordenadorRetornaTrue() throws SQLException {
-        // Professor com id=10
+        UUID profId = UUID.randomUUID();
+        UUID labId = UUID.randomUUID();
+
         Professor professor = new Professor();
-        professor.setId(10);
+        professor.setId(profId);
         professor.setTipoUsuario("PROFESSOR");
 
         Laboratorio lab = new Laboratorio();
-        lab.setId(5);
-        lab.setCoordenadorId(10);
+        lab.setId(labId);
+        lab.setCoordenadorId(profId);
 
-        when(repository.findById(5)).thenReturn(Optional.of(lab));
+        when(repository.findById(labId)).thenReturn(Optional.of(lab));
 
-        assertTrue(laboratorioService.podeGerenciar(professor, 5));
-        verify(repository).findById(5);
+        assertTrue(laboratorioService.podeGerenciar(professor, labId));
+        verify(repository).findById(labId);
     }
 
     @Test
     void podeGerenciar_professorNaoCoordenadorRetornaFalse() throws SQLException {
-        // Professor com id=10
+        UUID profId = UUID.randomUUID();
+        UUID labId = UUID.randomUUID();
+
         Professor professor = new Professor();
-        professor.setId(10);
+        professor.setId(profId);
         professor.setTipoUsuario("PROFESSOR");
 
         Laboratorio lab = new Laboratorio();
-        lab.setId(5);
-        lab.setCoordenadorId(99);
+        lab.setId(labId);
+        lab.setCoordenadorId(UUID.randomUUID());
 
-        when(repository.findById(5)).thenReturn(Optional.of(lab));
+        when(repository.findById(labId)).thenReturn(Optional.of(lab));
 
-        assertFalse(laboratorioService.podeGerenciar(professor, 5));
-        verify(repository).findById(5);
+        assertFalse(laboratorioService.podeGerenciar(professor, labId));
+        verify(repository).findById(labId);
     }
 
     @Test
     void podeGerenciar_professorLabInexistenteRetornaFalse() throws SQLException {
+        UUID profId = UUID.randomUUID();
+        UUID labId = UUID.randomUUID();
+
         Professor professor = new Professor();
-        professor.setId(10);
+        professor.setId(profId);
         professor.setTipoUsuario("PROFESSOR");
 
-        when(repository.findById(5)).thenReturn(Optional.empty());
+        when(repository.findById(labId)).thenReturn(Optional.empty());
 
-        assertFalse(laboratorioService.podeGerenciar(professor, 5));
-        verify(repository).findById(5);
+        assertFalse(laboratorioService.podeGerenciar(professor, labId));
+        verify(repository).findById(labId);
     }
 
     @Test
     void podeGerenciar_bolsistaRetornaFalse() throws SQLException {
         Bolsista bolsista = new Bolsista();
+        bolsista.setId(UUID.randomUUID());
         bolsista.setTipoUsuario("BOLSISTA");
 
-        assertFalse(laboratorioService.podeGerenciar(bolsista, 5));
+        assertFalse(laboratorioService.podeGerenciar(bolsista, UUID.randomUUID()));
         verifyNoInteractions(repository);
     }
 
     @Test
     void podeGerenciar_usuarioNullRetornaFalse() throws SQLException {
-        assertFalse(laboratorioService.podeGerenciar(null, 5));
+        assertFalse(laboratorioService.podeGerenciar(null, UUID.randomUUID()));
         verifyNoInteractions(repository);
     }
 
     @Test
     void temVaga_retornaTrueQuandoLabTemEspaco() throws SQLException {
+        UUID labId = UUID.randomUUID();
         Laboratorio lab = new Laboratorio();
-        lab.setId(1);
+        lab.setId(labId);
         lab.setCapacidade(10);
 
-        when(repository.findById(1)).thenReturn(Optional.of(lab));
-        when(repository.contarBolsistasAtivos(1)).thenReturn(5);
+        when(repository.findById(labId)).thenReturn(Optional.of(lab));
+        when(repository.contarBolsistasAtivos(labId)).thenReturn(5);
 
-        assertTrue(laboratorioService.temVaga(1));
-        verify(repository).findById(1);
-        verify(repository).contarBolsistasAtivos(1);
+        assertTrue(laboratorioService.temVaga(labId));
+        verify(repository).findById(labId);
+        verify(repository).contarBolsistasAtivos(labId);
     }
 
     @Test
     void temVaga_retornaFalseQuandoLabEstaLotado() throws SQLException {
+        UUID labId = UUID.randomUUID();
         Laboratorio lab = new Laboratorio();
-        lab.setId(1);
+        lab.setId(labId);
         lab.setCapacidade(10);
 
-        when(repository.findById(1)).thenReturn(Optional.of(lab));
-        when(repository.contarBolsistasAtivos(1)).thenReturn(10);
+        when(repository.findById(labId)).thenReturn(Optional.of(lab));
+        when(repository.contarBolsistasAtivos(labId)).thenReturn(10);
 
-        assertFalse(laboratorioService.temVaga(1));
-        verify(repository).findById(1);
-        verify(repository).contarBolsistasAtivos(1);
+        assertFalse(laboratorioService.temVaga(labId));
+        verify(repository).findById(labId);
+        verify(repository).contarBolsistasAtivos(labId);
     }
 
     @Test
     void temVaga_retornaFalseQuandoLabNaoExiste() throws SQLException {
-        when(repository.findById(1)).thenReturn(Optional.empty());
+        UUID labId = UUID.randomUUID();
+        when(repository.findById(labId)).thenReturn(Optional.empty());
 
-        assertFalse(laboratorioService.temVaga(1));
-        verify(repository).findById(1);
-        verify(repository, never()).contarBolsistasAtivos(anyInt());
+        assertFalse(laboratorioService.temVaga(labId));
+        verify(repository).findById(labId);
+        verify(repository, never()).contarBolsistasAtivos(any(UUID.class));
     }
 }

@@ -93,6 +93,13 @@
 			<version>42.7.4</version>
 		</dependency>
 
+		<!-- gerador de relatorios e comprovantes em pdf -->
+		<dependency>
+			<groupId>com.github.librepdf</groupId>
+			<artifactId>openpdf</artifactId>
+			<version>2.0.3</version>
+		</dependency>
+
 
 
 		<dependency>

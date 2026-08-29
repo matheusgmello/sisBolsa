@@ -1,196 +1,100 @@
-# Instalação e Execução do SisBolsa
+# Guia de Instalacao e Execucao — SisBolsa
 
-## Pré-requisitos
+## Pre-requisitos
 
-| Ferramenta | Versão mínima | Observação |
+| Ferramenta | Versao Recomendada | Finalidade |
 |---|---|---|
-| Docker + Docker Compose | Qualquer atual | Suficiente sozinho — o build roda dentro da imagem |
-| Java JDK | 21 | Só para rodar a aplicação fora do container |
-| Maven | 3.9+ | Só para rodar a aplicação fora do container |
-| IntelliJ IDEA | Qualquer | Opcional — o projeto roda via Maven também |
-
-> **PostgreSQL local** é uma alternativa ao Docker. Veja a Opção B abaixo.
+| **Docker & Docker Compose** | Qualquer versao recente | Execucao completa em containers (banco + aplicacao) |
+| **Java JDK** | 21 | Execucao local do backend (opcional caso use Docker) |
+| **Maven** | 3.9+ | Build local do backend |
+| **Node.js** | 20+ | Desenvolvimento e build do frontend React (opcional caso use Docker) |
 
 ---
 
-## 1. Clonar o repositório
+## 1. Execucao Rapida via Docker (Recomendado)
 
+O Docker Compose sobe automaticamente o banco PostgreSQL e a aplicacao com o frontend compilado.
+
+1. Clone o repositorio e acerte o diretorio:
+   ```bash
+   git clone <url-do-repositorio>
+   cd trabalho-finalp-poow1
+   ```
+
+2. Inicie os containers:
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. Acesse a aplicacao no navegador:
+   - URL: **http://localhost:8080**
+
+4. Swagger UI / Documentacao da API:
+   - URL: **http://localhost:8080/swagger-ui.html**
+
+### Comandos Uteis do Docker
 ```bash
-git clone <url-do-repositorio>
-cd CadastroBolsistas
-```
+# Ver logs em tempo real
+docker compose logs -f
 
----
-
-## 2. Configurar o banco de dados
-
-### Opção A — Tudo em Docker (recomendado)
-
-Na raiz do projeto, execute:
-
-```bash
-docker compose up -d --build
-```
-
-Sobe dois containers: o PostgreSQL e a aplicação. O banco tem healthcheck, então
-a aplicação só inicia depois que ele aceita conexão — sem isso o Flyway falharia
-na corrida. As tabelas e os dados iniciais são criados pelas migrations no
-primeiro start.
-
-Acesse `http://localhost:8080`. Não precisa de Java nem Maven instalados: o
-build acontece dentro da imagem.
-
-Para subir só o banco e rodar a aplicação localmente:
-
-```bash
-docker compose up -d db
-mvn spring-boot:run
-```
-
-Comandos úteis:
-
-```bash
-# Parar (mantém os dados)
+# Parar a aplicacao mantendo os dados
 docker compose down
 
-# Parar e apagar todos os dados
+# Parar e resetar o banco de dados do zero
 docker compose down -v
-
-# Ver logs do container
-docker compose logs -f
-```
-
-Configurações usadas pelo container:
-
-```
-Banco:   cadastroBolsista
-Usuário: postgres
-Senha:   1234
-Porta:   5436
 ```
 
 ---
 
-### Opção B — PostgreSQL local (sem Docker)
+## 2. Execucao em Modo de Desenvolvimento
 
-1. Abra o pgAdmin.
-2. Crie um banco de dados chamado exatamente `cadastroBolsista` (B maiúsculo).
-3. Abra o Query Tool no banco criado.
-4. Não precisa rodar script nenhum: o Flyway cria e popula as tabelas no primeiro start da aplicação.
+Caso deseje desenvolver com o backend ou frontend rodando localmente:
 
-Após isso, ajuste a porta no arquivo de configuração:
-
-```
-src/main/resources/application.properties
+### Passo 1: Subir o PostgreSQL
+```bash
+docker compose up -d db
 ```
 
-Altere a porta de `5436` para `5432` (porta padrão do PostgreSQL local), ou
-exporte a variável de ambiente `DB_PORT=5432` antes de subir a aplicação.
-As credenciais também aceitam as variáveis `DB_HOST`, `DB_NAME`, `DB_USER`
-e `DB_PASSWORD`.
-
----
-
-## 3. Rodar a aplicação
-
-### Via Maven (recomendado para desenvolvimento)
-
+### Passo 2: Subir a aplicacao Spring Boot
 ```bash
 mvn spring-boot:run
 ```
 
-O Tomcat embarcado sobe na porta `8080`. Não é necessário instalar WildFly ou outro servidor.
-
-### Via build
-
+### Passo 3 (Opcional): Desenvolver no Frontend com Hot-Reload
+Caso deseje editar componentes React com Vite:
 ```bash
-mvn clean package
+cd frontend
+npm install
+npm run dev
 ```
 
 ---
 
-## 4. Rodar os testes
+## 3. Credenciais Iniciais de Acesso
+
+O banco e populado automaticamente via Flyway com as seguintes contas:
+
+### Administrador
+- **E-mail:** `admin@sisbolsa.com`
+- **Senha:** `12345678`
+
+### Professores Coordenadores
+- `roberto.mendes@sisbolsa.com` / `12345678` (Lab. Desenvolvimento de Software)
+- `carla.souza@sisbolsa.com` / `12345678` (Lab. Ciencias Biologicas)
+- `felipe.andrade@sisbolsa.com` / `12345678` (Lab. Engenharia Mecatronica)
+
+### Bolsistas (Exemplos)
+- `thiago.rocha@aluno.sisbolsa.com` / `12345678`
+- `camila.pires@aluno.sisbolsa.com` / `12345678`
+- `diego.almeida@aluno.sisbolsa.com` / `12345678`
+- `bruno.carvalho@aluno.sisbolsa.com` / `12345678`
+
+---
+
+## 4. Executando os Testes Automatizados
+
+A aplicacao possui 83 testes automatizados (unitarios, seguranca, services e controllers mockados) que rodam sem necessidade de banco ativo:
 
 ```bash
 mvn test
-```
-
-A suíte possui 74 testes unitários e de API (JUnit 5 + Mockito + MockMvc).
-Nenhum teste requer banco de dados ativo — os repositórios são mockados.
-
----
-
-## 5. Acessar o sistema
-
-```
-http://localhost:8080
-```
-
-Documentação da API (Swagger):
-
-```
-http://localhost:8080/swagger-ui.html
-```
-
----
-
-## 6. Credenciais iniciais
-
-As migrations criam os seguintes usuários para teste:
-
-### Administrador
-```
-E-mail: admin@sisbolsa.com
-Senha:  12345678
-Tipo:   ADMIN
-```
-
-### Professores coordenadores
-```
-roberto.mendes@sisbolsa.com  / 12345678  → Lab de Desenvolvimento de Software
-carla.souza@sisbolsa.com     / 12345678  → Lab de Ciencias Biologicas
-felipe.andrade@sisbolsa.com  / 12345678  → Lab de Engenharia Mecatronica
-```
-
-### Bolsistas (exemplos)
-```
-thiago.rocha@aluno.sisbolsa.com    / 12345678  → Lab de Desenvolvimento de Software
-camila.pires@aluno.sisbolsa.com    / 12345678  → Lab de Desenvolvimento de Software
-diego.almeida@aluno.sisbolsa.com   / 12345678  → Lab de Ciencias Biologicas
-bruno.carvalho@aluno.sisbolsa.com  / 12345678  → Lab de Engenharia Mecatronica
-```
-
-> As senhas são armazenadas como hash BCrypt. O `V4__senhas_bcrypt.sql` converte
-> os hashes do seed — não é necessário nenhuma migração manual.
-
----
-
-## 7. Cadastrar novos administradores
-
-O sistema suporta no máximo 3 administradores. Para cadastrar um novo:
-
-1. Faça login com uma conta ADMIN existente.
-2. Acesse **Usuários** no menu lateral.
-3. Clique em **Novo Usuário** e selecione o tipo `ADMIN`.
-
----
-
-## 8. Estrutura do banco
-
-As migrations do Flyway criam e populam as seguintes tabelas:
-
-| Tabela | Conteúdo inicial |
-|---|---|
-| `professor` | 3 professores coordenadores |
-| `laboratorio` | 3 laboratórios vinculados aos professores |
-| `projeto` | 6 projetos (2 por laboratório) |
-| `bolsista` | 7 bolsistas + 1 administrador |
-| `bolsista_projeto` | Vínculos entre bolsistas e projetos |
-| `frequencia` | 28 registros de horas (4 por bolsista) |
-
-Para reiniciar o banco do zero:
-
-```bash
-docker compose down -v
-docker compose up -d
 ```

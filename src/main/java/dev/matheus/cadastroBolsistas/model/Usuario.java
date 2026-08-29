@@ -7,19 +7,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Transient;
 
+import java.util.UUID;
+
 /*
  * campos comuns de qualquer usuario do sistema (ADMIN, BOLSISTA ou PROFESSOR).
- *
- * nao e entidade: bolsista e professor moram em tabelas separadas e com sequences
- * independentes, entao id 1 existe nas duas. nenhuma estrategia de heranca do jpa
- * da conta disso, por isso MappedSuperclass e duas entidades sem hierarquia.
+ * chave primaria do tipo UUID.
  */
 @MappedSuperclass
 public abstract class Usuario {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String nome;
     private String email;
@@ -32,10 +31,6 @@ public abstract class Usuario {
     @Column(name = "foto_url")
     private String fotoUrl;
 
-    /*
-     * nao existe como coluna. para bolsista vem da relacao com laboratorio,
-     * para professor o controller preenche com a lista de labs que ele coordena.
-     */
     @Transient
     private String nomeLaboratorio;
 
@@ -43,7 +38,7 @@ public abstract class Usuario {
 
     public Usuario() {}
 
-    public Usuario(int id, String nome, String email, String senha, boolean ativo, String tipoUsuario, String fotoUrl, String nomeLaboratorio) {
+    public Usuario(UUID id, String nome, String email, String senha, boolean ativo, String tipoUsuario, String fotoUrl, String nomeLaboratorio) {
         this.id = id;
         this.nome = nome;
         this.email = email;
@@ -54,8 +49,8 @@ public abstract class Usuario {
         this.nomeLaboratorio = nomeLaboratorio;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }

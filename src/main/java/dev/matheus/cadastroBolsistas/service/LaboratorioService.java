@@ -9,10 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.UUID;
 
 /*
- * regras de negocio de laboratorios. podeGerenciar libera admin e o professor
- * que coordena o lab; temVaga compara ocupacao atual com a capacidade.
+ * regras de negocio de laboratorios com IDs em UUID.
  */
 @Service
 public class LaboratorioService {
@@ -23,12 +24,12 @@ public class LaboratorioService {
     @Autowired
     private ProjetoRepository projetoRepository;
 
-    public boolean podeGerenciar(Usuario usuarioLogado, int labId) {
-        if (usuarioLogado == null) return false;
+    public boolean podeGerenciar(Usuario usuarioLogado, UUID labId) {
+        if (usuarioLogado == null || labId == null) return false;
         if (usuarioLogado.isAdmin()) return true;
         if (usuarioLogado.isProfessor()) {
             Laboratorio lab = repository.findById(labId).orElse(null);
-            return lab != null && lab.getCoordenadorId() == usuarioLogado.getId();
+            return lab != null && Objects.equals(lab.getCoordenadorId(), usuarioLogado.getId());
         }
         return false;
     }
@@ -43,11 +44,13 @@ public class LaboratorioService {
         return new ArrayList<>(repository.findByAtivoTrueOrderByNome());
     }
 
-    public ArrayList<Laboratorio> listarPorCoordenador(int professorId) {
+    public ArrayList<Laboratorio> listarPorCoordenador(UUID professorId) {
+        if (professorId == null) return new ArrayList<>();
         return new ArrayList<>(repository.buscarPorCoordenador(professorId));
     }
 
-    public Laboratorio buscarPorId(int id) {
+    public Laboratorio buscarPorId(UUID id) {
+        if (id == null) return null;
         Laboratorio lab = repository.findById(id).orElse(null);
         if (lab != null) {
             lab.setProjetos(new ArrayList<>(projetoRepository.buscarPorLaboratorio(id)));
@@ -62,17 +65,20 @@ public class LaboratorioService {
 
     /* soft delete */
     @Transactional
-    public boolean excluir(int id) {
+    public boolean excluir(UUID id) {
+        if (id == null) return false;
         return repository.desativar(id) > 0;
     }
 
-    public boolean temVaga(int labId) {
+    public boolean temVaga(UUID labId) {
+        if (labId == null) return false;
         Laboratorio lab = repository.findById(labId).orElse(null);
         if (lab == null) return false;
         return repository.contarBolsistasAtivos(labId) < lab.getCapacidade();
     }
 
-    public int contarBolsistasNoLaboratorio(int labId) {
+    public int contarBolsistasNoLaboratorio(UUID labId) {
+        if (labId == null) return 0;
         return repository.contarBolsistasAtivos(labId);
     }
 }

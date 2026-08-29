@@ -11,18 +11,18 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 /*
- * laboratorio de pesquisa. tem um professor coordenador e uma capacidade
- * maxima de bolsistas.
+ * laboratorio de pesquisa com id UUID e coordenador_id UUID.
  */
 @Entity
 @Table(name = "laboratorio")
 public class Laboratorio {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String nome;
 
@@ -32,18 +32,15 @@ public class Laboratorio {
     private String status;
     private int capacidade;
 
-    /* mesmo esquema do laboratorioId em Bolsista: coluna nullable, api publica em int */
     @Column(name = "coordenador_id")
-    private Integer coordenadorId;
+    private UUID coordenadorId;
 
-    /* so leitura, serve para o getCoordenador() devolver o nome sem query extra */
     @ManyToOne
     @JoinColumn(name = "coordenador_id", insertable = false, updatable = false)
     private Professor coordenadorProfessor;
 
     private boolean ativo;
 
-    /* preenchidos pelo controller quando a tela precisa, nao sao colunas */
     @Transient
     private int totalBolsistas;
     @Transient
@@ -51,19 +48,19 @@ public class Laboratorio {
 
     public Laboratorio() {}
 
-    public Laboratorio(int id, String nome, String areaPesquisa, String status, int capacidade,
-                       int coordenadorId, String coordenador, boolean ativo) {
+    public Laboratorio(UUID id, String nome, String areaPesquisa, String status, int capacidade,
+                       UUID coordenadorId, String coordenador, boolean ativo) {
         this.id = id;
         this.nome = nome;
         this.areaPesquisa = areaPesquisa;
         this.status = status;
         this.capacidade = capacidade;
-        setCoordenadorId(coordenadorId);
+        this.coordenadorId = coordenadorId;
         this.ativo = ativo;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
@@ -77,10 +74,9 @@ public class Laboratorio {
     public int getCapacidade() { return capacidade; }
     public void setCapacidade(int capacidade) { this.capacidade = capacidade; }
 
-    public int getCoordenadorId() { return coordenadorId != null ? coordenadorId : 0; }
-    public void setCoordenadorId(int coordenadorId) { this.coordenadorId = coordenadorId > 0 ? coordenadorId : null; }
+    public UUID getCoordenadorId() { return coordenadorId; }
+    public void setCoordenadorId(UUID coordenadorId) { this.coordenadorId = coordenadorId; }
 
-    /* as jsp leem ${lab.coordenador} esperando o nome do professor */
     public String getCoordenador() {
         return coordenadorProfessor != null ? coordenadorProfessor.getNome() : null;
     }

@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -54,31 +55,33 @@ class ProfessorServiceTest {
 
     @Test
     void buscarPorId_professorExistente_retornaObjeto() throws SQLException {
+        UUID id = UUID.randomUUID();
         Professor p = new Professor();
-        p.setId(1);
+        p.setId(id);
         p.setNome("Prof Roberto");
-        when(repository.findById(1)).thenReturn(Optional.of(p));
+        when(repository.findById(id)).thenReturn(Optional.of(p));
 
-        Professor resultado = professorService.buscarPorId(1);
+        Professor resultado = professorService.buscarPorId(id);
 
         assertNotNull(resultado);
-        assertEquals(1, resultado.getId());
+        assertEquals(id, resultado.getId());
         assertEquals("Prof Roberto", resultado.getNome());
-        verify(repository).findById(1);
+        verify(repository).findById(id);
     }
 
     @Test
     void buscarPorId_professorInexistente_retornaNull() throws SQLException {
-        when(repository.findById(99)).thenReturn(Optional.empty());
+        UUID id = UUID.randomUUID();
+        when(repository.findById(id)).thenReturn(Optional.empty());
 
-        assertNull(professorService.buscarPorId(99));
-        verify(repository).findById(99);
+        assertNull(professorService.buscarPorId(id));
+        verify(repository).findById(id);
     }
 
     @Test
     void atualizar_salvaNoRepositorio() throws SQLException {
         Professor p = new Professor();
-        p.setId(1);
+        p.setId(UUID.randomUUID());
 
         assertTrue(professorService.atualizar(p));
         verify(repository).save(p);
@@ -86,18 +89,20 @@ class ProfessorServiceTest {
 
     @Test
     void excluir_fazSoftDeleteEmVezDeApagarALinha() throws SQLException {
-        when(repository.desativar(5)).thenReturn(1);
+        UUID id = UUID.randomUUID();
+        when(repository.desativar(id)).thenReturn(1);
 
-        assertTrue(professorService.excluir(5));
-        verify(repository).desativar(5);
-        verify(repository, never()).deleteById(anyInt());
+        assertTrue(professorService.excluir(id));
+        verify(repository).desativar(id);
+        verify(repository, never()).deleteById(any(UUID.class));
     }
 
     @Test
     void excluir_quandoNadaFoiAtualizado_retornaFalse() throws SQLException {
-        when(repository.desativar(99)).thenReturn(0);
+        UUID id = UUID.randomUUID();
+        when(repository.desativar(id)).thenReturn(0);
 
-        assertFalse(professorService.excluir(99));
+        assertFalse(professorService.excluir(id));
     }
 
     @Test

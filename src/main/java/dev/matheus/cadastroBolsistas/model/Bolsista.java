@@ -9,9 +9,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 /*
- * bolsista do sistema. a tabela tambem guarda os ADMIN, diferenciados por tipo_usuario.
+ * bolsista e admin do sistema com id UUID, dados de vigencia e modalidade de bolsa.
  */
 @Entity
 @Table(name = "bolsista")
@@ -25,18 +27,9 @@ public class Bolsista extends Usuario {
     private String cpf;
     private String telefone;
 
-    /*
-     * a coluna e nullable (admin nao tem lab), por isso Integer.
-     * o get/set publico continua em int para nao mexer em controller nem jsp:
-     * 0 para fora vira null no banco, igual ao que o dao antigo fazia.
-     */
     @Column(name = "laboratorio_id")
-    private Integer laboratorioId;
+    private UUID laboratorioId;
 
-    /*
-     * so leitura, serve para resolver o nome do lab sem query extra.
-     * quem grava a coluna e o campo laboratorioId acima.
-     */
     @ManyToOne
     @JoinColumn(name = "laboratorio_id", insertable = false, updatable = false)
     private Laboratorio laboratorio;
@@ -44,13 +37,26 @@ public class Bolsista extends Usuario {
     @Enumerated(EnumType.STRING)
     private Cargo cargo;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "modalidade_bolsa")
+    private ModalidadeBolsa modalidadeBolsa;
+
+    @Column(name = "valor_bolsa")
+    private Double valorBolsa;
+
+    @Column(name = "data_inicio_bolsa")
+    private LocalDate dataInicioBolsa;
+
+    @Column(name = "data_fim_bolsa")
+    private LocalDate dataFimBolsa;
+
     public Bolsista() {
         super();
         setTipoUsuario("BOLSISTA");
     }
 
-    public Bolsista(int id, String nome, String senha, LocalDate dataNascimento, String curso, String email,
-                    String matricula, String cpf, String telefone, boolean ativo, int laboratorioId,
+    public Bolsista(UUID id, String nome, String senha, LocalDate dataNascimento, String curso, String email,
+                    String matricula, String cpf, String telefone, boolean ativo, UUID laboratorioId,
                     String nomeLaboratorio, String tipoUsuario, String fotoUrl, Cargo cargo) {
         super(id, nome, email, senha, ativo, tipoUsuario, fotoUrl, nomeLaboratorio);
         this.dataNascimento = dataNascimento;
@@ -58,7 +64,7 @@ public class Bolsista extends Usuario {
         this.matricula = matricula;
         this.cpf = cpf;
         this.telefone = telefone;
-        setLaboratorioId(laboratorioId);
+        this.laboratorioId = laboratorioId;
         this.cargo = cargo;
     }
 
@@ -77,8 +83,8 @@ public class Bolsista extends Usuario {
     public String getTelefone() { return telefone; }
     public void setTelefone(String telefone) { this.telefone = telefone; }
 
-    public int getLaboratorioId() { return laboratorioId != null ? laboratorioId : 0; }
-    public void setLaboratorioId(int laboratorioId) { this.laboratorioId = laboratorioId > 0 ? laboratorioId : null; }
+    public UUID getLaboratorioId() { return laboratorioId; }
+    public void setLaboratorioId(UUID laboratorioId) { this.laboratorioId = laboratorioId; }
 
     public Laboratorio getLaboratorio() { return laboratorio; }
 
@@ -89,4 +95,27 @@ public class Bolsista extends Usuario {
 
     public Cargo getCargo() { return cargo; }
     public void setCargo(Cargo cargo) { this.cargo = cargo; }
+
+    public ModalidadeBolsa getModalidadeBolsa() { return modalidadeBolsa; }
+    public void setModalidadeBolsa(ModalidadeBolsa modalidadeBolsa) { this.modalidadeBolsa = modalidadeBolsa; }
+
+    public Double getValorBolsa() { return valorBolsa; }
+    public void setValorBolsa(Double valorBolsa) { this.valorBolsa = valorBolsa; }
+
+    public LocalDate getDataInicioBolsa() { return dataInicioBolsa; }
+    public void setDataInicioBolsa(LocalDate dataInicioBolsa) { this.dataInicioBolsa = dataInicioBolsa; }
+
+    public LocalDate getDataFimBolsa() { return dataFimBolsa; }
+    public void setDataFimBolsa(LocalDate dataFimBolsa) { this.dataFimBolsa = dataFimBolsa; }
+
+    public boolean isBolsaVencida() {
+        return dataFimBolsa != null && dataFimBolsa.isBefore(LocalDate.now());
+    }
+
+    public boolean isBolsaPrestesAVencer() {
+        if (dataFimBolsa == null) return false;
+        LocalDate hoje = LocalDate.now();
+        long dias = ChronoUnit.DAYS.between(hoje, dataFimBolsa);
+        return dias >= 0 && dias <= 30;
+    }
 }
