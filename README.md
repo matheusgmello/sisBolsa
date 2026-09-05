@@ -119,6 +119,7 @@ Senha:  12345678
 Com a aplicacao rodando, acesse a documentacao interativa:
 - **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 - **OpenAPI JSON:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+- **Postman:** [postman/SisBolsa-API.postman.json](postman/SisBolsa-API.postman.json) — importe direto no Postman (organiza sozinho em uma pasta por tag). Instrucoes em [postman/README.md](postman/README.md).
 
 ---
 
